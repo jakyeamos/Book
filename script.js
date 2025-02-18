@@ -120,7 +120,7 @@ function playSongForSection(sectionId) {
 }
 
 // 👀 Intersection Observer to detect section visibility
-const observerOptions = { threshold: 0.5 }; // Trigger when 50% of section is visible
+const observerOptions = { threshold: 0.05 }; // Trigger when 50% of section is visible
 
 const observer = new IntersectionObserver(entries => {
   entries.forEach(entry => {

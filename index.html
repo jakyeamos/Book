@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Digital Book</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 📌 Controls for Chapter Navigation and Modes -->
+<div id="chapter-controls">
+    <button id="prev-chapter" class="hidden">⏮</button> <!-- Previous Chapter Button -->
+    <select id="chapter-selector"></select> <!-- Dropdown -->
+    <button id="next-chapter">⏭</button> <!-- Next Chapter Button -->
+    <button id="dark-mode-toggle">🌙</button> <!-- Dark Mode Button -->
+    <button id="mute-toggle">🔊</button>
+</div>
+
+
+<!-- 🎵 Background Audio -->
+<audio id="background-audio" preload="auto"></audio>
+
+<div class="book-container">
+
+    <!-- 📍 Chapter 1 -->
+    <div class="chapter" id="chapter1">
+        <section id="section1" class="book-section">
+            <p class="date-location"><em>Sunday, March 8th, 2036<br>Olympia, Washington</em></p>
+            <h2 class="chapter-title"><strong>THE RITUAL.</strong></h2>
+            <p>A cold sweat clings, a tribute to restless dreams.</p>
+            <p>A headache pulsates behind his eyes, a tribute to a restless night.</p>
+        </section>
+
+            <div class="poetic-text">
+                <p>He stretches...</p>
+                <p><strong>Hold,</strong></p>
+                <p><strong>Shiver,</strong></p>
+                <p><strong>Release.</strong></p>
+            </div>
+
+        <section id="section2" class="book-section">
+            <p>His fingers skim across his bedside table, searching his bedside table, too dazed to sit up just yet. 
+               After a few passes, he finds his phone. A faint glow emerges as it recognizes his face, a slight click signifies the phone unlocking. 
+               Swipe. Tap. Scroll. He moves with purpose aiming to combat the horrid silence of the room. 
+               His phone is already connected to an Alexa across the room. With another flick of his thumb, 
+               the first few notes of a song slip into the room. Sound trying yet failing to bury the thoughts that control his mornings.</p>
+
+            <p>An unfocused gaze maps the room, searching for nothing in particular. It’s the 
+            <span class="bold-grow-1">SAME</span>.
+            The <span class="bold-grow-2">SAME</span> walls. The 
+            <span class="bold-grow-3">SAME</span> dull hum of the fan. The 
+            <span class="bold-grow-4">SAME</span> list of things he was meant to do yesterday, last week, and last year. </p>
+
+            <div></div>
+
+            <p class="centered-text">He never expects anything different. </p>
+
+            <div></div>
+
+            <p>Even without the clarity of the glasses that he broke last week, familiarity sharpens the edges of his morning. 
+                He shakes off the weight of sleep, sits up, and lets his mind wander:</p>
+
+            <p>How many people have passed through this building, this room, this bed? </p>
+
+            <p>How many versions of himself have come and gone? How many skins shed?</p>
+            <p>He’s been so many different people in this room:</p>
+            <ul>
+                <li><strong>The version of himself that woke up early, convinced discipline would save him</strong>
+                    <ul>
+                        <li><em>The one that stayed in bed until noon knowing nothing would</em></li>
+                    </ul>
+                </li>
+                <li>The one that painted the walls in an attempt to force something to change
+                    <ul>
+                        <li><strong>Then the one that would stare at them blankly for weeks hating the color</strong></li>
+                    </ul>
+                </li>
+            </ul>
+            <p class="centered-text">Each one felt final. Each one felt like him. But somehow he outlived them all.</p>
+            <div></div>
+            <p class="centered-text">The room, witness to these changes, remains the same. As if unimpressed by his existence.</p>
+            <p>He turns to the window. The city is silent, covered in a grey hush similar to the day before. 
+                The skyline and everything beneath it is blanketed—every soul, every stone, every leaf. 
+                The buildings stand unbothered, unaffected by the darkness of the sky which seems poisonous to everything else.
+            </p>
+            <p class="centered-text"> He walks past his ever-growing pile of laundry, a monument to his fleeting ambitions— </p>
+            <p class="centered-text">Each sock and shirt outlasting his desire for order.</p>
+            <p>“Why do I have so many clothes?” He thinks</p>
+            <p class="right-aligned">Such a thinly veiled cover for his insecurities.
+            </p>
+            <p class="centered-text"> Insecurities that he can name, dissect, and understand—but not escape.
+            </p>
+            <p>His mind wanders to that girl he used to date—the one who left her coding job to pursue fashion in New York. 
+                Trading syntax for silk, clean-cut algorithms for a messy artistry of eating disorders. 
+            </p>
+            <p>He told her it was a scam, that fashion was just capitalism whispering in the mirror, convincing people they
+                 were unfinished canvasses, that the right cut, the right color, the right brand could turn them whole.
+            </p>
+            <p>She just laughed. "You don’t get it," she said.</p>
+            <p>"Clothes, the videos—they’re more than surface-level grandeur," she told him, "<em>They’re armor. Expression. Emotion.</em>"
+            </p>
+            <p>They cycled through the same argument, over and over, like a scratched record stuck on the same refrain—a helpless case of déjà vu 
+                stretched across their entire relationship. And somehow, through all of it, he never found the voice to tell her that he <strong>hoped</strong>
+                 she was right. Because now, he stands in a room of evidence to the contrary:</p>
+            <div class="staggered-indent">
+            <p>Hangers lined with leather,</p>
+            <p>shelves stacked with shirts,</p>
+            <p>jackets he bought for a version of himself that never arrived.</p>
+            <p>Shoes worn once, then abandoned when he realized they couldn't fix his posture or his presence.</p>
+             </div>
+            <p>He knows the psychology, he’s read the studies. The manufactured desires. The industry tactics that turn self-doubt into profit margins. 
+                And yet, he holds some hope. Or is it delusion?</p>
+            <p class="centered-text">It’s just a hobby, he tells himself. Just an appreciation for craftsmanship, for form, for color theory.</p>
+            <p>But deep down, he knows.</p>
+            <p>He envied her.
+            </p> 
+            <p>Not the sponsorships, the commercials, or the fame.
+            </p> 
+            <p>And it’s not the sharp kind of envy that remodels admiration into bitterness. It's quieter than that.
+                 A slow creeping thought that hangs around him, a chilling presence always just out of sight. He pushes it down, or away, 
+                 wherever it needs to go for him to continue to believe he was right.
+            </p>
+            <p>Leaving behind a stable job for fashion is like walking into the ocean and expecting the waves to hold you up.  
+                That she’s chasing something that was never meant to be caught.</p>
+            <p class="centered-text">He <strong>wants</strong> to believe that. He <strong>does</strong> believe that. 
+                She’s <strong>wrong</strong>, he's <strong>right.</strong> She’s <strong>naive</strong> and he’s a <strong>realist.</strong>
+                 </p>
+            <p>But…</p>
+            <p>What if she saw the risks and the inevitable failures and still decided it was worth it? </p>
+            <p>What if she knew exactly how deep the ocean was and ran in anyway?</p>
+        </section>
+        <section id="section3" class="book-section">
+            <p>What if the only difference between them was that she didn’t talk herself out of wanting more?</p>
+            <div class="text-block">
+                <p>Then what is he left with?</p>
+                <ul>
+                    <li>The certainty of this room.</li>
+                    <li>The hum of the fan.</li>
+                    <li>
+                        The window overlooking a sidewalk he’s studied more than he can stomach to study his reflection.
+                    </li>
+                </ul>
+            </div>
+            <p class="centered-text">The same thought each morning:</p>
+            <p class="centered-text"> a fantasy about how it would feel to step through the mesh covering the window. 
+                Letting gravity bear the weight of every choice he’s ever made. The wind rushing up to meet him like an old friend. 
+                Arms open, ready to hold him, if only for a moment. The ground, stern but fair—soft in its certainty, unwavering in its purpose.
+                 A final destination, <strong>an escape.</strong>
+            </p>
+            <p class="centered-text">And then—like always—the guilt comes crashing in.</p>
+            <p class="centered-text">The realization hits like a slap, sharp and sudden, that these thoughts are not just indulgent, but greedy.
+                 That in his worst moments, he can think only of his escape, while everyone else is left to carry the weight of it.
+            </p>
+            <p class="centered-text">How <strong>arrogant.</strong></p>
+            <p class="centered-text">How <strong>selfish.</strong></p>
+            <p class="centered-text">He lets out a slow breath, steadying himself as the shame settles in.</p>
+            <p class="centered-text">Every morning, he lets himself live in that thought. And every morning, it ends the same way.
+            </p>
+            <p>He shakes off the routine existential dread but for just a tick longer the girl in New York hangs around in his head.</p>
+            <p>Is she brave?</p>
+            <p class="right-aligned">Is she stupid?</p>
+            <p>Does it matter?</p>
+            <p class="right-aligned">He wonders how she’s doing.</p>
+            <p>“Should I call her?” He mutters to himself.</p>
+            <br>
+            <p class="centered-text">He quickly dismisses the thought knowing that rabbit hole all too well.</p>
+            <br>
+            <p>Then, almost without thinking, he moves to the bathroom.
+            </p>
+            <p>The shower is hot—scalding, even—he doesn't turn the temperature down. 
+                He lets it sear against his skin, letting the heat soak into him like it might burn something out.
+                There’s a switch to turn on the vent in the bathroom and each morning he pretends to be oblivious to that fact letting 
+                the mirror fog over, obscuring the reflection he hates to acknowledge.</p>
+            <p>Going through these motions with precision, each step is ingrained into muscle memory. A cleanser that promises to purify,
+                 a toner that claims to restore, a serum that swears it turns back the clock. He presses them into his skin with the same
+                  meticulous care an artist might give to a canvas as if each step might erase something deeper than just the dullness, the dryness, the imperfections.
+            </p>
+            <p>He regularly laughs at the absurdity.</p>
+            <p>As if a routine with a few drops of salicylic acid, and a layer of moisturizer, could stop the slow rot of time.
+                 As if he can somehow exfoliate his way out of entropy.  What’s the point of clear skin when the body beneath it is just a vessel inching toward inevitable collapse?
+                  When every effort to preserve, maintain, and perfect, is just a slow war against time that no one has <strong>ever</strong> won?
+            </p>
+            <p>And yet, he does it anyway. Every morning. Every night. No matter how pointless everything else feels, this stays. 
+                This ritual, this absurd devotion to something so small, and trivial. By the time he is done, his skin is smooth, his hair damp and heavy against his shoulders. 
+                The mirror has cleared enough to show his reflection, but he doesn’t look at it.</p>
+            <p>Instead, again he moves. Without much pace or purpose, he saunters over to the dresser, his fingers finding the handle in the same place it was yesterday.
+                 He reaches inside, pulling at a shirt he cared about once, back when there was still an image to maintain, a presence to shape. Back when he cared to impress. 
+                 Now, it’s just fabric, just another thing he puts on without thinking.
+            </p>
+            <p>His fingers close around the collar, but before it pulls free— <span class="alegreya-sans-sc-regular"> a sharp sting.</span></p>
+            <p>A pulse of heat spreads through his fingertip, and for a moment, he just watches. 
+                The pain is clean, almost elegant in its precision, a single bright thread cutting through the numb haze of the morning. 
+                His eyes widen taking in the puddle of red while it wells up, slow and deliberate, like blooming hibiscus in the summer.
+                 He squeezes his finger, coaxing out another bead, watching the surface tension hold until it finally breaks, sliding down toward his palm.
+                 <span class="alegreya-sans-sc-regular">He brings it to his lips.</span> 
+            </p>
+            <p>His tongue meets the copper tang, metallic and warm, something is grounding in its familiarity. But it’s not about the taste, not really. It’s about proof. 
+                Proof that he’s here. That his body still responds. That he is not just a collection of looping thoughts and half-formed memories, drifting through the weight of another morning. 
+            </p>
+            <p>He has always had a quiet respect for pain. It insists upon itself, sharp and undeniable, pulling him into this exact moment with more force than anything else in his day.
+                 No spiraling thoughts, no abstract questions about identity or purpose. Just this—this quiet, deliberate hurt. A tether back to something solid.
+            </p>
+            <p class="centered-text">He’s known it in many forms—<span class="alegreya-sans-sc-medium">the sear of heat pressed too long against the skin, the quiet bite of nails tracing red lines into flesh,
+                 The tight ache behind the eyes when a breath is held past comfort, just to see how long the body will fight back, and the scars—some fading, some stubborn, all reminders of a body that has learned 
+                 pain like a second language.</span> Little violences, self-contained, secretive.</p>
+            <p>There’s an odd kind of affection in the way his body registers the sting. A flicker of warmth buried somewhere deep, a reminder of a hobby he’s left in the past. 
+                He flexes his hand and feels the small, electric hum still clinging to his nerves. He holds onto it for a second longer than he should.
+            </p>
+            <p>He finally looks down. A hairpin. Caught between his Jeff Buckley Grace t-shirt and the fake wood paneling of the dresser.
+            </p>
+            <p>Small. Dainty. Slightly bent.</p>
+            <p>He rolls it between my fingers, feeling the faint pressure of its curve, the weight of something that once mattered to someone.
+                 It’s not his. But it was somebody’s. He pictures her- not with any real detail, just a shape. Someone standing there, in this room, his room. Pinning up her hair. Taking it down. He wonders where she is now.
+                  Did she yield to the poison, did she escape it? Does she ever think back to memories she had in this room?
+            </p>
+            <p class="centered-text">He sets the pin down on top of the dresser. By tomorrow, it will be just another forgotten thing. But for now, it isn’t.</p>
+            <p>The shirt is soft, worn thin in places, the kind of fabric that holds the memory of every wash. He slides his arms into it and lets the cotton settle against his skin.
+                 Then the sweater—thicker, heavier, sleeves just a little too long. He tugs them past his wrists, letting the fabric pool at the base of his fingers. He could roll them up, but he doesn’t. 
+                 He likes the way it feels.</p>
+            <p>Like a shield.</p>
+            <p>The jacket comes last. The weight of it presses down on his shoulders, familiar, grounding. He smooths his hands over the material, pressing out invisible creases. 
+                It isn’t cold outside, not really, but warmth isn’t always about temperature. It’s about pressure. About security. About something holding him together. 
+                He tugs the zipper up halfway but leaves it undone. Just enough to feel the enclosure, but not enough to make it feel like a cage.
+            </p>
+            <p class="centered-text">With everything in place, he exhales.</p>
+            <p>Only then does he move to the door. He gives his room a last look, a helpless search for someone to say goodbye to. There’s no one, of course. Just the stale air of a room that has long since stopped caring whether he stays or leaves.</p>
+        
+        </section>
+        <section id="section4" class="book-section">
+            <p>He steps out into the hallway, the door clicking shut behind him—a sound so final yet so meaningless. The hallway is empty, lined with identical doors, each concealing lives that barely intersect with his own. 
+                Somewhere down the hall, someone laughs—a short, sharp burst before disappearing into silence again. He stops mid-step. The sound is light, easy, and unburdened. It irritates him more than it should.
+                 He slips on his headphones before thinking about the laugh again: What is there to laugh at in this place? In this life? In this endless fog that stretches across the sky like a hand pressing down on the city?
+
+            </p>
+            <p class="centered-text">Is it ignorance?</p>
+            <br>
+            <p>The elevator arrives with a mechanical chime, the left door opening slightly slower than the right, mechanisms begging for maintenance.
+                 He steps inside and watches the numbers descend, the flickering red digits marking his slow approach to the ground; a less exciting parallel to his morning fantasies. The air inside is thick with the remnants of someone else’s cologne, 
+                something citrusy, and sharp, clashing against the metallic scent of the elevator itself. The doors open with a dull groan. There’s someone at the printer in the lobby, he lowers his gaze knowing they won’t talk to him but avoiding eye contact anyway.
+                 He continues out of the building, the security guard barely glances up from his phone, absorbed in a screen that flickers reflections across his glasses.
+                </p>
+            <p>Outside, the city greets him with its usual indifference. He pulls his jacket tighter around himself, to protect him from the anxiety that accompanies glances from strangers. The sky is a washed-out gray, thick with the weight of impending rain, 
+                though none has fallen yet. A bus rumbles past, kicking up a mist of water from the curb.</p>
+            <p>The walk to the library is familiar, his feet move without much thought. At the intersection, the pedestrian signal flicks to "WALK," its harsh white glow cutting through the fog. He crosses with the crowd, a sea of movement that barely registers him.
+                 Just another body, another shadow in the periphery of their morning routines. He enters the library, telling himself it’s to pass the time, but really it’s to escape— if not physically, then maybe into the fiction of a book. 
+                 It can be comforting to know that even an alien, a dragon, or another person can feel what he does. Their stories stretch across galaxies, through ancient ruins, into the harrowing spaces of the human heart and brain. Yet no matter the setting, 
+                 he can recognize the feelings and thoughts he’s had myself.
+            </p>
+            <p>The moment he steps inside, the familiar stillness settles over him. The smell— paper, ink, old glue —hasn’t changed, a light layering of dust covers the books.  He’s smelled the inside of this building a thousand times, and somehow, 
+                that steadiness soothes him instead of making him feel stuck.
+            </p>
+            <p> He nods to his friend, Nico, who works at the front desk. </p>
+            <p class="centered-text">Friend?</p>
+            <p>Are they friends? They’ve never hung out outside these walls, never even spoken beyond the boundaries of this library.</p>
+            <p class="centered-text">Acquaintance?</p>
+            <p>And yet, he knows his favorite books, front to back, his reading habits like clockwork—the way he annotates in pencil, never pen, as if every thought is temporary, something to be reconsidered, rewritten. 
+                The way he lingers a little longer in philosophy than fiction, fingertips ghosting over the pages like he’s trying to pull something tangible from the ink. He has a presence that feels unintentional, and effortless. 
+                Broad shoulders that somehow still seem at ease, the kind of posture that suggests he’s deep in thought even when he’s standing still. Dark curls that fall just slightly out of place, the kind that begs to be pushed back absentmindedly, 
+                though he never does. There’s something patient in the way he moves, measured but never hesitant, like he’s always waiting for something—a revelation, a perfect line, a moment worth holding onto.</p>
+            <p>He wonders if Nico’s ever found it.</p>
+            <p>Whatever.</p>
+            <p>Beyond him, Betsy leans against the counter, muttering over an improperly filled-out return slip. She has worked here for as long as he can remember, her presence as much a fixture as the shelves.
+            </p>
+            <p>He lets his fingers drift along the worn spines of the books. The friction between his thumb and the rough cloth makes his stomach turn slightly, but he has learned to push past it. Eventually, he settles on a book he has read too many times.
+            </p>
+            <p>In his usual corner, away from wandering eyes, he sets the book on its spine and lets it fall open to a random page.</p>
+            <p>He skims the text, then pauses—</p>
+            <p>There are notes in the margins. There’s never notes in the margins.</p>
+            <p>The handwriting is unfamiliar. The thoughts, however, are not</p>
+            <p>The underlined passage:</p>
+            <p>"<span class="biorhyme-font">There is no fate that cannot be surmounted by scorn.</span>"</p>
+            <p>the small scrawled notes next to it,  a response, in a tight precise script:</p>
+            <p>"<span class="annie-use-your-telescope-regular">What if you’re too tired to scorn it?</span>"</p>
+            <p>Further down the page another note:</p>
+            <p>"<span class="annie-use-your-telescope-regular">The rock is at its heaviest when you fight it. Maybe the point isn’t to push but to carry.</span>"</p>
+            <p>The words land somewhere deep inside him, echoing things he has thought before but never written down. He traces them with his fingers, the ink newer than anything else in this library. Someone else read this book. This exact page. 
+                Were they searching for something, escaping something—like him? He hesitates, lingering on the words, tracing them with his eyes like each letter might disappear if he looks away. In his chest, there is a nudge, 
+                a quiet pulse of something—recognition, curiosity… something warmer? Carefully, he closes the book. For a moment, he just holds it. Then, without quite knowing why, he carries it to the front desk. </p>
+            <p>Betsy looks up and smiles.</p>
+            <p>“Find something good Xander?” she asks.</p>
+            <p>He shifts the book under his arm. “Yeah,” he says curtly. “Just need a pen.”</p>
+            <p>She doesn’t ask why. Just reaches into the mug full of abandoned pens and hands Him one. “Bring it back when you’re done.”</p>
+            <p>He returns to his seat and clicks the pen open. The ink flows smoothly as he presses his own words into the margins, a quiet response to the ones before him.</p>
+            <p class="centered-text">"<strong>Maybe existence doesn’t require victory, only persistence.</strong>"</p>
+            <p class="centered-text">It feels like a thought he would normally keep inside. It isn’t a grand revelation, just a thought left behind, but that itself mirrors the myth: small, personal acts of meaning in an otherwise indifferent universe.</p>
+
+        </section>
+    </div>
+
+    <!-- 📍 Chapter 2 -->
+    <div class="chapter" id="chapter2">
+        <section id="section5" class="book-section">
+            <h2 class="chapter-title"><strong>THE ROUTINE.</strong></h2>
+            <p>The alarm goes off, 5:30 am, but Nico’s already awake. He twists to the left, then to the right, an assortment of cracks and pops ring out from his vertebrae. Loaf, his slightly overweight orange tabby, stirs beside him, 
+                stretching long and slow before hopping off the bed without any prompting. She’s a victim of the same routine as him. Nico pulls the sheets tight,  he smooths out each wrinkle, and tucks in the corners 
+                with army-like precision—as if he will be graded on his execution as if someone is watching. The room is clean, almost eerily so, stripped of anything unnecessary. No clothes left draped over chairs, no stray books, no clutter to betray the act of living.
+                 Everything is in its place. The only sign of disturbance—tiny specks of litter Loaf has tracked across the floor, scattering like misplaced punctuation in an otherwise expertly written sentence. He sweeps them up before they can settle or become something that deserves thought. 
+                 He hates to let things linger. 
+            </p>
+            <p>But something <strong>is</strong> lingering. A book on his desk, slightly misaligned, its spine not quite parallel to the others. The sight of it makes his fingers twitch. He shouldn’t care. He <strong>knows</strong> he shouldn’t care. But the weight in his chest is already forming,
+                 tightening, screaming its plea for him to take action. It will only take a second—just nudge it back into place.
+            </p>
+            <p>"<span class="harley">You’re doing that thing again.</span>" A raspy voice comments.</p>
+            <p>Nico’s fingers hesitate over the book, then pull away. His posture stiffens, the reaction automatic, ingrained. He doesn’t need to look to know Harley is there.</p>
+            <p>He always is.</p>
+            <p>From the corner of his eye, he can see the silhouette—leaning against the far wall, arms crossed, expression unreadable. His presence feels like an intrusion but also completely natural. “Fuck you, Harley.” 
+                He mutters knowing the volume of his words won’t change the fact Harley hears them. Harley laughs, a sharp bothersome set of breaths, but doesn’t respond. Just watches, always watching. </p>
+        </section>
+        <section id="section6" class="book-section">
+            <p>The silence that follows feels suffocating, pressing into his ribs, filling the space left behind by hesitation. It’s too quiet. Too still. He exhales, but it doesn’t settle him—something is clawing beneath his skin, 
+                a hum that won’t resolve, like a song stuck between radio frequencies, buzzing, churning, drowning.</p>
+                <p>
+                    Nico walks into the bathroom and flips the light switch. It doesn’t snap into place like a new one would. 
+                    Age and wear have made it sluggish, forcing him to push it up, slow and deliberate, like shoving something through mud. 
+                    He hates it. Every morning, the <span style="font-size: 1.05em; font-weight: bold;">SAME RESISTANCE.</span> 
+                    The <span style="font-size: 1.1em; font-weight: bold;">SAME DELAY.</span> 
+                    <span style="font-size: 1.2em; font-weight: bold;">IT SHOULD BE SIMPLE.</span> 
+                    <span style="font-size: 1.4em; font-weight: bold;">IT SHOULD JUST WORK.</span> 
+                    He’s put in more maintenance requests than he can count, each one behind the last on the “non-emergency” waitlist. 
+                    The light flickers on, then off, then on again. Every morning, this pulls a pool of uneasiness to his stomach. 
+                    He takes a deep breath and resumes his routine as the light finally agrees to do its job. 
+                
+                    He walks deeper into the bathroom, similarly spotless to the rest of his room, and he reaches for the temperature knobs of the shower. 
+                    <span style="font-size: 1.1em;">Three and a quarter turns</span> for the one on the left, 
+                    <span style="font-size: 1.1em;">one and a quarter</span> for the one on the right. 
+                    The high-pitched shrill of the knobs is one of his least favorite parts of the day. 
+                
+                    He keeps the water hot, just shy of burning. He steps in,
+                    and realizes one of the spouts on the showerhead has stopped working. Just one out of fifty, but he notices it immediately. 
+                    The discomfort spreads through his chest, his breathing speeds up, he reaches to turn off the water.
+                </p>
+                <p>"<span class="harley">Calm Down,</span>" Harley says bluntly, and Nico does.</p>
+                <p>Shampoo. Rinse. Conditioner—leave it in for exactly two minutes. Wash his face, then his body. His hands move over his arms, his shoulders, his chest. He scrubs hard. Too hard. He knows it, but he doesn’t stop. 
+                    Just a little longer. His fingers press into his skin, running over the same spot again, again, again. The lather is gone, but he keeps scrubbing—as if there’s something still left to erase. </p>
+                <p class="harley">“You’re already clean.”</p>
+                <p> But it doesn’t feel that way. He presses harder, until the friction turns to heat, until his skin feels raw beneath his palms. He doesn’t stop. Not yet.
+                </p>
+                <p class="harley">"That's <strong>enough.</strong>"</p>
+                <p>Harley’s voice cuts through the steam, low and firm. Nico exhales sharply and takes a step back allowing the water to run over him. He turns the water off and steps out, towel wrapped around his waist,
+                     cool air biting at his skin. He walks to the skin, his reflection stares back with stern green and brown eyes, his thin frame and low body fat make him look more muscular than his strength would imply, 
+                     the sharp lines of his collarbone prominent. His pale skin contrasts the dark bags under his eyes and his eyelashes which he thinks are a little too long for a boy. His damp hair clings to his forehead in uneven curls, 
+                     darker with moisture, the weight dragging them down. When dry, it sits in loose waves, somewhere between careless and carefully maintained, always looking a little too perfectly undone. He runs a hand through it, 
+                     watching the strands separate and settle, a few refusing to lie flat. No matter how much he fixes it, it always looks a little out of place. He doesn’t have much need for a skin-care routine he’s never been afflicted with acne, 
+                     he moisturizes his skin, puts on sunscreen, and leaves the bathroom.
+                </p>
+                <p>Back in the bedroom, Loaf is perched on the windowsill seemingly arguing with a bird that frequents the other side of the window. Nico moves to his dresser, pulling out clothes with mechanical precision. A black T-shirt, soft with wear. 
+                    Grey sweatpants, the holes which birth the string ripped and torn from being pulled on too hard. He folds the towel he just used, places it on its hook, and aligns the edges. His hands move over a dresser of identical socks neatly folded, 
+                    debating which pair to take before settling on one. After getting dressed, he turns to his desk, where his weekly pill organizer waits. the see-through compartments, each labeled with a day of the week, are all empty—except for today, the final compartment, 
+                    Sunday. By tonight, he’ll need to refill the entire thing. He flips open the small tab, shaking the contents into his palm. A multivitamin. Magnesium for sleep. Ashwagandha for stress. Omega-3s because it’s supposed to help with brain fog. And then, the prescriptions.
+                     One for focus. One for mood. The ones that are supposed to keep everything running smoothly, or at least quiet the noise enough to function (Unfortunately this doesn’t account for Harley). He swallows them one by one, the way he always does. He’s used to it by now. 
+                     Once the last pill is gone, he exhales and taps the empty compartment once with his fingertip snapping it shut. </p>
+                <p>Loaf stares with an empty stare, “Are you judging me?”, Nico says, Loaf flicks her tail maybe an act of confirmation. The books on his desk are still slightly off-center. His fingers twitch.</p>
+                <p>A book should be centered.</p>
+                <p style="font-weight: 400; font-size: 1em;">The spine should be aligned with the others.</p>
+                <p style="font-weight: 500; font-size: 1.2em;">There shouldn’t be gaps.</p>
+                <p style="font-weight: 700; font-size: 1.4em;">It should look right.</p>
+                <p>He reaches for it.</p>
+                <p><span class="harley">"Nico."</span> Harley barks. But Nico ignores him fixing the book, feeling the pressure leave from his chest. He opens the door steps through it and closes it rummaging through his pockets for the key and locking the door. </p>
+                <p>He walks down the hall then turns back to make sure the door is locked, he does this twice every morning. It’s the same stretch of doors, the same faint smell of cleaning supplies. Then—somewhere down the hall—a burst of laughter. Sharp. Sudden. 
+                    Too bright against the dim morning. He stops for half a second, shoulders tensing at the sound.</p>
+                <p>What is there to laugh at?</p>
+                <p>The thought comes with emotion, not quite bitter, but not neutral either. Maybe he just doesn’t understand it. Maybe some people wake up without that quiet weight pressing against their ribs. Maybe he wouldn’t know what to do with himself if he did.
+                     Harley walks beside him now. Not completely in step—Harley never walks quite right, he isn’t fully bound by the constraints of the real world.</p>
+                <p><span class="harley">"Do you ever think about what it’d be like? to be able to wake up and laugh?"</span> Harley asks, Nico struggles to decipher if this is Harley's attempt to mock him or a genuine curiosity. He doesn’t answer.</p>
+                <p>The elevator arrives with a chime, he turns away but his stomach still drops knowing the left side will open slightly slower than the right. He steps inside, and presses his thumb against the cool railing, grounding himself in the sensation. 
+                    A breath in, a breath out. The doors slide shut. His mind wanders—uncontrolled, unwelcome—to a dream he almost remembers. Something about running. The lobby is nearly empty, lit by overhead lights. The security guard there—not watching, just present, phone screen reflecting off his glasses.
+                     Outside, it's warmer than it looks, uncharacteristic for a city caught in the limbo of night and morning. It’s quiet, only small sounds occur at this time, wind, trees rustling, the quiet hum of a car moving a few blocks away, two sets of footsteps: Nicos, and Harleys.
+                      As Nico crosses the street he makes sure to step only on the white of the crosswalk as if the cracks and imperfections of the asphalt harbor danger unbeknownst to the naked eye. He’s walked this route to the library hundreds of times, yet the comfort that comes with routine never seems to apply here.
+                       His steps are a touch too fast, his hand just a bit too deep in his pockets. He watches as the sun begins its brazen ascent into the sky.
+                </p>
+                <p>He arrives at the library, and the moment he steps inside his demeanor changes, his pace slows, his hands escape their strict confinement. Betsy is already behind the counter, flipping through paperwork, her expression caught between boredom and irritation.
+                </p>
+                <p>“You’re early,” she says without looking up.</p>
+                <p>“I know.”</p>
+                <p>His hands are cold. He flexes them, trying to shake the feeling. Moving toward the philosophy section, he lets his fingers graze the spines of books, noting their weight, and their texture. He doesn’t read them the way some people do. He doesn’t trace the margins, looking for salvation in someone else’s handwriting.
+                     But he reads. Not for answers, not for comfort—just to see what other people have thought. The clock strikes 8 am, the start of his shift. He places <em>Das Kapital</em> back on the shelf and begins his tasks. shortly after the library opens a familiar figure enters, Xander. He doesn’t know much about Xander, 
+                     he comes in at the same time every morning, sits in the same corner, reads, and then leaves. They speak sometimes, discuss books, or news, comment on the many ideas that are usually contained within the hardcovers on either side of each book. But never anything personal, he has no insight into Xander’s hobbies or relationships.</p>
+                <p>Whatever.</p>
+                <p> Xander grabs a book he’s grabbed many times before, “<em>The Myth of Sisyphus</em>,” He carries it to his corner. It takes Nico a second to place why he feels like he remembers that book, not because of the 50 times Xander has taken it and put it back, but this week for the first time in a long time someone else grabbed it.
+                    A few days ago, a girl had been sitting in the same spot, curled over its pages. She was deliberate, and careful—writing in the margins, pausing between lines as if searching for something in the spaces between the words. She wrote like someone who expected a response.
+                </p>
+                <p></p>
+                
+        </section>
+        
+
+    </div>
+
+    <!-- ✍ Highlighting Feature -->
+    <div id="book-content">
+        <p>Select text to highlight it.</p>
+    </div>
+
+    <!-- 💬 Discussion Section -->
+    <div class="comments">
+        <h2>Discussion</h2>
+        <script src="https://giscus.app/client.js"
+            data-repo="yourusername/digital-book"
+            data-repo-id="your-repo-id"
+            data-category="General"
+            data-category-id="your-category-id"
+            data-mapping="pathname"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-theme="light"
+            crossorigin="anonymous"
+            async>
+        </script>
+    </div>
+
+    <div class="chapter-footer">
+        <span id="page-number">1</span> | <span id="chapter-footer"></span>
+    </div>
+</div>
+
+<!-- 📜 Script for Functionality -->
+<script src="script.js"></script>
+
+</body>
+</html>

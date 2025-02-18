@@ -1,0 +1,325 @@
+@import url('https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:ital,wght@0,100;0,300;0,400;0,500;0,700;0,800;0,900;1,100;1,300;1,400;1,500;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=BioRhyme:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Annie+Use+Your+Telescope&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap');
+
+/* 📌 General Page Styling */
+body {
+    font-family: 'Alegreya Sans SC', serif;
+    font-weight: 300;
+    font-style: normal;
+    font-size: 1.08;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;  /* Light Mode Background */
+    color: #000000;  /* Light Mode Text */
+    transition: background 0.3s, color 0.3s;
+}
+
+/* 🌙 Dark Mode */
+.dark-mode {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+/* 📚 Book Container */
+.book-container {
+    max-width: 800px;
+    margin: 80px auto 50px; /* Add space at the top for the fixed control bar */
+    padding: 20px;
+    background: #f5f5f5;  /* Light mode */
+    color: #000000;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode - Book Container */
+.dark-mode .book-container {
+    background: #222;
+    color: #ffffff;
+}
+
+/* 📖 Chapter Titles */
+.chapter-title {
+    text-align: right;
+    font-size: 1.5em;
+    font-weight: 700;
+    font-family: 'Alegreya Sans SC', serif;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* 📌 Book Sections */
+.book-section {
+    padding: 5px 0;
+    opacity: 1;
+    transform: translateY(10px);
+    transition: opacity 1s ease-out, transform 1s ease-out;
+    border-bottom: none; /* Removes section lines */
+}
+
+/* 📌 Chapter Dividers (Line Only Between Chapters) */
+.chapter {
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #ccc; /* Light Mode Line */
+}
+
+/* Dark Mode - Chapter Divider */
+.dark-mode .chapter {
+    border-bottom: 2px solid #444; /* Dark Mode Line */
+}
+
+/* 📌 Header Controls Bar (Fixed & Updated for New Buttons) */
+#chapter-controls {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    background: rgba(30, 30, 30, 0.95);
+    padding: 10px 20px;
+    border-radius: 0 0 10px 10px; /* Smooth curve at bottom */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* 🎚 Chapter Dropdown */
+#chapter-selector {
+    padding: 6px;
+    font-size: 1em;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+    background: #ffffff;
+    color: #000000;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* 🌙 Mode & Navigation Buttons */
+#dark-mode-toggle, #prev-chapter, #next-chapter, #mute-toggle {
+    background: #444;
+    color: #ffffff;
+    border: none;
+    padding: 6px 10px;
+    font-size: 1.2em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Hover Effects */
+#dark-mode-toggle:hover, #prev-chapter:hover, #next-chapter:hover, #mute-toggle:hover {
+    background: #666;
+}
+
+/* Hide Prev/Next buttons when at first/last chapter */
+.hidden {
+    display: none;
+}
+
+/* 🌙 Dark Mode Adjustments */
+.dark-mode #chapter-controls {
+    background: rgba(10, 10, 10, 0.95);
+}
+
+.dark-mode #chapter-selector {
+    background: #222;
+    color: #ffffff;
+    border: 1px solid #888;
+}
+
+.dark-mode #dark-mode-toggle, .dark-mode #prev-chapter, .dark-mode #next-chapter, .dark-mode #mute-toggle {
+    background: #ffffff;
+    color: #000000;
+}
+
+.dark-mode #dark-mode-toggle:hover, .dark-mode #prev-chapter:hover, .dark-mode #next-chapter:hover {
+    background: #ddd;
+}
+
+/* Sticky Header (Page Number) */
+.page-number {
+    position: static;
+    top: 10px;
+    right: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+/* Sticky Footer (Chapter Name) */
+.chapter-footer {
+    position: fixed;
+    bottom: 10px;
+    left: 15px;
+    font-size: 1em;
+    font-style: italic;
+    opacity: 0.8;
+    padding: 5px;
+    border-radius: 5px;
+    display: block;
+}
+
+.bold-grow-1 {
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.bold-grow-2 {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.bold-grow-3 {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.bold-grow-4 {
+    font-weight: bold;
+    font-size: 1.4em;
+}
+
+.centered-text {
+    text-align: center;
+}
+
+.right-aligned {
+    text-align: right;
+}
+
+.alegreya-sans-sc-thin {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 100;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-light {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-regular {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-medium {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-bold {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-extrabold {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 800;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-black {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 900;
+    font-style: normal;
+  }
+  
+  .alegreya-sans-sc-thin-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 100;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-light-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 300;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-regular-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 400;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-medium-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 500;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-bold-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 700;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-extrabold-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 800;
+    font-style: italic;
+  }
+  
+  .alegreya-sans-sc-black-italic {
+    font-family: "Alegreya Sans SC", serif;
+    font-weight: 900;
+    font-style: italic;
+  }
+
+
+.biorhyme-font {
+    font-family: "BioRhyme", serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+    font-variation-settings:
+      "wdth" 100;
+  }
+
+  .annie-use-your-telescope-regular {
+    font-family: "Annie Use Your Telescope", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .harley {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  .cinzel-decorative-bold {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  .cinzel-decorative-black {
+    font-family: "Cinzel Decorative", serif;
+    font-weight: 900;
+    font-style: normal;
+  }
+  
+  
+  .staggered-indent {
+    text-align: left;
+}
+
+.staggered-indent p:nth-child(1) { text-indent: 2em; }
+.staggered-indent p:nth-child(2) { text-indent: 4em; }
+.staggered-indent p:nth-child(3) { text-indent: 6em; }
+.staggered-indent p:nth-child(4) { text-indent: 8em; }
+.staggered-indent p:nth-child(5) { text-indent: 10em; }
+

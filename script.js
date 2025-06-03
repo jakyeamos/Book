@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const pageNumber = document.getElementById("page-number");
     const chapterFooter = document.getElementById("chapter-footer");
     const muteToggleButton = document.getElementById("mute-toggle");
-    const highlightTextButton = document.getElementById("highlight-text-button");
+    // const highlightTextButton = document.getElementById("highlight-text-button"); // Removed
     const prevChapterButton = document.getElementById("prev-chapter");
     const nextChapterButton = document.getElementById("next-chapter");
 
@@ -102,12 +102,12 @@ document.addEventListener("DOMContentLoaded", function () {
         logDebug("[ERROR] Audio or Mute Toggle Button not found for mute event listener.");
     }
 
-    // ✨ Handle Highlight Text Button
-    if (highlightTextButton) {
-        highlightTextButton.addEventListener("click", toggleHighlightAtSelection); // Renamed function
-    } else {
-        logDebug("[ERROR] Highlight Text Button not found.");
-    }
+    // ✨ Highlight Text Button logic removed as button is deleted. Shortcut is the primary method.
+    // if (highlightTextButton) {
+    //     highlightTextButton.addEventListener("click", toggleHighlightAtSelection); 
+    // } else {
+    //     logDebug("[ERROR] Highlight Text Button not found."); // This log might still appear if old HTML is cached.
+    // }
 
     // 📖 Populate chapter dropdown
     chapters.forEach((chapter) => {
@@ -210,6 +210,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const markElement = document.createElement("mark");
+            logDebug(`[HIGHLIGHT_DEBUG] Range details before surroundContents: StartContainer: ${range.startContainer.nodeName}, StartOffset: ${range.startOffset}, EndContainer: ${range.endContainer.nodeName}, EndOffset: ${range.endOffset}`);
+            logDebug(`[HIGHLIGHT_DEBUG] Mark element created: <${markElement.tagName}>`);
+            
             try {
                 // Check if the selection is already highlighted by a different mark (e.g. a sub-selection of an existing mark)
                 // This is a complex scenario. For now, we'll allow it, which might lead to nested marks if not careful.
@@ -217,6 +220,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 // and then treat it as an unhighlight operation. But that's beyond current scope.
                 
                 range.surroundContents(markElement);
+                logDebug(`[HIGHLIGHT_DEBUG] surroundContents EXECUTED. Parent of markElement: ${markElement.parentNode ? markElement.parentNode.nodeName : 'null'}. markElement content: '${markElement.innerHTML}'`);
+
+                if (chapterElement.contains(markElement)) {
+                    logDebug(`[HIGHLIGHT_DEBUG] markElement IS within the chapter element after surroundContents.`);
+                } else {
+                    logDebug(`[HIGHLIGHT_DEBUG] WARNING: markElement is NOT within the chapter element after surroundContents. This is unexpected.`);
+                }
 
                 let highlights = JSON.parse(localStorage.getItem("highlights")) || [];
                 // Prevent duplicate entries for the exact same text in the same chapter
@@ -225,12 +235,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     highlights.push({ chapterId: currentChapterId, text: selectedText });
                     localStorage.setItem("highlights", JSON.stringify(highlights));
                     logDebug(`[HIGHLIGHT] Highlighted and saved to localStorage: "${selectedText}" in chapter ${currentChapterId}`);
+                    
+                    // Log current chapter highlights from localStorage
+                    const currentChapterHighlights = highlights.filter(h => h.chapterId === currentChapterId);
+                    logDebug(`[HIGHLIGHT_DEBUG] Highlights for chapter ${currentChapterId} in localStorage: ${JSON.stringify(currentChapterHighlights)}`);
                 } else {
                     logDebug(`[HIGHLIGHT] Text already highlighted and stored: "${selectedText}" in chapter ${currentChapterId}. No new entry added.`);
                 }
 
             } catch (e) {
-                logDebug(`[HIGHLIGHT][ERROR] Could not surround contents for highlighting: ${e.message}. This can happen if the selection is complex (e.g., spans across different block elements or contains partial HTML elements). Try selecting plain text within a single paragraph.`);
+                logDebug(`[HIGHLIGHT_ERROR] Error during range.surroundContents: ${e.name} - ${e.message}. Stack: ${e.stack}`);
+                selection.removeAllRanges(); // Clear selection
+                return; 
             }
         }
         selection.removeAllRanges();
@@ -513,9 +529,9 @@ Object.keys(sectionToSongMap).forEach(sectionId => {
 
     // ✨ Keyboard shortcut for highlighting
     document.addEventListener('keydown', function(event) {
-        if ((event.ctrlKey || event.metaKey) && event.key === 'h') {
-            event.preventDefault(); // Prevent default browser action (e.g., opening history)
-            logDebug('[HIGHLIGHT_SHORTCUT] Ctrl/Cmd+H pressed. Calling toggleHighlightAtSelection().');
+        if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
+            event.preventDefault(); // Prevent default browser action
+            logDebug('[HIGHLIGHT_SHORTCUT] Ctrl/Cmd+Shift+H pressed. Calling toggleHighlightAtSelection().');
             toggleHighlightAtSelection();
         }
     });

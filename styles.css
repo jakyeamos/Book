@@ -323,6 +323,17 @@ body {
 .staggered-indent p:nth-child(4) { text-indent: 8em; }
 .staggered-indent p:nth-child(5) { text-indent: 10em; }
 
+/* ✨ Highlight Styling (for <mark> tag) */
+.book-container mark {
+    background-color: yellow; 
+    color: black; 
+}
+
+.dark-mode .book-container mark {
+    background-color: #ffff00; /* Standard yellow, high contrast */
+    color: #000000; /* Black text for readability on yellow */
+}
+
 /* 🐞 Debug Log Styling */
 #debug-log {
     position: fixed;

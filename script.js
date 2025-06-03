@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     logDebug("[DEBUG] DOM fully loaded. Initializing scripts...");
 
+    let firstInteractionDone = false;
+    logDebug(`[AUTOPLAY] Initial firstInteractionDone: ${firstInteractionDone}`);
+
     const audio = document.getElementById("background-audio");
     const darkModeButton = document.getElementById("dark-mode-toggle");
     const chapterSelector = document.getElementById("chapter-selector");
@@ -328,9 +331,37 @@ function playSongForSection(sectionId) {
         audio.load();
         logDebug(`[MUSIC_LOGIC] audio.src set to: ${audio.src}. Called audio.load(). ReadyState after load call: ${audio.readyState}, NetworkState: ${audio.networkState}`);
 
-        if (audio.muted) {
-            logDebug("[AUDIO] Audio is currently muted by global mute setting. Playback will be silent unless unmuted by user."); // Kept specific audio log
+        // Autoplay mute/unmute strategy
+        if (!firstInteractionDone) {
+            if (!audio.muted) { // Only mute if not already globally muted by user
+                audio.muted = true;
+                logDebug(`[AUTOPLAY] Playback will start muted for ${audio.src} (awaiting first user interaction). Original audio.muted state was false.`);
+            } else {
+                logDebug(`[AUTOPLAY] Playback will start muted for ${audio.src} (audio already muted by user). Awaiting first user interaction.`);
+            }
+        } else {
+            // If interaction has occurred, ensure audio is NOT muted by this autoplay strategy
+            // Respect user's explicit mute toggle choice
+            let userMuted = localStorage.getItem("audioMuted") === "true";
+            if (audio.muted && !userMuted) {
+                logDebug(`[AUTOPLAY] First interaction done. Unmuting for ${audio.src} as it was muted by autoplay strategy.`);
+                audio.muted = false;
+            } else if (userMuted) {
+                logDebug(`[AUTOPLAY] First interaction done, but audio remains muted by user setting for ${audio.src}.`);
+                audio.muted = true; // Ensure it respects user's mute
+            } else {
+                logDebug(`[AUTOPLAY] First interaction done. Audio will play unmuted for ${audio.src}.`);
+                audio.muted = false; // Explicitly set to false if not user muted.
+            }
         }
+        // End of autoplay mute/unmute strategy
+
+        if (audio.muted && !firstInteractionDone) { // Check if still muted by autoplay logic before playing
+             logDebug("[AUDIO] Audio is currently muted by autoplay strategy. Playback will be silent unless unmuted by user interaction or toggle.");
+        } else if (audio.muted && firstInteractionDone) {
+             logDebug("[AUDIO] Audio is currently muted by user setting. Playback will be silent.");
+        }
+
 
         let playPromise = audio.play();
 
@@ -352,7 +383,7 @@ function playSongForSection(sectionId) {
 }
 
 // 👀 Intersection Observer to detect section visibility
-const observerOptions = { threshold: 0.5 }; 
+const observerOptions = { threshold: 0.05 }; // Rolled back from 0.5 to 0.05
 logDebug(`[OBSERVER] IntersectionObserver options set to: threshold ${observerOptions.threshold}`); // Kept this specific observer log
 
 const observer = new IntersectionObserver(entries => {
@@ -476,6 +507,44 @@ Object.keys(sectionToSongMap).forEach(sectionId => {
             toggleHighlightAtSelection();
         }
     });
+
+    // Autoplay Strategy: First User Interaction Handler
+    function handleFirstUserInteraction() {
+        if (!firstInteractionDone) {
+            logDebug('[AUTOPLAY] First user interaction detected.');
+            firstInteractionDone = true;
+
+            const userActuallyMuted = localStorage.getItem("audioMuted") === "true";
+
+            if (userActuallyMuted) {
+                logDebug('[AUTOPLAY] User has explicitly muted the audio via toggle. Respecting that choice.');
+                if (!audio.muted) audio.muted = true; // Ensure audio element matches persisted state
+            } else {
+                logDebug('[AUTOPLAY] User has not explicitly muted via toggle. Unmuting audio element now.');
+                if (audio.muted) audio.muted = false; // Unmute if it was muted (e.g. by autoplay strategy)
+            }
+            
+            // This log might be confusing as currentSong might not be the one that was playing muted.
+            // The core idea is that if any audio was playing (but muted by autoplay), it becomes audible.
+            // If audio was paused, it remains paused but will play unmuted next time.
+            if (!audio.paused && !audio.muted && !userActuallyMuted) {
+                 logDebug('[AUTOPLAY] Audio should now be audible if it was playing and muted by autoplay.');
+            } else if (audio.paused && !userActuallyMuted) {
+                logDebug('[AUTOPLAY] Audio is paused. Subsequent plays will be unmuted (unless user mutes again).');
+            }
+
+
+            // Clean up the event listener after the first interaction.
+            document.removeEventListener('click', handleFirstUserInteraction);
+            document.removeEventListener('touchstart', handleFirstUserInteraction);
+            logDebug('[AUTOPLAY] Removed first user interaction listeners.');
+        }
+    }
+
+    // Add listeners for first interaction
+    document.addEventListener('click', handleFirstUserInteraction, { once: false }); // once: false to be explicit, though default
+    document.addEventListener('touchstart', handleFirstUserInteraction, { once: false }); // once: false, will be removed manually
+
 
     logDebug("[DEBUG] Initialization complete.");
 });

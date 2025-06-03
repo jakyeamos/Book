@@ -15,6 +15,7 @@
     <button id="next-chapter">⏭</button> <!-- Next Chapter Button -->
     <button id="dark-mode-toggle">🌙</button> <!-- Dark Mode Button -->
     <button id="mute-toggle">🔊</button>
+    <button id="highlight-text-button">✏️ Highlight</button> <!-- New Button -->
 </div>
 
 
@@ -395,11 +396,13 @@
     <!-- 💬 Discussion Section -->
     <div class="comments">
         <h2>Discussion</h2>
+        <!-- TODO: Replace the placeholder values below with your actual Giscus configuration details -->
+        <!-- Find more information at https://giscus.app -->
         <script src="https://giscus.app/client.js"
-            data-repo="yourusername/digital-book"
-            data-repo-id="your-repo-id"
+            data-repo="[REPLACE_WITH_YOUR_USERNAME]/[REPLACE_WITH_YOUR_REPO_NAME]"
+            data-repo-id="[REPLACE_WITH_YOUR_REPO_ID]"
             data-category="General"
-            data-category-id="your-category-id"
+            data-category-id="[REPLACE_WITH_YOUR_CATEGORY_ID]"
             data-mapping="pathname"
             data-reactions-enabled="1"
             data-emit-metadata="0"
@@ -416,6 +419,8 @@
 
 <!-- 📜 Script for Functionality -->
 <script src="script.js"></script>
+
+<div id="debug-log"></div> <!-- New Debug Log Container -->
 
 </body>
 </html>

@@ -326,7 +326,17 @@ function playSongForSection(sectionId) {
     const songFile = sectionToSongMap[sectionId];
 
     if (songFile && songFile !== currentSong) {
-        logDebug(`[MUSIC_LOGIC] Attempting to set new song. Section: ${sectionId}, Target song file: ${songFile}, currentSong: '${currentSong}'`);
+        // Pause current song if one is playing
+        if (currentSong && !audio.paused) { 
+            logDebug(`[MUSIC_SWITCH] Pausing current song: '${currentSong}' before playing new song: '${songFile}'.`);
+            audio.pause();
+        } else if (currentSong) {
+            logDebug(`[MUSIC_SWITCH] Current song '${currentSong}' was already paused or ended. Preparing to play new song: '${songFile}'.`);
+        }
+        currentSong = null; // Clear currentSong immediately before setting up a new one.
+        logDebug(`[MUSIC_SWITCH] Cleared currentSong. Ready to set new song.`);
+
+        logDebug(`[MUSIC_LOGIC] Attempting to set new song. Section: ${sectionId}, Target song file: ${songFile}, currentSong: '${currentSong}'`); // currentSong here will be null
         audio.src = songFile;
         audio.load();
         logDebug(`[MUSIC_LOGIC] audio.src set to: ${audio.src}. Called audio.load(). ReadyState after load call: ${audio.readyState}, NetworkState: ${audio.networkState}`);
@@ -367,10 +377,12 @@ function playSongForSection(sectionId) {
 
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                logDebug(`[MUSIC_LOGIC] Playback SUCCEEDED for ${audio.src}. Updating currentSong from '${currentSong}' to '${songFile}'`);
+                // currentSong was null here, now set to the successfully played songFile
+                logDebug(`[MUSIC_LOGIC] Playback SUCCEEDED for ${audio.src}. Updating currentSong to '${songFile}'`);
                 currentSong = songFile; 
             }).catch(error => {
-                logDebug(`[MUSIC_LOGIC] Playback FAILED for ${audio.src}. Error: ${error.name} - ${error.message}. currentSong REMAINS '${currentSong}'`);
+                // currentSong is still null if play failed
+                logDebug(`[MUSIC_LOGIC] Playback FAILED for ${audio.src}. Error: ${error.name} - ${error.message}. currentSong REMAINS '${currentSong}' (should be null).`);
             });
         } else {
             logDebug("[AUDIO] audio.play() did not return a promise. This is unexpected. Playback might not have started."); // Kept specific audio log

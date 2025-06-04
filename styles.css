@@ -325,8 +325,8 @@ body {
 
 /* ✨ Highlight Styling (for <mark> tag) */
 .book-container mark {
-    background-color: yellow; 
-    color: black; 
+    background-color: yellow;
+    color: black;
 }
 
 .dark-mode .book-container mark {
@@ -360,4 +360,3 @@ body {
 #debug-log div:last-child {
     border-bottom: none;
 }
-

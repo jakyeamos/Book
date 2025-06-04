@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // 🎧 Add Event Listeners for Audio Element States (for debugging)
-    if (audio) { 
+    if (audio) {
         ['loadstart', 'loadeddata', 'loadedmetadata', 'canplay', 'canplaythrough', 'play', 'playing', 'pause', 'ended', 'error', 'abort', 'stalled', 'waiting', 'emptied', 'suspend'].forEach(event => {
             audio.addEventListener(event, () => {
                 logDebug(`[AUDIO_EVENT] Event: '${event}'. Src: ${audio.src}. CurrentSong: '${currentSong}'. Paused: ${audio.paused}. Muted: ${audio.muted}. ReadyState: ${audio.readyState}. NetworkState: ${audio.networkState}. CurrentTime: ${audio.currentTime.toFixed(2)}s. Error: ${audio.error ? audio.error.message : 'null'}`);
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ✨ Highlight Text Button logic removed as button is deleted. Shortcut is the primary method.
     // if (highlightTextButton) {
-    //     highlightTextButton.addEventListener("click", toggleHighlightAtSelection); 
+    //     highlightTextButton.addEventListener("click", toggleHighlightAtSelection);
     // } else {
     //     logDebug("[ERROR] Highlight Text Button not found."); // This log might still appear if old HTML is cached.
     // }
@@ -185,40 +185,45 @@ document.addEventListener("DOMContentLoaded", function () {
             let highlights = JSON.parse(localStorage.getItem("highlights")) || [];
             const initialLength = highlights.length;
             highlights = highlights.filter(h => !(h.text === selectedText && h.chapterId === currentChapterId));
-            
+
             if (highlights.length < initialLength) {
                 localStorage.setItem("highlights", JSON.stringify(highlights));
                 logDebug(`[HIGHLIGHT] Unhighlighted and removed from localStorage: "${selectedText}" in chapter ${currentChapterId}`);
             } else {
                 logDebug(`[HIGHLIGHT] Text found in a mark tag but not matching any stored highlight for chapter ${currentChapterId}: "${selectedText}"`);
             }
-        } 
+        }
         // Highlight Logic
         else {
-            logDebug(`[HIGHLIGHT] Attempting to HIGHLIGHT text: "${selectedText}" in chapter ${currentChapterId}`);
-            
+            logDebug(`[HIGHLIGHT] Attempting to HIGHLIGHT text: "${selectedText}" in chapter ${currentChapterId}`); // User sees this.
+
+            logDebug('[HIGHLIGHT_TRACE] Getting chapterElement...');
             const chapterElement = range.startContainer.closest('.chapter');
+
+            logDebug(`[HIGHLIGHT_TRACE] chapterElement found: ${chapterElement ? chapterElement.id : 'null'}`);
             if (!chapterElement) {
-                logDebug("[HIGHLIGHT][ERROR] Selected text is not within a chapter element. Cannot highlight.");
+                logDebug("[HIGHLIGHT_ERROR] Could not find a .chapter ancestor for the selected text."); // Changed log prefix
                 selection.removeAllRanges();
                 return;
             }
-            // Ensure the chapterElement's ID matches the currentChapterId from the selector, mostly a sanity check
-            if (chapterElement.id !== currentChapterId) {
-                 logDebug(`[HIGHLIGHT][WARNING] Selected text is in chapter '${chapterElement.id}' but current chapter in selector is '${currentChapterId}'. Highlighting based on selection's chapter.`);
-                 // Potentially update currentChapterId = chapterElement.id; if this scenario is valid
-            }
 
-            const markElement = document.createElement("mark");
+            logDebug('[HIGHLIGHT_TRACE] chapterElement check passed.');
+            logDebug(`[HIGHLIGHT_TRACE] Current selection text to highlight: "${selectedText}"`);
+
+            const markElement = document.createElement('mark');
+            logDebug(`[HIGHLIGHT_DEBUG] Mark element successfully created: <${markElement.tagName}>`); // Updated log for clarity
+
+            // This is the original detailed logging block that was NOT being reached:
             logDebug(`[HIGHLIGHT_DEBUG] Range details before surroundContents: StartContainer: ${range.startContainer.nodeName}, StartOffset: ${range.startOffset}, EndContainer: ${range.endContainer.nodeName}, EndOffset: ${range.endOffset}`);
-            logDebug(`[HIGHLIGHT_DEBUG] Mark element created: <${markElement.tagName}>`);
-            
+            // logDebug(`[HIGHLIGHT_DEBUG] Mark element created: <${markElement.tagName}>`); // Already logged above now
+
             try {
+                logDebug('[HIGHLIGHT_TRACE] Entering try block for surroundContents.');
                 // Check if the selection is already highlighted by a different mark (e.g. a sub-selection of an existing mark)
                 // This is a complex scenario. For now, we'll allow it, which might lead to nested marks if not careful.
                 // A more robust solution would be to expand the range to the parent mark if a partial selection inside a mark is made,
                 // and then treat it as an unhighlight operation. But that's beyond current scope.
-                
+
                 range.surroundContents(markElement);
                 logDebug(`[HIGHLIGHT_DEBUG] surroundContents EXECUTED. Parent of markElement: ${markElement.parentNode ? markElement.parentNode.nodeName : 'null'}. markElement content: '${markElement.innerHTML}'`);
 
@@ -227,26 +232,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else {
                     logDebug(`[HIGHLIGHT_DEBUG] WARNING: markElement is NOT within the chapter element after surroundContents. This is unexpected.`);
                 }
-
+                logDebug('[HIGHLIGHT_TRACE] Storing highlight...');
                 let highlights = JSON.parse(localStorage.getItem("highlights")) || [];
-                // Prevent duplicate entries for the exact same text in the same chapter
                 const alreadyExists = highlights.some(h => h.text === selectedText && h.chapterId === currentChapterId);
                 if (!alreadyExists) {
                     highlights.push({ chapterId: currentChapterId, text: selectedText });
                     localStorage.setItem("highlights", JSON.stringify(highlights));
                     logDebug(`[HIGHLIGHT] Highlighted and saved to localStorage: "${selectedText}" in chapter ${currentChapterId}`);
-                    
-                    // Log current chapter highlights from localStorage
+
                     const currentChapterHighlights = highlights.filter(h => h.chapterId === currentChapterId);
                     logDebug(`[HIGHLIGHT_DEBUG] Highlights for chapter ${currentChapterId} in localStorage: ${JSON.stringify(currentChapterHighlights)}`);
                 } else {
                     logDebug(`[HIGHLIGHT] Text already highlighted and stored: "${selectedText}" in chapter ${currentChapterId}. No new entry added.`);
                 }
+                logDebug('[HIGHLIGHT_TRACE] Highlight stored.');
 
             } catch (e) {
                 logDebug(`[HIGHLIGHT_ERROR] Error during range.surroundContents: ${e.name} - ${e.message}. Stack: ${e.stack}`);
-                selection.removeAllRanges(); // Clear selection
-                return; 
+                selection.removeAllRanges();
+                return;
             }
         }
         selection.removeAllRanges();
@@ -293,7 +297,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             nodesToReplace.push({node: node, text: highlight.text});
                         }
                     }
-                    
+
                     // Process replacements from last to first to avoid issues with node splitting and indices
                     for (let i = nodesToReplace.length - 1; i >= 0; i--) {
                         const item = nodesToReplace[i];
@@ -343,7 +347,7 @@ function playSongForSection(sectionId) {
 
     if (songFile && songFile !== currentSong) {
         // Pause current song if one is playing
-        if (currentSong && !audio.paused) { 
+        if (currentSong && !audio.paused) {
             logDebug(`[MUSIC_SWITCH] Pausing current song: '${currentSong}' before playing new song: '${songFile}'.`);
             audio.pause();
         } else if (currentSong) {
@@ -395,7 +399,7 @@ function playSongForSection(sectionId) {
             playPromise.then(() => {
                 // currentSong was null here, now set to the successfully played songFile
                 logDebug(`[MUSIC_LOGIC] Playback SUCCEEDED for ${audio.src}. Updating currentSong to '${songFile}'`);
-                currentSong = songFile; 
+                currentSong = songFile;
             }).catch(error => {
                 // currentSong is still null if play failed
                 logDebug(`[MUSIC_LOGIC] Playback FAILED for ${audio.src}. Error: ${error.name} - ${error.message}. currentSong REMAINS '${currentSong}' (should be null).`);
@@ -523,7 +527,7 @@ Object.keys(sectionToSongMap).forEach(sectionId => {
         computeChapterPageOffsets(); // This function uses window.innerHeight internally
         updatePageNumber();          // This function also uses window.innerHeight internally
         // Also, re-apply highlights as their positions might change relative to new page breaks
-        loadAndApplyHighlights(); 
+        loadAndApplyHighlights();
     }
     window.addEventListener("resize", handleResize);
 
@@ -551,7 +555,7 @@ Object.keys(sectionToSongMap).forEach(sectionId => {
                 logDebug('[AUTOPLAY] User has not explicitly muted via toggle. Unmuting audio element now.');
                 if (audio.muted) audio.muted = false; // Unmute if it was muted (e.g. by autoplay strategy)
             }
-            
+
             // This log might be confusing as currentSong might not be the one that was playing muted.
             // The core idea is that if any audio was playing (but muted by autoplay), it becomes audible.
             // If audio was paused, it remains paused but will play unmuted next time.

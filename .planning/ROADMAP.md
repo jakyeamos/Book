@@ -29,7 +29,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Chapters 1 and 2 contain the expanded docx versions (not the old ~300 and ~200 word stubs)
   3. Chapter text preserves all formatting — `.poetic-text` blocks, `.bold-grow-*` sequences, centered/right-aligned text, date/location headers
   4. Chapter dropdown lists all added chapters with correct titles and no dead entries
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Tooling infrastructure: mammoth install, convert-chapters.cjs, validate-chapters.cjs
+- [ ] 01-02-PLAN.md — Ch1 & Ch2: DISCREPANCY.md report + author ch01.html and ch02.html (has human checkpoint)
+- [ ] 01-03-PLAN.md — New chapters: author ch03.html through ch07.html and ch08.html from docx
+- [ ] 01-04-PLAN.md — New chapters: author ch09.html, ch10.html, and ch15.html from docx
+- [ ] 01-05-PLAN.md — Shell refactor: chapters/index.json, index.html shell, fetch-based script.js, final lint (has human checkpoint)
 
 ### Phase 2: Foundation
 **Goal**: The codebase has a single source of truth for per-chapter visual, audio, and effect settings; switching chapters applies a distinct CSS identity; transitions are smooth; the debug log is gone
@@ -81,7 +88,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Content Migration | 0/TBD | Not started | - |
+| 1. Content Migration | 0/5 | Planned | - |
 | 2. Foundation | 0/TBD | Not started | - |
 | 3. Audio and Reading Baseline | 0/TBD | Not started | - |
 | 4. Parallax and Text Effects | 0/TBD | Not started | - |

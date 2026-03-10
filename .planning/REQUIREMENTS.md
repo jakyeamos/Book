@@ -84,22 +84,22 @@
 | FNDM-02 | Phase 2 | Pending |
 | FNDM-03 | Phase 2 | Pending |
 | FNDM-04 | Phase 2 | Pending |
-| AUDIO-01 | Phase 3 | Pending |
 | AUDIO-02 | Phase 2 | Pending |
-| AUDIO-03 | Phase 5 | Pending |
-| TEXT-01 | Phase 4 | Pending |
+| AUDIO-01 | Phase 3 | Pending |
+| TEXT-01 | Phase 3 | Pending |
+| TEXT-04 | Phase 3 | Pending |
+| CMTS-01 | Phase 3 | Pending |
+| VFX-02 | Phase 4 | Pending |
 | TEXT-02 | Phase 4 | Pending |
 | TEXT-03 | Phase 4 | Pending |
-| TEXT-04 | Phase 3 | Pending |
 | VFX-01 | Phase 5 | Pending |
-| VFX-02 | Phase 4 | Pending |
-| CMTS-01 | Phase 3 | Pending |
+| AUDIO-03 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
 - Mapped to phases: 22
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-10 — added content migration requirements after reading source documents*
+*Last updated: 2026-03-10 — traceability updated with final phase assignments from ROADMAP.md*

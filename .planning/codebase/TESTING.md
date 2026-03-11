@@ -1,360 +1,146 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-03-10
+**Analysis Date:** 2026-03-11
 
 ## Test Framework
 
-**Status:** Not detected - No automated testing framework
+**Runner:**
+- None. No test framework is installed or configured.
+- `package.json` `"test"` script: `echo "Error: no test specified" && exit 1`
+- No `jest.config.*`, `vitest.config.*`, `mocha.opts`, or equivalent found.
 
-**Framework Information:**
-- No test runner found (Jest, Vitest, Mocha, Jasmine absent)
-- No test configuration files (jest.config.js, vitest.config.ts, mocha.opts absent)
-- No test scripts in package.json (file not present)
-- No assertion library (Chai, Sinon, Testing Library not installed)
+**Assertion Library:**
+- None.
 
-**Manual Testing Approach:**
-- Testing performed via browser inspection and debug log output
-- Debug UI (`#debug-log`) serves as manual verification tool
-- Browser console (console.warn fallback) used for logging
-
-**Current Debug Output:**
+**Run Commands:**
 ```bash
-# There are no automated run commands - testing is manual
-# Manual verification done through:
-# 1. Browser debug log panel (bottom right, 300px wide)
-# 2. Browser console (F12)
-# 3. Visual inspection of page state
+# No test runner exists. The only test-adjacent commands are:
+node tools/validate-chapters.cjs --full              # Full structural validation
+node tools/validate-chapters.cjs --manifest          # Manifest JSON validation only
+node tools/validate-chapters.cjs --check ch01        # Single chapter structural check
+node tools/validate-chapters.cjs --lint-formatting   # Inline style lint on all chapters
 ```
 
 ## Test File Organization
 
 **Location:**
-- No test files present
-- No test directory (`__tests__/`, `tests/`, `spec/`)
-- Code and tests co-located in single `script.js` (467 lines total)
+- No `*.test.*` or `*.spec.*` files exist anywhere in the project.
+- Validation tooling lives in `tools/` at project root.
 
-**Potential Test Structure** (if tests were added):
-- Tests would likely be added to separate `*.test.js` or `*.spec.js` files
-- Recommended location: `tests/` directory at root level
-- Test fixtures: `tests/fixtures/` for mock data (chapters, highlights, etc.)
+**Naming:**
+- Not applicable — no test files.
 
-## Test Structure
-
-**Current Approach:** No formal test structure
-
-**Custom Debug Infrastructure** (lines 441-466 in `script.js`):
-```javascript
-function logDebug(message) {
-    let debugElement = document.getElementById("debug-log");
-    if (!debugElement) {
-        console.warn("[WARNING] Debugging UI not found.");
-        return;
-    }
-
-    let timestamp = new Date().toISOString().split("T")[1].split(".")[0];
-    let logEntry = document.createElement("div");
-    logEntry.textContent = `[${timestamp}] ${message}`;
-    debugElement.appendChild(logEntry);
-
-    // Auto-clear logs after 30 seconds
-    setTimeout(() => {
-        if (logEntry.parentNode) {
-            logEntry.parentNode.removeChild(logEntry);
-        }
-    }, 30000);
-
-    // Ensure only the last 50 messages are kept
-    if (debugElement.children.length > 50) {
-        debugElement.removeChild(debugElement.children[0]);
-    }
-
-    debugElement.scrollTop = debugElement.scrollHeight;
-}
+**Structure:**
+```
+tools/
+  validate-chapters.cjs     # Structural validation + formatting lint
+  convert-chapters.cjs      # One-time DOCX conversion utility (not a test)
 ```
 
-**Log Message Format:**
+## What Exists Instead of Tests
+
+The project uses a **manual validation script** (`tools/validate-chapters.cjs`) as its sole quality gate. It is a Node.js CJS script with no testing library dependency.
+
+**Checks performed by `validate-chapters.cjs`:**
+
+1. **Manifest validation** (`--manifest` / `--full`):
+   - `chapters/index.json` exists and is valid JSON
+   - Manifest is an array
+   - Each entry has required fields: `id` (string), `file` (string), `title` (string), `number` (integer)
+   - Each `file` referenced in the manifest actually exists on disk
+
+2. **Chapter structural checks** (`--check <slug>` / `--full`):
+   - File exists at `chapters/{slug}.html`
+   - Contains `<div class="chapter" id="{chapterId}">` wrapper element
+   - Contains an element with `class="chapter-title"`
+   - Does NOT contain bare section IDs like `id="section1"` (must use `chN-s` format)
+
+3. **Formatting lint** (`--lint-formatting` / `--full`):
+   - Scans all `chapters/*.html` files (excluding `index.html`)
+   - Flags any `style="..."` inline style attribute found inside chapter content
+   - Reports file and line number for each violation
+
+**Output format (pass/fail to stdout):**
 ```
-[HH:MM:SS] [LEVEL] Message content
-[14:02:35] [DEBUG] DOM fully loaded. Initializing scripts...
-[14:02:36] [AUDIO] New song detected. Attempting to play: Eva_Angelina.mp3 for section: section1.
-[14:02:37] [ERROR] Chapter ID chapter5 not found.
+[PASS] ch01
+[FAIL] ch02: missing chapter-title element
+[PASS] manifest entry chapter1
+[FAIL] ch03.html:47 - inline style found
+```
+
+## Validation Script Internals
+
+**`tools/validate-chapters.cjs` — key functions:**
+
+- `checkChapter(identifier)` — normalizes slug, reads file, runs DOM structure assertions
+- `checkManifest(options)` — parses `chapters/index.json`, validates shape and file existence
+- `lintFormatting()` — regex-scans chapter HTML for `style="` occurrences
+- `normalizeSlug(input)` — converts `chapter1` or `ch1` → `ch01` (zero-padded)
+- `chapterIdFromSlug(slug)` — converts `ch01` → `chapter1` (for wrapper ID matching)
+- `resolveManifestFile(fileEntry)` — normalizes manifest `file` paths (strips `./` and `chapters/` prefixes)
+
+**Entry modes via CLI args:**
+```bash
+--full              # Run all checks in sequence: manifest + all chapters + lint
+--manifest          # Manifest only
+--check <slug...>   # One or more chapter slugs
+--lint-formatting   # Inline style scan only
 ```
 
 ## Mocking
 
-**Framework:** Not applicable - no testing framework
+**Framework:** None.
 
-**Manual Verification Methods:**
-
-**localStorage Mocking:**
-- Tests can clear localStorage before manual verification:
-```javascript
-localStorage.clear();
-localStorage.setItem("selectedChapter", "chapter1");
-localStorage.setItem("darkMode", "enabled");
-```
-
-**DOM Element Mocking:**
-- Manual HTML DOM state can be inspected via browser DevTools
-- Chapter visibility toggled by examining `style.display` property
-- Audio element state inspected via audio.src, audio.muted properties
-
-**Audio Playback Mocking (Manual):**
-- Mute toggle tested via browser mute button or code: `audio.muted = true`
-- Song switching verified through debug logs: `[AUDIO] New song detected...`
-- Promise resolution tested via browser console: `audio.play().then(() => console.log('Playing'))`
+**Patterns:** Not applicable — no unit tests exist.
 
 ## Fixtures and Factories
 
-**Test Data:**
-- No fixture files present
-- HTML structure serves as fixture (chapters, sections, buttons in `index.html`)
+**Test Data:** Not applicable.
 
-**Expected Test Data Structure** (if tests were implemented):
-```javascript
-// Recommended fixture structure for highlights feature:
-const mockHighlights = [
-    {
-        chapterId: "chapter1",
-        text: "A cold sweat clings"
-    },
-    {
-        chapterId: "chapter2",
-        text: "The alarm goes off, 5:30 am"
-    }
-];
+**Chapter HTML files** (`chapters/ch01.html` through `chapters/ch15.html`) serve as the primary content under validation, but are not test fixtures — they are production content files.
 
-// Mock chapter structure:
-const mockChapter = {
-    id: "chapter1",
-    title: "THE RITUAL.",
-    display: "block"
-};
-
-// Mock section mapping:
-const mockSectionToSongMap = {
-    section1: "Eva_Angelina.mp3",
-    section2: "Mojo_Pin.mp3",
-    section3: "Rose_Parade.mp3"
-};
-```
-
-**Location for Future Tests:**
-- Fixtures: `tests/fixtures/highlights.json`
-- Fixtures: `tests/fixtures/chapters.json`
-- Factory functions: `tests/factories/chapterFactory.js`
+**Raw conversion output** (`chapters/raw/ch*-raw.html`) are intermediate DOCX-to-HTML conversion artifacts used as source material, not for testing.
 
 ## Coverage
 
-**Current Status:** Not measured - no coverage tool
+**Requirements:** None enforced.
 
-**Requirements:** None enforced
-
-**Uncovered Areas:**
-- Chapter navigation logic (47 lines untested, lines 119-135)
-- Highlight text selection (58 lines untested, lines 142-198)
-- Highlight persistence and reload (73 lines untested, lines 201-273)
-- Audio playback control (33 lines untested, lines 284-317)
-- Intersection observer logic (17 lines untested, lines 323-340)
-- Page numbering calculations (22 lines untested, lines 391-412)
-- Dark mode toggle (8 lines untested, lines 74-79)
-- Mute toggle (8 lines untested, lines 82-88)
-- Window resize handling (8 lines untested, lines 427-435)
-
-**High-Risk Uncovered Code:**
-- `loadAndApplyHighlights()` (lines 201-273) - Complex DOM tree walking, high risk for regression
-- `highlightSelectedText()` (lines 142-198) - Text selection and DOM manipulation, browser-dependent
-- `playSongForSection()` (lines 284-317) - Audio promise handling, timing-dependent
+**View Coverage:**
+- Not applicable — no test runner.
 
 ## Test Types
 
-**Unit Tests (Not Present):**
+**Unit Tests:** None.
 
-**Recommended Approach:**
-- Test individual functions in isolation
-- Mock localStorage, DOM, audio element
+**Integration Tests:** None.
 
-**Example unit test structure** (using Jest):
+**E2E Tests:** None.
+
+**Manual Browser Testing:** The primary validation method for runtime behavior. The `isDev` flag in `script.js` enables `Logger.debug` and `Logger.info` output when running on `localhost` or with `?debug` in the URL query string, providing a manual debug mode:
 ```javascript
-describe('escapeRegExp', () => {
-    it('should escape special regex characters', () => {
-        const result = escapeRegExp('[test]');
-        expect(result).toBe('\\[test\\]');
-    });
-});
-
-describe('highlightSelectedText', () => {
-    it('should not highlight outside of chapter', () => {
-        // Mock selection outside chapter boundary
-        // Verify no mark element created
-        // Verify error logged
-    });
-});
+const isDev =
+  window.location.hostname.includes("localhost") ||
+  window.location.hostname === "127.0.0.1" ||
+  new URLSearchParams(window.location.search).has("debug");
 ```
-
-**Integration Tests (Not Present):**
-
-**Recommended Scope:**
-- Test chapter navigation end-to-end
-- Verify highlight persistence across page reload
-- Verify dark mode state persists in localStorage
-- Verify audio playback with intersection observer
-
-**Example integration test structure:**
-```javascript
-describe('Highlight Feature', () => {
-    beforeEach(() => {
-        localStorage.clear();
-        document.body.innerHTML = fixture;
-    });
-
-    it('should highlight text and persist to localStorage', () => {
-        // Select text in chapter
-        // Call highlightSelectedText()
-        // Verify mark element created
-        // Verify localStorage contains highlight
-        // Verify highlight reapplied after reload
-    });
-});
-```
-
-**E2E Tests (Not Present):**
-
-**Status:** Not applicable - no E2E framework
-
-**Recommended Framework:** Cypress or Playwright for browser automation
-
-**Example scenarios to test:**
-- User selects chapter from dropdown, chapter displays correctly
-- User highlights text, scrolls away, returns to chapter, highlight persists
-- User toggles dark mode, refreshes page, dark mode remains enabled
-- User scrolls through sections, audio switches appropriately
 
 ## Common Patterns
 
-**Manual Async Testing:**
-```javascript
-// Current pattern in playSongForSection() (lines 299-311):
-let playPromise = audio.play();
+**Async Testing:** Not applicable.
 
-if (playPromise !== undefined) {
-    playPromise.then(() => {
-        logDebug(`[AUDIO] Playback STARTED successfully for: ${audio.src}`);
-        currentSong = songFile;
-    }).catch(error => {
-        logDebug(`[AUDIO] Playback FAILED for: ${audio.src}. Error: ${error.name} - ${error.message}`);
-    });
-}
-```
+**Error Testing:** Not applicable.
 
-**Manual Promise Testing** (if Jest were used):
-```javascript
-test('audio playback resolves on success', async () => {
-    const mockAudio = { play: jest.fn().mockResolvedValue(undefined) };
-    // Would require extracting audio logic into testable function
-    await mockAudio.play();
-    expect(mockAudio.play).toHaveBeenCalled();
-});
-```
+## Implications for Future Test Work
 
-**Error Testing** (Manual via Debug Logs):
+This project has zero automated test coverage of runtime JavaScript behavior. If tests are added, the following are the highest-value targets given current code:
 
-**Current Approach:**
-- Trigger error conditions manually
-- Read debug logs to verify error handling
+- `chapters/config.js` pure functions: `getChapterTheme`, `getAudioCues`, `normalizeCue`, `getParticlePreset` — all are pure or near-pure and can be unit tested with Node.js directly
+- `clamp01(value)` — pure utility, trivially testable
+- `resolveCueForLine(cues, lineNumber)` and `calculateCueVolume(cue, lineNumber, type)` in `script.js` — pure calculation functions with clear input/output contracts
+- Manifest structure validation logic already exists in `validate-chapters.cjs` and could be ported to a proper test suite
 
-**Example: Chapter not found error** (line 358):
-```javascript
-// In browser console:
-showChapter("nonexistent-chapter", true);
-// Check debug log for: [ERROR] Chapter ID nonexistent-chapter not found.
-```
-
-**Example: Selection validation error** (lines 144-149):
-```javascript
-// In browser console, without selecting text:
-highlightSelectedText();
-// Check debug log for: [INFO] No text selected or selection is collapsed.
-```
-
-**Example: Highlight application error** (lines 266-268):
-```javascript
-// Manually add invalid highlight to localStorage:
-localStorage.setItem("highlights", JSON.stringify([
-    { chapterId: "nonexistent", text: "test" }
-]));
-// Reload page, check debug log for warning about missing chapter
-```
-
-## Debugging Tools
-
-**Built-in Debug UI:**
-- Location: Bottom-right corner of page (`#debug-log`, styles.css lines 327-351)
-- Auto-scrolls to latest log entry
-- Auto-clears entries after 30 seconds
-- Keeps circular buffer of last 50 messages
-- Monospace font for readability
-
-**Browser DevTools:**
-- Console (F12) shows localStorage operations
-- Network tab shows audio file loading
-- Elements inspector shows DOM mutations during highlight
-- Application tab shows localStorage state
-
-**Log Levels Used:**
-- `[DEBUG]` - Initialization, state calculations
-- `[INFO]` - User interactions
-- `[WARNING]` - Expected edge cases
-- `[ERROR]` - Failures and exceptions
-- `[AUDIO]` - Playback events
-- `[OBSERVER]` - Intersection detection
-
-## Testing Recommendations
-
-**Immediate Priority (High Value):**
-
-1. **Add Jest or Vitest** - Set up automated testing framework
-   - Config: `vitest.config.js` at root
-   - Tests: `tests/` directory
-   - Command: `npm run test`
-
-2. **Test Core Features**:
-   - Chapter navigation and display
-   - Highlight text selection and persistence
-   - Audio playback triggering
-   - Dark mode persistence
-
-3. **Add DOM Testing Library**:
-   - Use `@testing-library/dom` for DOM interaction tests
-   - Replaces manual browser testing for unit/integration tests
-
-**Medium Priority:**
-
-4. **Add E2E Tests** - Cypress or Playwright for user workflows
-5. **Add Code Coverage** - nyc/c8 to identify untested code
-6. **Add Linting** - ESLint for code quality
-
-**Test File Structure** (Recommended):
-```
-project-root/
-├── tests/
-│   ├── unit/
-│   │   ├── highlight.test.js
-│   │   ├── navigation.test.js
-│   │   ├── audio.test.js
-│   │   └── persistence.test.js
-│   ├── integration/
-│   │   ├── chapter-flow.test.js
-│   │   ├── highlight-workflow.test.js
-│   │   └── dark-mode.test.js
-│   ├── fixtures/
-│   │   ├── chapters.json
-│   │   └── highlights.json
-│   └── setup.js
-├── vitest.config.js
-└── package.json
-```
+**Recommended framework if tests are introduced:** Vitest (works without a build step config for pure-function modules; compatible with ES module syntax used in `script.js` and `chapters/config.js`).
 
 ---
 
-*Testing analysis: 2026-03-10*
+*Testing analysis: 2026-03-11*

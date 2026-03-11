@@ -1,240 +1,182 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-03-10
+**Analysis Date:** 2026-03-11
 
 ## Naming Patterns
 
 **Files:**
-- HTML: `index.html` - Single entry point
-- JavaScript: `script.js` - Single monolithic file (no module structure)
-- CSS: `styles.css` - Single stylesheet
-- Assets: `{SongName}.mp3` - All media files with descriptive names (e.g., `Eva_Angelina.mp3`, `Mojo_Pin.mp3`)
+- HTML chapter files: `ch{NN}.html` (zero-padded two digits, e.g. `ch01.html`, `ch15.html`)
+- Raw conversion output: `ch{NN}-raw.html` in `chapters/raw/`
+- Tool scripts: kebab-case `.cjs` (e.g. `validate-chapters.cjs`, `convert-chapters.cjs`)
+- Main entry files: lowercase flat names (`script.js`, `styles.css`, `index.html`)
 
-**Functions:**
-- camelCase for all function declarations
-- Verb-first pattern: `playSongForSection()`, `highlightSelectedText()`, `updatePageNumber()`, `showChapter()`, `navigateChapter()`
-- Helper functions prefixed with underscore convention not used; instead use descriptive names
-- Event handler functions named descriptively: `updateChapterOnScroll()`, `handleResize()`
-- Private scope achieved through block scope, not naming conventions
+**Functions (JavaScript — `script.js`, `chapters/config.js`):**
+- Camelcase for all functions: `showChapter`, `fetchChapterMarkup`, `updateNavigationButtons`, `initializeDarkMode`
+- Verb-noun pattern for action functions: `applyTheme`, `setupGiscus`, `resetChapterEffects`, `registerCleanup`
+- Verb-noun-subject for setup functions scoped to a DOM element: `setupParagraphAnimations(chapterElement)`, `setupTitleAnimation(chapterElement)`, `setupPoetryTypewriter(chapterElement)`, `setupBoldGrowAnimation(chapterElement)`
+- Getter functions in config: prefix `get` + noun: `getChapterTheme`, `getAudioTrack`, `getAudioCues`, `getParticlePreset`
 
 **Variables:**
-- camelCase for all variable declarations
-- Descriptive names reflecting purpose: `chapterSelector`, `darkModeButton`, `sectionToSongMap`, `observerOptions`
-- Constants use camelCase (not UPPER_SNAKE_CASE): `sectionToSongMap`, `observerOptions`
-- Boolean variables often prefixed with `is` or `should`: `isMuted`, `isDark`, `inChapter`, `shouldScrollToTop`, `isCollapsed`
+- camelCase throughout: `lineAnchors`, `groupedByParent`, `fadeOutTarget`, `durationSeconds`
+- Boolean flags: descriptive adjective names: `isDev`, `isMobile`, `prefersReducedMotion`, `rafScheduled`, `destroyed`
+- DOM element collections: named `elements` object with descriptive keys (e.g. `elements.chapterContainer`, `elements.prevButton`)
+- Loop/iteration variables: full descriptive names, not `i`: `entry`, `chapter`, `layer`, `group`, `cue`, `paragraph`
 
-**Types/Classes:**
-- HTML element references use `camelCase`: `audio`, `chapterSelector`, `pageNumber`, `currentChapter`
-- No TypeScript or formal type system; types are implicit via usage
-- DOM elements selected once at init and stored in variables
+**Constants (config.js):**
+- SCREAMING_SNAKE_CASE for module-level constants: `DEFAULT_THEME`, `BASE_AUDIO`, `PARTICLE_PRESETS`, `LAYER_LIBRARY`, `SITE_CONFIG`
+- Chapter IDs: camelCase string keys: `"chapter1"`, `"chapter2"`, `"chapter15"`
+- Section IDs in HTML: `ch{N}-s{N}` format (e.g. `id="ch1-s1"`, `id="ch1-s2"`)
+
+**CSS Classes:**
+- kebab-case throughout: `.book-container`, `.chapter-title`, `.parallax-layer-bg`, `.bold-grow-1`, `.paragraph-fade`, `.fading-out`
+- State modifier classes appended directly: `.fading-out`, `.fading-in`, `.is-visible`, `.hidden`, `.revealed`, `.visible`
+- BEM-lite: base class + modifier suffix (e.g. `.parallax-layer`, `.parallax-layer-bg`, `.parallax-layer-mid`, `.parallax-layer-front`)
+
+**Classes (JavaScript):**
+- PascalCase: `AudioController`, `ParticleController`
 
 ## Code Style
 
 **Formatting:**
-- No explicit code formatter (Prettier, ESLint, or Biome) detected
-- Indentation: 4 spaces (observed in script.js)
-- Line length: Mixed; some lines exceed 100 characters
-- Semicolons: Consistently used at end of statements
-- Spacing: Single space around operators, after `if/for/while`, before opening braces
+- 2-space indentation in `script.js` and `chapters/config.js`
+- 4-space indentation in `tools/convert-chapters.cjs` and `tools/validate-chapters.cjs` (tool files are inconsistent with main source)
+- 4-space indentation in HTML files (`index.html`, chapter `.html` files)
+- No trailing semicolons are absent (semicolons are used consistently in JS)
+- Single quotes in CJS tool files; no quotes preference difference in ES module files (both patterns appear)
 
 **Linting:**
-- No linting configuration found (.eslintrc, .eslintignore, eslint.config.js absent)
-- Code follows informal conventions rather than enforced rules
-- Comments use emoji for visual organization: `📌`, `🌙`, `🎵`, `🎯`, `👀`, `🔇`, `✨`, `🔄`, `📌`, `📚`, `📖`, `📐`, `🛠`, `🐞`, `🌙`
+- No ESLint or Prettier configuration files present in the project
+- No `.editorconfig` detected
+- `validate-chapters.cjs` enforces an HTML convention: inline `style=""` attributes are forbidden inside chapter content (`lintFormatting()` function)
 
 ## Import Organization
 
-**Global Scope:**
-- No explicit imports (vanilla JavaScript)
-- DOM elements queried directly: `document.getElementById()`, `document.querySelectorAll()`, `document.createElement()`
-- External script loaded via `<script>` tag at end of HTML: `<script src="script.js"></script>`
-- Audio files referenced by string literals in `sectionToSongMap` object
+**ES Module (`script.js`):**
+- Named imports grouped at top, single `import` statement from one module: `import chapterConfig, { SITE_CONFIG, getAmbientTrack, ... } from "./chapters/config.js"`
+- No external library imports (libraries loaded via CDN `<script>` tags in `index.html`)
+- Libraries accessed via `window.gsap`, `window.ScrollTrigger`, `window.tsParticles` — never assumed present without guard check
 
-**Code Organization:**
-- Single `script.js` file contains all logic
-- Initialization wrapped in `DOMContentLoaded` event listener (lines 1-438)
-- Global functions outside event listener: `logDebug()` (line 441+)
-- Global constant objects: `sectionToSongMap` (line 276)
+**CJS tool files:**
+- `require()` at top: Node built-ins first (`fs`, `path`), then npm packages (`mammoth`)
+
+**Path Aliases:**
+- None — relative paths used throughout
 
 ## Error Handling
 
-**Patterns:**
-
-**Try-Catch:**
-- Used for DOM manipulation errors in `highlightSelectedText()` (lines 180-197)
-- Used in `loadAndApplyHighlights()` (lines 212-268) with comprehensive error logging
-- Catch blocks log errors but continue execution where safe
-
-**Fallback Logic:**
-- Selection validation before manipulation (lines 144-158)
-- Range checks before DOM traversal (lines 163-169)
-- Optional chaining via null/undefined checks: `if (chapterTitleElement) { ... }`
-- Null coalescing pattern: `let isMuted = localStorage.getItem("audioMuted") === "true"`
-
-**Promise Handling:**
-- Audio playback wrapped in promise with `.then().catch()` (lines 299-311)
-- Error messages logged to both debug UI and console
-
-**Logging on Error:**
+**Guard pattern before DOM operations:**
 ```javascript
-// Example from highlightSelectedText():
-logDebug(`[ERROR] Could not surround contents for highlighting: ${e.message}. ...`);
-
-// Example from playSongForSection():
-logDebug(`[AUDIO] Playback FAILED for: ${audio.src}. Error: ${error.name} - ${error.message}`);
+if (!elements.chapterContainer || !elements.chapterSelector || !primaryAudio || ...) {
+  Logger.error("Missing critical DOM elements. App initialization aborted.");
+  return;
+}
 ```
+
+**try/catch on all async browser APIs that can throw:**
+- `await audio.play()` always wrapped: `try { await this.standbyMain.play(); } catch (error) { ... }`
+- `await this.instance.destroy()` always wrapped in `ParticleController.destroy()`
+- `fetchChapterMarkup`: response status checked via `if (!response.ok) { throw new Error(...) }`
+- JSON.parse in tools always wrapped
+
+**Error message pattern:**
+- Use `error?.message || error` when logging caught errors to safely handle both Error objects and raw strings:
+  ```javascript
+  Logger.debug("Ambient audio play blocked by browser", error?.message || error);
+  ```
+
+**Optional chaining used defensively:**
+- `chapter?.audio?.mainTrack`, `cue?.endLine`, `theme.transitionDuration || chapterConfig.defaultTheme.transitionDuration`
+
+**Cleanup functions registered for all side effects:**
+- Every event listener, `IntersectionObserver`, `ScrollTrigger`, and interval added during chapter setup is registered via `registerCleanup(fn)` and torn down in `resetChapterEffects()` before the next chapter loads
 
 ## Logging
 
-**Framework:** Custom `logDebug()` function (lines 441-466)
-
-**Implementation:**
-- No external logging library (Winston, Pino, etc.)
-- Custom debug UI appended to DOM element `#debug-log`
-- Timestamps added automatically in HH:MM:SS format
-- Auto-clear: Log entries removed after 30 seconds (line 454)
-- Circular buffer: Only last 50 messages kept (lines 461-463)
-
-**Patterns:**
-
-**Log Levels:**
-- `[DEBUG]` - State changes, initialization, calculations
-- `[INFO]` - User interactions, non-error state
-- `[WARNING]` - Expected edge cases, unusual but handled conditions
-- `[ERROR]` - Unexpected failures, exceptions
-- `[AUDIO]` - Audio-specific events (playback, muting, song switching)
-- `[OBSERVER]` - Intersection observer events
-
-**When to Log:**
-- Initialization: Line 2, 32, 437
-- State changes: Lines 49, 69, 87, 146, 155
-- User interactions: Lines 115, 187, 263
-- Error conditions: Lines 18, 71, 90, 97, 190, 267, 270, 358
-- Calculations: Lines 402-406
-
-**Examples:**
+**Logger object (not `console` directly):**
 ```javascript
-logDebug("[DEBUG] DOM fully loaded. Initializing scripts...");
-logDebug(`[AUDIO] New song detected. Attempting to play: ${songFile} for section: ${sectionId}.`);
-logDebug(`[ERROR] Chapter ID ${chapterId} not found.`);
-logDebug(`[WARNING] Highlight attempt outside of a chapter. Ignoring.`);
+const Logger = {
+  debug: (...args) => { if (isDev) { console.log("[DEBUG]", ...args); } },
+  info:  (...args) => { if (isDev) { console.info("[INFO]", ...args); } },
+  error: (...args) => { console.error("[ERROR]", ...args); }
+};
+```
+- `Logger.debug` and `Logger.info`: dev-only (localhost or `?debug` query param)
+- `Logger.error`: always visible in production
+- Tool scripts (`validate-chapters.cjs`) use bare `console.log` with `[PASS]`/`[FAIL]`/`[SKIP]`/`[WARN]`/`[OK]`/`[ERROR]` prefixes
+
+**`isDev` detection:**
+```javascript
+const isDev =
+  window.location.hostname.includes("localhost") ||
+  window.location.hostname === "127.0.0.1" ||
+  new URLSearchParams(window.location.search).has("debug");
 ```
 
 ## Comments
 
 **When to Comment:**
-- Emoji section headers used extensively (📌, 🌙, 🎵, etc.) instead of text comments
-- Inline comments explain non-obvious logic (lines 139, 222-223, 249, 254)
-- No JSDoc or formal documentation comments
-- Comments clarify intent rather than restate code
-
-**Examples:**
-```javascript
-// 📌 Precompute total pages for all chapters
-function computeChapterPageOffsets() { ... }
-
-// ✨ Helper function to escape RegExp special characters
-function escapeRegExp(string) { ... }
-
-// Basic check: Ensure selection is within a chapter
-let inChapter = false;
-```
+- Block comments used to explain non-obvious HTML structure in `index.html`: `<!-- Chapter content is injected dynamically by script.js. Development note: ... -->`
+- Inline comments are absent in JS — code relies on descriptive naming instead
+- No JSDoc or TSDoc — the project is plain JavaScript with no type tooling
 
 ## Function Design
 
-**Size:**
-- Functions range from 2-80 lines
-- Average function: 15-25 lines
-- Largest function: `loadAndApplyHighlights()` at ~73 lines (lines 201-273) - performs complex DOM tree walking and replacement
+**Size:** Functions are focused and small-to-medium. Large orchestration functions (`showChapter`, `setupChapterExperience`, `loadManifestAndBoot`) call smaller single-purpose helpers rather than being monolithic.
 
-**Parameters:**
-- Most functions take 0-2 parameters
-- Boolean flags used for control flow: `showChapter(chapterId, shouldScrollToTop = true)`
-- Default parameter values: `shouldScrollToTop = true`
-- No rest parameters or destructuring observed
+**Parameters:** Descriptive parameter names always. Default parameter values used for optional timing arguments: `crossfadeTo(trackName, durationSeconds = 1.5)`, `setMainVolume(volume, durationSeconds = 0.25)`.
 
 **Return Values:**
-- Most functions return nothing (void)
-- One function returns modified boolean: `escapeRegExp()` returns string
-- Functions relied upon for side effects (DOM mutation, localStorage updates)
+- Early return used as guard pattern — functions return `null` or `void` early rather than nesting:
+  ```javascript
+  if (!trackName) { this.pauseMain(); return; }
+  if (this.currentTrack === trackName && !this.activeMain.paused) { return; }
+  ```
+- Async functions return `Promise<void>` implicitly; no explicit return type annotations
 
-**Examples:**
+**`void` operator for fire-and-forget async:**
 ```javascript
-// No return, side effects on DOM
-function showChapter(chapterId, shouldScrollToTop = true) { ... }
-
-// Return value used
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Side effects: event listener registration, state mutation
-chapterSelector.addEventListener("change", function () {
-    localStorage.setItem("selectedChapter", selectedChapter);
-    updateNavigationButtons(selectedChapter);
-});
+void syncToViewportLine();
 ```
+Used to explicitly signal an async call's return value is intentionally discarded.
 
 ## Module Design
 
-**Exports:**
-- No module system (no `export`, `module.exports`, ES6 modules)
-- Single global scope containing all functions and variables
-- Functions accessed via window object when needed
+**Exports (`chapters/config.js`):**
+- Named exports for all public functions and constants: `export function getChapterTheme(...)`, `export const PARTICLE_PRESETS`
+- Default export is a config summary object: `export default chapterConfig`
+- Internal helpers (e.g. `normalizeCue`, `clamp01`, `DEFAULT_THEME`) are NOT exported — module-private by declaration
 
-**Global State:**
-- DOM element references cached at initialization (lines 4-12)
-- `chapters` array: Global reference to all chapter elements (line 14)
-- `chapterPageOffsets` object: Computed and maintained globally (line 15)
-- `currentSong` variable: Tracks currently playing song (line 282)
-- `sectionToSongMap` object: Constant mapping configuration (lines 276-280)
+**No Barrel Files:**
+- Single config module; `script.js` imports directly from `./chapters/config.js`
 
-**Initialization Pattern:**
-```javascript
-// Wait for DOM load
-document.addEventListener("DOMContentLoaded", function () {
-    // Query DOM once
-    const audio = document.getElementById("background-audio");
-    const chapters = Array.from(document.querySelectorAll(".chapter"));
+## HTML Chapter Conventions
 
-    // Compute initial state
-    computeChapterPageOffsets();
-
-    // Register event listeners
-    window.addEventListener("load", function () { ... });
-    chapterSelector.addEventListener("change", function () { ... });
-
-    // Initialize features
-    logDebug("[DEBUG] Initialization complete.");
-});
-
-// Utility functions available globally
-function logDebug(message) { ... }
+**Required structure per chapter file:**
+```html
+<div class="chapter" id="chapterN">
+  <section id="chN-sN" class="book-section">
+    <p class="date-location">...</p>
+    <h2 class="chapter-title">...</h2>
+    ...
+  </section>
+</div>
 ```
 
-## Object Patterns
+**Enforced by `validate-chapters.cjs`:**
+- Must have `<div class="chapter" id="chapterN">` wrapper
+- Must have `class="chapter-title"` element
+- Section IDs must use `chN-s` format (bare `id="section1"` is a lint failure)
+- Inline `style=""` attributes forbidden inside chapter content
 
-**Configuration Objects:**
-```javascript
-// Mapping configuration
-const sectionToSongMap = {
-  section1: "Eva_Angelina.mp3",
-  section2: "Mojo_Pin.mp3",
-  section3: "Rose_Parade.mp3"
-};
-
-// Observer configuration
-const observerOptions = { threshold: 0.5 };
-
-// Highlight data structure
-let highlights = JSON.parse(localStorage.getItem("highlights")) || [];
-highlights.push({ chapterId: currentChapterId, text: selectedText });
-```
-
-**Immutable Data Patterns:**
-- Used sparingly; no freeze/seal
-- Rely on localStorage serialization for persistence
+**CSS class vocabulary for chapter authors:**
+- `.poetic-text` — poetry blocks (animated stagger on scroll)
+- `.bold-grow-1` through `.bold-grow-4` — inline emphasis with scale animation
+- `.centered-text` — centered paragraph
+- `.right-aligned` — right-aligned paragraph
+- `.staggered-indent` — indented stanza block
+- `.date-location` — excluded from paragraph fade animation
+- `.pov-marker` — point-of-view attribution
 
 ---
 
-*Convention analysis: 2026-03-10*
+*Convention analysis: 2026-03-11*

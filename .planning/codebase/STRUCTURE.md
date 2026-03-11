@@ -1,203 +1,181 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-10
+**Analysis Date:** 2026-03-11
 
 ## Directory Layout
 
 ```
-/c/Users/gspea/Book/
-├── .github/              # GitHub workflows and configuration
-├── .planning/            # GSD planning documents
-│   └── codebase/         # Architecture and structure analysis
-├── index.html            # Main application entry point
-├── script.js             # Interactive features and state management
-├── styles.css            # Presentation layer and theming
-├── Eva_Angelina.mp3      # Background music track 1
-├── Mojo_Pin.mp3          # Background music track 2
-├── Rose_Parade.mp3       # Background music track 3
-└── .git/                 # Version control
+Book/                          # Project root — served as GitHub Pages site
+├── index.html                 # Single HTML shell (the entire app entry point)
+├── script.js                  # All application logic (ES module, ~1230 lines)
+├── styles.css                 # All styles — layout, animations, theming (~9KB)
+├── package.json               # Node metadata; only runtime dep is mammoth (tooling only)
+├── package-lock.json          # Lockfile
+├── .gitignore                 # Ignores node_modules/ and .planning/
+├── Eva_Angelina.mp3           # Primary music track (root-level asset)
+├── Mojo_Pin.mp3               # Primary music track (root-level asset)
+├── Rose_Parade.mp3            # Primary music track (root-level asset)
+├── chapters/                  # All chapter content and configuration
+│   ├── index.json             # Chapter manifest (ordered array — source of truth for nav)
+│   ├── config.js              # Chapter configuration (themes, audio, particles, parallax)
+│   ├── ch01.html              # Chapter 1 HTML fragment
+│   ├── ch02.html              # Chapter 2 HTML fragment
+│   ├── ch03.html              # Chapter 3 HTML fragment (stub — minimal content)
+│   ├── ch04.html              # Chapter 4 HTML fragment (stub)
+│   ├── ch05.html              # Chapter 5 HTML fragment (stub)
+│   ├── ch06.html              # Chapter 6 HTML fragment (stub)
+│   ├── ch07.html              # Chapter 7 HTML fragment
+│   ├── ch08.html              # Chapter 8 HTML fragment
+│   ├── ch09.html              # Chapter 9 HTML fragment
+│   ├── ch10.html              # Chapter 10 HTML fragment
+│   ├── ch15.html              # Chapter 15 HTML fragment
+│   ├── DISCREPANCY.md         # Notes on chapter content discrepancies
+│   └── raw/                   # Raw HTML output from DOCX conversion (not served directly)
+│       ├── ch01-raw.html
+│       ├── ch02-raw.html
+│       ├── ch03-07-raw.html
+│       ├── ch08-raw.html
+│       ├── ch09-10-raw.html
+│       └── ch15-raw.html
+├── tools/                     # Offline developer tooling (Node.js scripts, not served)
+│   ├── convert-chapters.cjs   # Converts source .docx files to raw HTML via mammoth
+│   └── validate-chapters.cjs  # Validates chapter HTML structure
+├── .planning/                 # GSD planning docs (gitignored — never deployed)
+│   ├── PROJECT.md
+│   ├── REQUIREMENTS.md
+│   ├── ROADMAP.md
+│   ├── STATE.md
+│   ├── config.json
+│   ├── codebase/              # Codebase map docs (this directory)
+│   ├── phases/                # Per-phase implementation plans
+│   └── research/
+└── .github/
+    └── workflows/
+        └── jekyll-gh-pages.yml  # GitHub Pages deployment workflow
 ```
+
+Note: `assets/` directory is referenced in config (e.g., `assets/ch1/fog.png`, `assets/ambient/wind_loop.mp3`) but does not yet exist in the repository. These are planned assets.
 
 ## Directory Purposes
 
-**Root Directory:**
-- Purpose: Contains all application files, music assets, and configuration
-- Contains: HTML entry point, JavaScript logic, CSS styling, audio files, git metadata
-- Deployment: All files at root level deployed as-is to static hosting
+**`chapters/` (served):**
+- Purpose: All chapter data consumed at runtime
+- Contains: Chapter HTML fragments, the manifest JSON, and the config module
+- Key files: `chapters/index.json` (navigation manifest), `chapters/config.js` (all per-chapter data)
 
-**.planning/codebase/:**
-- Purpose: Holds architectural analysis documents
-- Contains: ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, CONCERNS.md
-- Generated: Yes (by GSD mapping commands)
-- Committed: Yes (version controlled for team reference)
+**`chapters/raw/` (not directly served):**
+- Purpose: Intermediate output from `tools/convert-chapters.cjs`; raw HTML from DOCX before manual cleanup and semantic markup is applied
+- Contains: Bulk-converted HTML, one file per source DOCX (some span multiple chapters)
+- Generated: Yes, by `tools/convert-chapters.cjs`
+- Committed: Yes (serves as reference during content migration)
 
-**.github/:**
-- Purpose: GitHub Actions CI/CD workflows
-- Key file: `jekyll-gh-pages.yml` (for GitHub Pages deployment)
-- Generated: No (manually maintained)
+**`tools/` (not served):**
+- Purpose: Developer utilities for content migration pipeline
+- Contains: Node.js CommonJS scripts
+- Key files: `tools/convert-chapters.cjs` (DOCX→HTML conversion), `tools/validate-chapters.cjs` (HTML structure validation)
+
+**`.planning/` (gitignored):**
+- Purpose: All GSD planning artifacts
+- Generated: No (human + AI authored)
+- Committed: No (in `.gitignore`)
 
 ## Key File Locations
 
 **Entry Points:**
-
-- `index.html`: HTML document structure - loads all chapters, sections, controls, audio element, and scripts. Single-page document served to browser. No routing or multiple pages.
+- `index.html`: Browser entry point — the only HTML file served; loads everything else
+- `script.js`: Application logic entry point — `DOMContentLoaded` at line 274 is where boot starts
 
 **Configuration:**
-
-- No traditional config files (no package.json, no build process)
-- Audio mapping: Hardcoded in `script.js` lines 276-280 as `sectionToSongMap`
-- Feature flags: None detected - all features enabled by default
+- `chapters/config.js`: Per-chapter config — edit this to change any chapter's theme, audio, particles, or parallax layers
+- `chapters/index.json`: Navigation manifest — edit this to add, remove, or reorder chapters shown in the UI
 
 **Core Logic:**
+- `script.js`: All runtime logic — `AudioController` (line 24), `ParticleController` (line 217), chapter lifecycle functions (`showChapter`, `setupChapterExperience`, `loadManifestAndBoot`)
 
-- `script.js`: All JavaScript functionality - chapter navigation, audio playback, highlighting, dark mode, state persistence
-- `styles.css`: All CSS - layout, typography, colors, theming, animations
-- `index.html`: Content markup - narrative text organized into chapters and sections
+**Styles:**
+- `styles.css`: All CSS — theming custom properties, dark mode, animation classes, layout
 
-**Content:**
+**Chapter Content:**
+- `chapters/ch01.html` — `chapters/ch15.html`: Individual chapter HTML fragments injected at runtime
 
-- `index.html` lines 27-230: Chapter 1 (sections 1-4) - "THE RITUAL" narrative
-- `index.html` lines 293-386: Chapter 2 (sections 5-6) - "THE ROUTINE" narrative
-- Sections identified by IDs: `section1` through `section6`
-- Audio mappings: `section1` → Eva_Angelina.mp3, `section2` → Mojo_Pin.mp3, `section3` → Rose_Parade.mp3
-
-**Static Assets:**
-
-- `Eva_Angelina.mp3` (4.0 MB): Background music for Chapter 1, Section 1
-- `Mojo_Pin.mp3` (5.5 MB): Background music for Chapter 1, Section 2
-- `Rose_Parade.mp3` (3.3 MB): Background music for Chapter 1, Section 3
-- Asset strategy: Files referenced by filename in `sectionToSongMap`, served from root directory
-
-**Testing:**
-
-- Not present - no test files, test configuration, or test directory structure
+**Tooling:**
+- `tools/convert-chapters.cjs`: Run with `node tools/convert-chapters.cjs` to convert .docx source files
+- `tools/validate-chapters.cjs`: Run with `node tools/validate-chapters.cjs` to check chapter HTML
 
 ## Naming Conventions
 
 **Files:**
+- Chapter HTML fragments: `ch{NN}.html` — zero-padded two-digit chapter number (e.g., `ch01.html`, `ch15.html`)
+- Raw conversion output: `ch{NN}-raw.html` or `ch{NN}-{MM}-raw.html` for multi-chapter source files
+- Tools: kebab-case `.cjs` extension (CommonJS, not ES module)
+- Config: `config.js` (ES module with named + default exports)
 
-- Pattern: `kebab-case.ext` or `camelCase.js`
-- Examples: `index.html`, `script.js`, `styles.css`, `Eva_Angelina.mp3`
-- CSS uses: English descriptive names (e.g., `chapter-controls`, `dark-mode-toggle`)
+**Chapter IDs:**
+- Format: `chapter{N}` — no zero-padding, no hyphens (e.g., `chapter1`, `chapter15`)
+- Used as: Object keys in `CHAPTERS` (config.js), `data-chapter` attribute on `.book-container`, values in `chapters/index.json`
 
-**HTML IDs:**
+**CSS Classes (chapter content):**
+- `.chapter` — root wrapper of each injected chapter fragment
+- `.book-section` — semantic section within a chapter; animation hooks target `.book-section > p`
+- `.chapter-title` — the chapter heading; receives entrance animation
+- `.poetic-text` — poetry/lyrical blocks; receives typewriter reveal animation
+- `.bold-grow-1` / `.bold-grow-2` / `.bold-grow-3` / `.bold-grow-4` — inline spans for scroll-triggered scale emphasis (scale set by CSS custom properties `--bold-grow-{N}-scale`)
+- `.staggered-indent` — indented list-style block
+- `.centered-text` — centered paragraph variant
+- `.date-location` — italicized scene-setting metadata at top of section
+- `.pov-marker` — point-of-view character label
 
-- Pattern: `kebab-case` or `lowercase`
-- Examples: `chapter-controls`, `chapter-selector`, `background-audio`, `chapter1`, `section1`
-- Purpose: Direct reference from JavaScript queries
-
-**CSS Classes:**
-
-- Pattern: `kebab-case`
-- Examples: `book-container`, `chapter-title`, `book-section`, `hidden`, `dark-mode`
-- Convention: One hyphen for regular classes, two hyphens for modifiers (dark-mode)
-
-**JavaScript Functions:**
-
-- Pattern: `camelCase`
-- Public functions: `showChapter()`, `playSongForSection()`, `highlightSelectedText()`, `logDebug()`
-- Helper functions: `navigateChapter()`, `updateNavigationButtons()`, `updateChapterOnScroll()`
-- Event callbacks: Often inline arrow functions (lines 112-117, 74-79, 134-135)
-
-**JavaScript Variables:**
-
-- Pattern: `camelCase` for normal variables, `UPPERCASE` for constants
-- Examples: `audio`, `darkModeButton`, `currentSong`, `sectionToSongMap` (object)
-- Scope: Most variables declared within DOMContentLoaded event listener (line 1) for encapsulation
-
-**CSS Variables:**
-
-- Pattern: Not used - hardcoded color values
-- Colors: Literal values like `#ffffff`, `#1a1a1a`, `rgba(0, 0, 0, 0.7)`
-- Opportunity: Could migrate to CSS custom properties for theme management
+**CSS Custom Properties (theme, set dynamically by `script.js`):**
+- `--chapter-accent-color` — per-chapter accent color applied to UI controls and highlights
+- `--chapter-background-tint` — overlay tint color
+- `--chapter-background-image` — gradient background
+- `--chapter-transition-duration` — chapter fade transition duration in seconds
 
 ## Where to Add New Code
 
-**New Chapter Content:**
+**New chapter content:**
+1. Write the chapter HTML fragment using the established class structure; save as `chapters/ch{NN}.html`
+2. Add an entry to `chapters/index.json` with `{ id, file, title, number }` in the desired navigation order
+3. Add a `chapter{N}` key to `CHAPTERS` in `chapters/config.js` with `metadata`, `theme`, `audio`, and `particles`
+4. Add a matching entry to `LAYER_LIBRARY` in `chapters/config.js` if parallax layers are needed
 
-- File: `index.html`
-- Location: Add new `<div class="chapter" id="chapterN">` block after existing chapters (after line 386)
-- Pattern: Include `<section class="book-section" id="sectionN">` subsections with paragraph content
-- Title: Include `<h2 class="chapter-title">` with chapter name
-- Example structure:
-  ```html
-  <div class="chapter" id="chapter3">
-    <section id="section7" class="book-section">
-      <h2 class="chapter-title"><strong>CHAPTER NAME</strong></h2>
-      <p>Content goes here...</p>
-    </section>
-  </div>
-  ```
+**New particle preset:**
+- Add to `PARTICLE_PRESETS` object in `chapters/config.js`; reference by name in any chapter's `particles.type` field
 
-**New Audio Track for Section:**
+**New visual effect (scroll-triggered):**
+- Add setup function following the pattern of `setupParagraphAnimations` / `setupPoetryTypewriter` in `script.js`
+- Register all ScrollTriggers and event listeners via `registerCleanup(fn)` so they are torn down on chapter transition
+- Call the new function from `setupChapterExperience`
 
-- File: `script.js` lines 276-280
-- Location: Add entry to `sectionToSongMap` object
-- Pattern: `sectionId: "filename.mp3"`
-- Example: `section7: "new_track.mp3"`
-- Requirements: MP3 file must exist in root directory and be referenced by exact filename
-- Note: No file validation - missing files fail silently in audio playback
+**New UI control:**
+- Add the button/element to `index.html`
+- Reference it in the `elements` object (line 296 in `script.js`)
+- Attach event listener in the event wiring section (lines 1181–1216 in `script.js`)
 
-**New Interactive Feature:**
+**New ambient audio track:**
+- Place the file at `assets/ambient/{name}.mp3`
+- Reference the path in the relevant chapter's `audio.ambientTrack` or `lineCues[*].ambientTrack` in `chapters/config.js`
 
-- File: `script.js` (within DOMContentLoaded listener, after line 2)
-- Pattern: Add HTML control element (button, toggle) to `index.html`
-- Query element: `const newElement = document.getElementById("element-id");`
-- Add listener: `newElement.addEventListener("click", function() { ... })`
-- State storage: Use `localStorage.setItem(key, value)` for persistence
-- Example: Follow pattern of dark mode toggle (lines 74-79) or mute toggle (lines 82-91)
-
-**New Theme or Font Style:**
-
-- File: `styles.css`
-- Location: Add CSS class at appropriate section (typography section starts line 197)
-- Pattern: Define class with font-family, font-weight, font-style
-- Usage: Apply class to HTML elements in `index.html` (e.g., `<span class="new-style">text</span>`)
-- Theme colors: Add dark mode rule (e.g., `.dark-mode .class-name { ... }`)
-
-**New Debug Feature:**
-
-- Utilize existing: `logDebug()` function (line 441-466)
-- Location: `script.js` lines 441-466
-- Usage: Call `logDebug("[CATEGORY] message")` from anywhere
-- Auto-display: Messages appear in fixed debug panel (bottom-right)
-- Categories observed: `[DEBUG]`, `[ERROR]`, `[WARNING]`, `[INFO]`, `[AUDIO]`, `[OBSERVER]`
+**Developer tooling:**
+- Add new scripts to `tools/` as `.cjs` files (CommonJS); they are never bundled or served
 
 ## Special Directories
 
-**.git/:**
-- Purpose: Version control metadata
-- Generated: Yes (git initialization)
-- Committed: Yes (part of git repo)
-- Note: Standard git directory structure
-
-**.github/:**
-- Purpose: GitHub-specific configuration and CI/CD
-- Files: `jekyll-gh-pages.yml` (GitHub Actions workflow)
-- Generated: No (manually created)
+**`chapters/raw/`:**
+- Purpose: Stores raw mammoth-converted HTML from source .docx files before editorial cleanup
+- Generated: Yes (by `tools/convert-chapters.cjs`)
 - Committed: Yes
 
-**.planning/:**
-- Purpose: GSD (Goal-Driven Strategy) planning documents
-- Subdirectory: `.planning/codebase/` contains analysis docs
-- Generated: Yes (by GSD mapper commands)
-- Committed: Yes (reference documents for team)
+**`.planning/`:**
+- Purpose: GSD planning artifacts (requirements, roadmap, phase plans, codebase maps)
+- Generated: No
+- Committed: No (listed in `.gitignore`)
 
-**No build output directory:**
-- Architecture note: This is a static site with no build process
-- Assets: HTML, CSS, JS deployed directly, no minification or bundling
-- Opportunity: Could add build tooling (webpack, esbuild) for minification/optimization
-
-## File Size Notes
-
-- `index.html`: ~41 KB (large due to narrative content)
-- `script.js`: ~21 KB (comprehensive feature set)
-- `styles.css`: ~8 KB (extensive font/style definitions)
-- `Eva_Angelina.mp3`: ~4.0 MB
-- `Mojo_Pin.mp3`: ~5.5 MB
-- `Rose_Parade.mp3`: ~3.3 MB
-- **Total with audio:** ~12.9 MB
+**`node_modules/`:**
+- Purpose: npm dependencies (only `mammoth` — used by tooling only, not the served app)
+- Generated: Yes
+- Committed: No (listed in `.gitignore`)
 
 ---
 
-*Structure analysis: 2026-03-10*
+*Structure analysis: 2026-03-11*

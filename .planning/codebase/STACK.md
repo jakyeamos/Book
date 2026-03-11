@@ -1,101 +1,101 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-10
+**Analysis Date:** 2026-03-11
 
 ## Languages
 
 **Primary:**
-- HTML5 - Markup for interactive digital book structure
-- CSS3 - Styling, responsive design, dark mode support, typography
-- JavaScript (Vanilla) - Client-side interactivity, audio playback, state management
+- JavaScript (ES2020+) - All application logic, configuration, and tooling
+- HTML5 - Chapter content fragments and application shell (`index.html`, `chapters/ch01.html` through `chapters/ch15.html`)
+- CSS3 - All visual styling (`styles.css`)
 
 **Secondary:**
-- None - No backend language detected
+- JSON - Chapter manifest and project config (`chapters/index.json`, `.planning/config.json`)
 
 ## Runtime
 
 **Environment:**
-- Browser-based (No server-side runtime required)
-- Tested on modern browsers with HTML5 audio and localStorage support
+- Node.js v25.8.0 (detected on host machine)
+- No `.nvmrc` or `.python-version` present; no pinned Node version in project
 
 **Package Manager:**
-- None - No package manager configuration detected (no npm, pip, cargo, etc.)
+- npm
+- Lockfile: present (`package-lock.json`, lockfileVersion 3)
+
+## Module System
+
+**Frontend:**
+- ES Modules (`type` field in `package.json` is `"commonjs"` but `index.html` loads `script.js` as `type="module"`, and `script.js` uses `import` syntax from `./chapters/config.js`)
+
+**Tooling:**
+- CommonJS (`tools/convert-chapters.cjs`, `tools/validate-chapters.cjs` use `require()`)
 
 ## Frameworks
 
 **Core:**
-- Vanilla JavaScript - No framework dependencies; all features implemented with native DOM APIs
+- None — vanilla JavaScript, no frontend framework (no React, Vue, Svelte, etc.)
 
-**Frontend Features:**
-- Intersection Observer API - For detecting section visibility and triggering audio playback
-- Web Audio API - HTML5 audio element for background music playback
-- localStorage API - For persistent user preferences (dark mode, reading position, highlights)
+**Animation:**
+- GSAP 3.13.0 — scroll-driven animations, parallax, audio volume tweening, title entrance, poetry stagger, bold-grow effects
+  - Loaded via CDN: `https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js`
+  - ScrollTrigger plugin: `https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js`
+  - Used in `script.js` via `window.gsap` and `window.ScrollTrigger`
+  - Fallback paths exist for when GSAP is unavailable (IntersectionObserver + `requestAnimationFrame`)
+
+**Particle Effects:**
+- tsParticles Slim 2.12.0 — per-chapter ambient particle systems (dust, rain, embers, snow, stars)
+  - Loaded via CDN: `https://cdnjs.cloudflare.com/ajax/libs/tsparticles-slim/2.12.0/tsparticles.slim.bundle.min.js`
+  - Used in `script.js` via `window.tsParticles`
+  - Config defined in `chapters/config.js` under `PARTICLE_PRESETS`
+
+**Testing:**
+- None detected
 
 **Build/Dev:**
-- Jekyll (optional, via GitHub Pages) - Used for static site generation in deployment pipeline
-- GitHub Pages - Hosting platform with Jekyll integration
+- None — no bundler (Webpack, Vite, Rollup, esbuild, Parcel)
+- Project runs directly from the filesystem via any HTTP server
+- `file://` protocol not supported (fetch API requires HTTP)
 
 ## Key Dependencies
 
-**External Resources:**
-- Google Fonts API - Typography via CDN import for multiple font families
-  - `Alegreya Sans SC`
-  - `BioRhyme`
-  - `Annie Use Your Telescope`
-  - `Cinzel Decorative`
+**Runtime (npm):**
+- `mammoth` ^1.11.0 — converts `.docx` Word files to HTML for chapter authoring pipeline
+  - Used only in `tools/convert-chapters.cjs` (offline tooling, not loaded in browser)
 
-**Audio Files (Local):**
-- `Eva_Angelina.mp3` - Background music for section1
-- `Mojo_Pin.mp3` - Background music for section2
-- `Rose_Parade.mp3` - Background music for section3
+**CDN (browser runtime):**
+- GSAP 3.13.0 — animation engine (loaded from cloudflare CDN)
+- tsParticles Slim 2.12.0 — particle engine (loaded from cloudflare CDN)
 
 ## Configuration
 
+**Chapter Manifest:**
+- `chapters/index.json` — ordered list of chapter IDs, filenames, titles, and numbers
+
+**Chapter Config:**
+- `chapters/config.js` — ES module exporting per-chapter themes, audio cues, particle types, parallax layers, and site-wide config (`SITE_CONFIG`) including optional Giscus settings
+
+**App Config:**
+- `.planning/config.json` — GSD workflow settings (mode, model profile, parallelization)
+
 **Environment:**
-- No environment variables required
-- No secrets or API keys needed for core functionality
-- Settings stored in browser localStorage (client-side only)
+- No `.env` files present; no environment variables required for runtime
+- No build step; no environment-specific config files
 
 **Build:**
-- No build configuration files detected (webpack, vite, tsconfig, etc.)
-- GitHub Pages deployment handled by Jekyll workflow
+- No build config files (no `vite.config.*`, `webpack.config.*`, `tsconfig.json`, etc.)
 
 ## Platform Requirements
 
 **Development:**
-- Any text editor or IDE
-- Web browser with ES6 support and HTML5 APIs (localStorage, Intersection Observer)
-- Optional: Git for version control
+- Node.js (any recent version) for running tooling scripts in `tools/`
+- Any HTTP server to serve `index.html` (e.g., `npx serve`, `python -m http.server`, VS Code Live Server)
+- `file://` protocol explicitly unsupported — fetch API calls will fail
 
 **Production:**
-- Static web hosting (currently GitHub Pages)
-- No backend server required
-- CDN support for font delivery (Google Fonts)
-- Support for audio file delivery (MP3 format)
-
-## Storage & Persistence
-
-**Client-Side:**
-- Browser localStorage for user preferences:
-  - `darkMode` - Dark/light mode toggle state
-  - `audioMuted` - Audio mute state
-  - `selectedChapter` - Currently selected chapter ID
-  - `scrollPosition` - Scroll position within chapter
-  - `highlights` - User-created text highlights (stored as JSON array)
-
-## Performance Characteristics
-
-**Assets:**
-- 3 MP3 audio files (range: 3.3MB to 5.5MB each)
-- Single CSS file with responsive design
-- Single vanilla JavaScript file (466 lines)
-- Single HTML file with embedded content (no separation of concerns file structure)
-
-**Optimization Observations:**
-- Audio files preloaded with `preload="auto"`
-- Debug logging persists for 30 seconds before auto-clearing
-- Highlights re-applied on window resize events
+- Static file hosting only — no server-side runtime required
+- All assets are local files (HTML, CSS, JS, MP3, PNG)
+- CDN dependencies: Cloudflare CDN for GSAP and tsParticles; Giscus CDN for comments (optional)
 
 ---
 
-*Stack analysis: 2026-03-10*
+*Stack analysis: 2026-03-11*

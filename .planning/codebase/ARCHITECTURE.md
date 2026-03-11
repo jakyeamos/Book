@@ -1,189 +1,166 @@
 # Architecture
 
-**Analysis Date:** 2026-03-10
+**Analysis Date:** 2026-03-11
 
 ## Pattern Overview
 
-**Overall:** Single-Page Application (SPA) with Progressive Enhancement
+**Overall:** Single-Page Application (SPA) with a data-driven chapter experience layer
 
 **Key Characteristics:**
-- Client-side rendering with vanilla JavaScript (no framework dependencies)
-- Document-based narrative structure with interactive features
-- Observable pattern for section visibility tracking
-- Persistent state management via localStorage
-- Modular feature isolation (chapters, audio, highlighting, dark mode)
+- One HTML shell (`index.html`) that never reloads; all chapter content is fetched and injected at runtime
+- A central configuration module (`chapters/config.js`) drives all per-chapter behavior: themes, audio cues, particle effects, and parallax layers
+- Two class-based controllers (`AudioController`, `ParticleController`) encapsulate stateful side-effects; all other logic lives in plain functions inside a single DOMContentLoaded closure in `script.js`
+- Requires an HTTP server at runtime; `fetch()` is used for chapter HTML fragments and the manifest — `file://` protocol is explicitly unsupported
 
 ## Layers
 
-**Presentation Layer:**
-- Purpose: Renders narrative content and UI controls
+**Shell Layer:**
+- Purpose: Static HTML scaffold that is loaded once; provides DOM anchor points for all dynamic content
 - Location: `index.html`
-- Contains: Semantic HTML markup for chapters, sections, navigation controls
-- Depends on: CSS styling, JavaScript for interactivity
-- Used by: Main application bootstrap
+- Contains: Audio elements, fixed controls bar, parallax root, chapter container, comments widget container, chapter footer
+- Depends on: CDN scripts (GSAP, ScrollTrigger, tsParticles), `styles.css`, `script.js`
+- Used by: Browser directly
 
-**Interaction Layer:**
-- Purpose: Handles user input, events, and DOM manipulation
-- Location: `script.js` (lines 1-438)
-- Contains: Event listeners, state updates, localStorage synchronization
-- Depends on: DOM API, IntersectionObserver API, localStorage API
-- Used by: All interactive features (chapter navigation, dark mode, highlighting, audio)
+**Configuration Layer:**
+- Purpose: Single source of truth for every chapter's theme, audio cue timeline, particle preset, and parallax layers
+- Location: `chapters/config.js`
+- Contains: `CHAPTERS` object (keyed by `chapterId`), `PARTICLE_PRESETS`, `LAYER_LIBRARY`, `SITE_CONFIG`, and all exported getter functions
+- Depends on: Nothing (pure data + utility functions)
+- Used by: `script.js` via named imports
 
-**State Management Layer:**
-- Purpose: Persists user preferences and reading progress
-- Mechanism: Browser localStorage with JSON serialization
-- Manages: Selected chapter, scroll position, dark mode preference, audio mute state, highlights
-- Access pattern: Key-value pairs stored as strings, parsed on load
+**Application Logic Layer:**
+- Purpose: Orchestrates chapter lifecycle: manifest loading, content fetching, effect setup, navigation, and user interactions
+- Location: `script.js`
+- Contains: `AudioController` class, `ParticleController` class, and all chapter lifecycle functions inside a single `DOMContentLoaded` handler
+- Depends on: `chapters/config.js`, `chapters/index.json` (manifest), GSAP/ScrollTrigger/tsParticles (optional, gracefully degraded), `localStorage`
+- Used by: Browser (loaded as ES module via `<script type="module">`)
 
-**Audio Engine:**
-- Purpose: Background music playback tied to section visibility
-- Location: `script.js` (lines 275-340)
-- Audio element: `<audio id="background-audio">` in `index.html`
-- Mapping: Section IDs to local MP3 files via `sectionToSongMap` object
-- Trigger: IntersectionObserver fires when section reaches 50% visibility
+**Content Layer:**
+- Purpose: Per-chapter HTML fragments injected into `#chapter-container` on demand
+- Location: `chapters/ch01.html` through `chapters/ch15.html`
+- Contains: Semantic HTML structured with `.chapter`, `.book-section`, `.chapter-title`, `.poetic-text`, `.bold-grow-*`, `.staggered-indent`, `.centered-text`, `.date-location`, `.pov-marker` classes
+- Depends on: Nothing (inert HTML fragments, no scripts)
+- Used by: `script.js` via `fetch()` + `innerHTML` injection
 
-**Styling System:**
-- Purpose: Visual presentation and theming
+**Manifest Layer:**
+- Purpose: Ordered list of chapters used to populate the dropdown and drive navigation
+- Location: `chapters/index.json`
+- Contains: Array of `{ id, file, title, number }` objects — 11 chapters currently
+- Depends on: Nothing
+- Used by: `script.js` at boot (`loadManifestAndBoot`)
+
+**Style Layer:**
+- Purpose: All visual presentation including dark mode, per-chapter theming via CSS custom properties, animation classes, and responsive layout
 - Location: `styles.css`
-- Contains: Layout, typography, dark mode styles, custom font classes
-- Depends on: Google Fonts API (Alegreya Sans SC, BioRhyme, Annie Use Your Telescope, Cinzel Decorative)
+- Contains: CSS custom properties (`--chapter-accent-color`, `--chapter-background-tint`, `--chapter-background-image`, `--chapter-transition-duration`), animation keyframes, component styles
+- Depends on: Google Fonts CDN (4 typefaces: Alegreya Sans SC, BioRhyme, Annie Use Your Telescope, Cinzel Decorative)
+- Used by: `index.html`
+
+**Tooling Layer (offline only):**
+- Purpose: One-time conversion of source `.docx` files to raw HTML, and validation of chapter HTML structure
+- Location: `tools/convert-chapters.cjs`, `tools/validate-chapters.cjs`
+- Contains: Node.js CommonJS scripts using `mammoth` for DOCX-to-HTML conversion
+- Depends on: `mammoth` npm package, local filesystem paths
+- Used by: Developers manually; not part of the served application
 
 ## Data Flow
 
-**Chapter Navigation Flow:**
+**Boot sequence:**
 
-1. User clicks dropdown or prev/next button
-2. Event listener captures selection (line 112-117)
-3. Chapter ID saved to localStorage (line 114)
-4. `showChapter()` hides all chapters except selected (line 343-363)
-5. Footer and page number update (line 361-362)
-6. Navigation buttons update visibility (line 366-374)
+1. Browser loads `index.html`, which fetches GSAP + tsParticles from CDN and then `script.js` as an ES module
+2. `DOMContentLoaded` fires in `script.js`; environment is detected (dev/prod, mobile, `prefers-reduced-motion`)
+3. `AudioController` and `ParticleController` are instantiated; `localStorage` is read for saved chapter, scroll position, highlights, dark mode, and mute state
+4. `loadManifestAndBoot` fetches `chapters/index.json`, populates the chapter `<select>` dropdown, and calls `showChapter` for the initial chapter
+5. `showChapter` fetches the chapter HTML fragment, injects it into `#chapter-container`, then calls `setupChapterExperience`
+6. `setupChapterExperience` calls config getters to apply CSS custom properties (theme), init parallax layers, run text animations, set up audio cue scroll listeners, and load particle effects
 
-**Audio Playback Flow:**
+**Chapter navigation flow:**
 
-1. IntersectionObserver monitors all mapped sections
-2. Section becomes 50%+ visible on screen
-3. `playSongForSection()` triggered (line 285-317)
-4. Song file mapped via `sectionToSongMap` (line 276-280)
-5. Audio element source updated and playback initiated (line 291-308)
-6. Current song cached to prevent re-triggering (line 304)
+1. User changes `<select>`, clicks Prev/Next, or code calls `showChapter(chapterId)`
+2. Current chapter fades out (CSS class `fading-out` + CSS transition duration read from custom property)
+3. `resetChapterEffects` runs all registered cleanup functions (kills ScrollTriggers, removes scroll listeners, disconnects IntersectionObservers, clears parallax DOM)
+4. New chapter HTML is fetched (or served from `state.chapterCache` Map)
+5. New chapter is injected and fades in; `setupChapterExperience` runs for the new chapter
 
-**Highlighting Feature Flow:**
+**Audio cue scroll sync flow:**
 
-1. User selects text in chapter
-2. `highlightSelectedText()` extracts selection (line 143-198)
-3. Validation ensures selection is within chapter (line 161-176)
-4. Text wrapped in `<mark>` element via `surroundContents()` (line 179-181)
-5. Highlight object stored in localStorage with chapter context (line 185-186)
-6. On page load, `loadAndApplyHighlights()` re-applies all highlights (line 201-273)
-
-**Dark Mode Flow:**
-
-1. User clicks dark mode button (line 74-79)
-2. Preference saved to localStorage (line 77)
-3. `dark-mode` class toggled on body element (line 75)
-4. CSS dark mode selectors apply inverted colors
-5. Preference persists across sessions (line 58-61)
+1. Chapter loads with `lineCues` array from config (normalized via `normalizeCue`)
+2. `collectLineAnchors` assigns sequential `data-line-number` attributes to all headings, paragraphs, and list items within `.book-section`
+3. On each scroll event (throttled via `requestAnimationFrame`), `getViewportLineNumber` finds the element closest to 45% viewport height
+4. `resolveCueForLine` matches the line number to a cue range; `calculateCueVolume` applies fade-in/fade-out gain envelopes
+5. `AudioController.crossfadeTo` / `crossfadeAmbientTo` handle track switching with GSAP-animated volume transitions
 
 **State Management:**
-
-- **localStorage Keys:**
-  - `selectedChapter`: Active chapter ID
-  - `scrollPosition`: Pixel offset from top
-  - `darkMode`: "enabled" or "disabled"
-  - `audioMuted`: "true" or "false"
-  - `highlights`: JSON array of highlight objects
-
-- **Restoration Pattern:** On window load event, localStorage values retrieve and apply UI state
+- Runtime state lives in a single `state` object inside the `DOMContentLoaded` closure: `{ chapterManifest, chapterCache, currentChapterId, cleanupFns, highlights }`
+- Persistent state is stored in `localStorage`: `selectedChapter`, `scrollPosition`, `highlights`, `darkMode`, `audioMuted`
+- No framework state management; no reactive bindings
 
 ## Key Abstractions
 
-**Section-to-Song Mapping:**
-- Purpose: Declarative audio assignment to narrative sections
-- Location: `script.js` lines 276-280
-- Pattern: Simple object literal mapping section IDs to filename strings
-- Extensible: Add new entries to map new sections to audio files
+**`AudioController` class:**
+- Purpose: Manages two primary audio elements in a double-buffer pattern for crossfading, plus a single ambient channel
+- Examples: `script.js` lines 24–215
+- Pattern: Active/standby swap — `activeMain` and `standbyMain` references are swapped after each crossfade so the previously active element becomes the next standby
 
-**Chapter Manager:**
-- Purpose: Encapsulates chapter visibility and navigation logic
-- Implemented via: `chapters` array (line 14) and related helper functions
-- Functions: `showChapter()`, `navigateChapter()`, `updateNavigationButtons()`
-- Scope: All chapter-related state and DOM updates isolated to these functions
+**`ParticleController` class:**
+- Purpose: Wraps tsParticles lifecycle (load/destroy) with chapter-aware preset selection and mobile particle-count capping
+- Examples: `script.js` lines 217–272
+- Pattern: Destroy-and-reload on chapter change; no incremental updates
 
-**Highlight System:**
-- Purpose: Persistent markup of user-selected text across sessions
-- Dual responsibility: Save on user selection, re-apply on page load
-- Challenge: Text nodes split/merged during DOM operations
-- Mitigation: Reverse-iteration through nodesToReplace array (line 243)
+**Chapter config getters:**
+- Purpose: Pure functions that accept a `chapterId` string and return normalized config objects, with safe fallbacks to defaults
+- Examples: `getChapterTheme`, `getAudioCues`, `getParticleConfig`, `getParticlePreset` — all in `chapters/config.js`
+- Pattern: Spread merge with `DEFAULT_THEME` for theme; `normalizeCue` for audio cue normalization with sensible defaults
 
-**Observer System:**
-- Purpose: Trigger audio playback based on section visibility
-- Technology: IntersectionObserver API with 0.5 threshold
-- Benefit: Automatic triggering without manual scroll tracking
-- Coverage: Only sections in `sectionToSongMap` are observed
+**`cleanupFns` registry:**
+- Purpose: Allows ephemeral effects (ScrollTriggers, scroll listeners, IntersectionObservers) to register their own teardown via `registerCleanup(fn)` so chapter transitions can cleanly dispose all active effects
+- Examples: `script.js` — `registerCleanup`, `resetChapterEffects`
+- Pattern: Push-on-register, pop-all-on-reset
+
+**Chapter HTML fragments:**
+- Purpose: Self-contained content units that carry no logic — only semantic markup with prescribed CSS class names that `script.js` hooks into
+- Examples: `chapters/ch01.html` through `chapters/ch15.html`
+- Pattern: Root `.chapter` > multiple `.book-section` > paragraphs/headings/`.poetic-text`/`.bold-grow-*` spans
 
 ## Entry Points
 
-**Application Bootstrap:**
-- Location: `index.html` (line 1-10)
-- Triggers: Page load in browser
-- Responsibilities: Load stylesheets, define HTML structure, defer script execution
+**Browser entry point:**
+- Location: `index.html`
+- Triggers: Direct HTTP request; GitHub Pages serves this as the root
+- Responsibilities: Load CDN dependencies, declare audio elements, define static DOM structure, load `script.js`
 
-**Script Initialization:**
-- Location: `script.js` (line 1-2)
-- Triggers: `DOMContentLoaded` event
-- Responsibilities: Initialize DOM references, set up event listeners, restore state
+**Application init:**
+- Location: `script.js` — `DOMContentLoaded` handler (line 274)
+- Triggers: DOM ready
+- Responsibilities: Wire all UI events, instantiate controllers, restore persisted state, boot chapter loading
 
-**Primary User Interactions:**
-- Chapter selection: `#chapter-selector` change event (line 112-117)
-- Previous/Next buttons: Click events (line 134-135)
-- Dark mode toggle: Click event (line 74-79)
-- Mute toggle: Click event (line 82-91)
-- Highlight button: Click event (line 95)
-- Scroll events: Window scroll triggers page number and chapter updates (line 424-425)
-- Window resize: Recalculates page breaks and reapplies highlights (line 428-435)
+**Configuration entry point:**
+- Location: `chapters/config.js` — default export `chapterConfig` + named exports
+- Triggers: Imported by `script.js` at module parse time
+- Responsibilities: Provide all per-chapter data; nothing is fetched at runtime from this module
 
 ## Error Handling
 
-**Strategy:** Defensive null checking with console/debug logging
+**Strategy:** Fail-soft with user-visible fallback messages; audio/particle errors are silently logged in dev only
 
 **Patterns:**
-
-- **Element Not Found:** Check if element exists before accessing (line 65-72, 82-91, 94-98)
-- **DOM Operations Failure:** Try-catch around `surroundContents()` with fallback (line 180-194)
-- **Audio Playback Issues:** Promise-based error handling with retry-safe state (line 299-311)
-- **localStorage Parsing:** Default to empty objects/arrays if parsing fails (line 184, 202)
-- **Missing Chapter:** Validation that chapter exists before showing (line 357-359)
-
-**Debug Output:**
-
-- Custom logger function `logDebug()` outputs timestamped messages to in-page console (line 441-466)
-- Messages auto-clear after 30 seconds (line 454-458)
-- Max 50 concurrent messages kept to prevent memory bloat (line 461-463)
-- Categories: `[DEBUG]`, `[ERROR]`, `[WARNING]`, `[INFO]`, `[AUDIO]`, `[OBSERVER]`
+- `loadManifestAndBoot` wraps the entire boot sequence in try/catch; on failure, injects an error message into `#chapter-container` explaining the HTTP server requirement
+- `showChapter` catches fetch errors and displays a tailored message including the failing filename
+- `AudioController.crossfadeTo` / `crossfadeAmbientTo` catch browser autoplay blocks silently (logged as `debug` only)
+- `ParticleController.updateForChapter` / `destroy` catch tsParticles errors silently
+- Cleanup functions are individually wrapped in try/catch inside `resetChapterEffects`
+- `highlightSelectedText` falls back to a text-search-and-re-apply strategy when `Range.surroundContents` throws (cross-node selections)
 
 ## Cross-Cutting Concerns
 
-**Logging:**
-- Approach: Custom `logDebug()` function with DOM output
-- Usage: Audio operations, IntersectionObserver events, chapter transitions, initialization
-- Audience: Developer/user debugging rather than production analytics
+**Logging:** `Logger` object with `debug`, `info`, `error` methods; `debug` and `info` are suppressed unless `window.location.hostname` is localhost/127.0.0.1 or `?debug` query param is present
 
-**Validation:**
-- Approach: Inline checks before operations
-- Examples: Text selection validation (line 145-158), chapter existence checks (line 357-359)
-- Strategy: Fail gracefully with informative logging rather than throwing
+**Accessibility:** `prefers-reduced-motion` media query is checked at boot; when true, parallax is disabled and particles are skipped. ARIA labels are on all control buttons and the chapter selector.
 
-**Authentication:**
-- Approach: Not applicable - client-side only application
-- Note: No user identity or permission system
+**Responsiveness:** Mobile user agent detection caps particle count at 50; layout handled via CSS
 
-**Performance Optimization:**
-- Lazy restoration: Scroll position restored with 100ms delay (line 47-50)
-- Lazy reapplication: Highlights only applied to visible chapters (line 211)
-- Debounced calculations: Window resize recalculates page offsets (line 428-435)
-- Audio promise handling: Prevents duplicate play attempts (line 304)
+**Progressive enhancement:** All animation and audio features degrade gracefully when GSAP, ScrollTrigger, or tsParticles are unavailable — fallbacks use `IntersectionObserver`, `requestAnimationFrame`-based scroll handlers, and direct volume assignment
 
 ---
 
-*Architecture analysis: 2026-03-10*
+*Architecture analysis: 2026-03-11*

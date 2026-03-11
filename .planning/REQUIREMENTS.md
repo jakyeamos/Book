@@ -46,15 +46,40 @@
 
 - [ ] **CMTS-01**: Giscus comments block properly configured and functional for readers
 
+## Phase 6–8 Requirements
+
+### Content Completion (Phase 6)
+
+- [ ] **CONT-10**: Chapters 3–6 (`ch03.html`–`ch06.html`) filled with authored content from `chapters/raw/` sources; no stub files remain
+- [ ] **CONT-11**: Ch1 and Ch2 canonical versions decided — author reviews `chapters/DISCREPANCY.md` and signs off on which version is final
+- [ ] **CONT-12**: `tools/validate-chapters.cjs` extended with minimum word-count check so stub chapters fail validation with a clear warning
+
+### Assets & External Configuration (Phase 7)
+
+- [ ] **ASSET-01**: All ambient audio files referenced in `chapters/config.js` exist at their configured paths under `assets/ambient/` (or config updated to `null` for chapters with no asset)
+- [ ] **ASSET-02**: Parallax image assets for Ch1 and Ch2 exist at their configured paths under `assets/ch1/` and `assets/ch2/`, or `image` entries removed from `LAYER_LIBRARY` and gradient-only mode documented as intentional
+- [ ] **CMTS-02**: Giscus configured — GitHub Discussions category created on repo; `repo`, `repoId`, and `categoryId` populated in `SITE_CONFIG.giscus` in `chapters/config.js`
+
+### Code Quality & Accessibility (Phase 8)
+
+- [ ] **QUAL-01**: `saveScrollPosition()` in `script.js` throttled to at most once per 500ms; no synchronous `localStorage.setItem` on every scroll event
+- [ ] **QUAL-02**: Google Fonts `@import` calls in `styles.css` consolidated into a single URL request
+- [ ] **QUAL-03**: CDN `<script>` tags for GSAP and tsParticles in `index.html` include `integrity` (SRI hash) attributes
+- [ ] **QUAL-04**: `.github/workflows/jekyll-gh-pages.yml` replaced with a plain static pages deploy workflow (no Jekyll build step)
+- [ ] **QUAL-05**: `package.json` `"type"` field corrected; `mammoth` moved to `devDependencies`
+- [ ] **QUAL-06**: `syncToViewportLine` in `script.js` checks `destroyed` after each `await` to prevent post-teardown audio crossfade continuation
+- [ ] **QUAL-07**: Dead CSS rules `.chapter-theme[data-chapter="chapter1/2"]` removed from `styles.css`
+- [ ] **ACCS-02**: Mobile readers see a "tap to enable audio" UI prompt on first visit when `audio.play()` is blocked by browser autoplay policy
+- [ ] **ACCS-03**: An effects toggle button allows readers to disable particles and scroll animations (for motion sensitivity, low-powered devices, or preference)
+
 ## v2 Requirements
 
 ### Performance & Accessibility
 
 - **PERF-01**: Reading progress bar shows position within current chapter
 - **PERF-02**: Particle effects and parallax automatically reduce/disable on mobile for performance
-- **ACCS-01**: All animations respect `prefers-reduced-motion` media query
-- **ACCS-02**: iOS audio unlock prompt ("tap to enable audio") for mobile readers
-- **ACCS-03**: Remaining drafted chapters (11–14) added to HTML when available
+- **ACCS-01**: All animations respect `prefers-reduced-motion` media query (CSS media query in place; ParticleController honors it)
+- **ACCS-04**: Remaining drafted chapters (11–14) added to HTML when available
 
 ## Out of Scope
 
@@ -95,11 +120,27 @@
 | VFX-01 | Phase 5 | Pending |
 | AUDIO-03 | Phase 5 | Pending |
 
+| CONT-10 | Phase 6 | Pending |
+| CONT-11 | Phase 6 | Pending |
+| CONT-12 | Phase 6 | Pending |
+| ASSET-01 | Phase 7 | Pending |
+| ASSET-02 | Phase 7 | Pending |
+| CMTS-02 | Phase 7 | Pending |
+| QUAL-01 | Phase 8 | Pending |
+| QUAL-02 | Phase 8 | Pending |
+| QUAL-03 | Phase 8 | Pending |
+| QUAL-04 | Phase 8 | Pending |
+| QUAL-05 | Phase 8 | Pending |
+| QUAL-06 | Phase 8 | Pending |
+| QUAL-07 | Phase 8 | Pending |
+| ACCS-02 | Phase 8 | Pending |
+| ACCS-03 | Phase 8 | Pending |
+
 **Coverage:**
-- v1 requirements: 22 total
-- Mapped to phases: 22
+- v1 requirements: 22 total (Phases 1–5)
+- Phase 6–8 requirements: 15 total
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-10 — traceability updated with final phase assignments from ROADMAP.md*
+*Last updated: 2026-03-11 — Phases 6–8 added from post-milestone audit*

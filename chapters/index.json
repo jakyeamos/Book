@@ -1,0 +1,68 @@
+[
+  {
+    "id": "chapter1",
+    "file": "ch01.html",
+    "title": "The Ritual",
+    "number": 1
+  },
+  {
+    "id": "chapter2",
+    "file": "ch02.html",
+    "title": "The Routine",
+    "number": 2
+  },
+  {
+    "id": "chapter3",
+    "file": "ch03.html",
+    "title": "Left Alone",
+    "number": 3
+  },
+  {
+    "id": "chapter4",
+    "file": "ch04.html",
+    "title": "A Library for One",
+    "number": 4
+  },
+  {
+    "id": "chapter5",
+    "file": "ch05.html",
+    "title": "The Girl with the Hammer",
+    "number": 5
+  },
+  {
+    "id": "chapter6",
+    "file": "ch06.html",
+    "title": "Hope",
+    "number": 6
+  },
+  {
+    "id": "chapter7",
+    "file": "ch07.html",
+    "title": "All Good Things",
+    "number": 7
+  },
+  {
+    "id": "chapter8",
+    "file": "ch08.html",
+    "title": "Static Between Stations",
+    "number": 8
+  },
+  {
+    "id": "chapter9",
+    "file": "ch09.html",
+    "title": "Golden",
+    "number": 9
+  },
+  {
+    "id": "chapter10",
+    "file": "ch10.html",
+    "title": "Gianna's Week",
+    "number": 10
+  },
+  {
+    "id": "chapter15",
+    "file": "ch15.html",
+    "title": "Blackberries",
+    "number": 15
+  }
+]

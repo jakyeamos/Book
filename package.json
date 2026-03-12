@@ -1,0 +1,38 @@
+{
+  "name": "book",
+  "version": "1.0.0",
+  "description": "Interactive digital book with chapter-based visuals, audio, and particles.",
+  "main": "script.js",
+  "scripts": {
+    "test": "node tools/validate-chapters.cjs --full",
+    "validate:chapters": "node tools/validate-chapters.cjs --full",
+    "validate:manifest": "node tools/validate-chapters.cjs --manifest",
+    "lint:chapters": "node tools/validate-chapters.cjs --lint-formatting",
+    "convert:chapters": "node tools/convert-chapters.cjs",
+    "platform:typecheck": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json --noEmit",
+    "platform:backfill": "node scripts/backfill-normalized-content.cjs",
+    "platform:auth-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/auth-smoke.js",
+    "platform:import-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/import-staging-smoke.js",
+    "platform:editorial-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/editorial-workflow-smoke.js",
+    "platform:audio-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/audio-studio-smoke.js",
+    "platform:reader-sync-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/reader-sync-smoke.js",
+    "platform:phase06-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/phase06-e2e-smoke.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakyeamos/Book.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jakyeamos/Book/issues"
+  },
+  "homepage": "https://github.com/jakyeamos/Book#readme",
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "typescript": "^5.9.3",
+    "mammoth": "^1.11.0"
+  }
+}

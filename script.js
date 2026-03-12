@@ -1,4 +1,4 @@
-﻿import chapterConfig, {
+import chapterConfig, {
   SITE_CONFIG,
   getAmbientTrack,
   getAudioCues,
@@ -365,7 +365,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     cleanupFns: [],
     highlights: JSON.parse(localStorage.getItem("highlights") || "[]"),
     effectsEnabled: localStorage.getItem("effectsEnabled") !== "false",
-    resumeAudioSync: null
+    resumeAudioSync: null,
+    giscusConfigured: false,
+    giscusThemeListenersBound: false,
+    currentGiscusTheme: null,
+    pendingGiscusTheme: null
   };
 
   if (window.gsap && window.ScrollTrigger) {
@@ -401,6 +405,134 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (elements.bookContainer) {
       elements.bookContainer.setAttribute("data-chapter", chapterId);
     }
+  }
+
+  function getConfiguredGiscusTheme(chapterId) {
+    const giscusConfig = SITE_CONFIG?.giscus || {};
+    const themeByChapter = giscusConfig.themeByChapter || {};
+
+    if (chapterId && Object.prototype.hasOwnProperty.call(themeByChapter, chapterId)) {
+      return themeByChapter[chapterId];
+    }
+
+    if (chapterId && typeof giscusConfig.themeDirectory === "string" && giscusConfig.themeDirectory.trim()) {
+      const basePath = giscusConfig.themeDirectory.trim().replace(/\/+$/, "");
+      return `${basePath}/${chapterId}.css`;
+    }
+
+    return giscusConfig.theme || "dark";
+  }
+
+  function resolveGiscusThemeValue(themeValue) {
+    if (!themeValue) {
+      return null;
+    }
+
+    const raw = String(themeValue).trim();
+    if (!raw || raw.includes("REPLACE") || raw.includes("[")) {
+      return null;
+    }
+
+    if (raw.startsWith("https://")) {
+      return raw;
+    }
+
+    if (raw.startsWith("http://")) {
+      Logger.debug("Skipping non-HTTPS giscus theme URL.", raw);
+      return null;
+    }
+
+    if (raw.startsWith("/")) {
+      if (window.location.protocol !== "https:") {
+        Logger.debug("Custom giscus theme URLs require HTTPS origin.", raw);
+        return null;
+      }
+
+      return `${window.location.origin}${raw}`;
+    }
+
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
+      Logger.debug("Unsupported giscus theme protocol.", raw);
+      return null;
+    }
+
+    const looksLikePath = raw.includes("/") || raw.endsWith(".css");
+    if (looksLikePath) {
+      if (window.location.protocol !== "https:") {
+        Logger.debug("Custom giscus theme paths require HTTPS origin.", raw);
+        return null;
+      }
+
+      const normalizedPath = raw.replace(/^\.?\//, "");
+      return `${window.location.origin}/${normalizedPath}`;
+    }
+
+    return raw;
+  }
+
+  function postGiscusConfig(setConfig) {
+    if (!elements.giscusContainer) {
+      return false;
+    }
+
+    const iframe = elements.giscusContainer.querySelector("iframe.giscus-frame");
+    if (!(iframe instanceof HTMLIFrameElement) || !iframe.contentWindow) {
+      return false;
+    }
+
+    iframe.contentWindow.postMessage({ giscus: { setConfig } }, "https://giscus.app");
+    return true;
+  }
+
+  function flushPendingGiscusTheme() {
+    if (!state.pendingGiscusTheme) {
+      return;
+    }
+
+    if (postGiscusConfig({ theme: state.pendingGiscusTheme })) {
+      state.pendingGiscusTheme = null;
+    }
+  }
+
+  function applyGiscusTheme(chapterId, force = false) {
+    if (!state.giscusConfigured) {
+      return;
+    }
+
+    const configuredTheme = getConfiguredGiscusTheme(chapterId);
+    const resolvedTheme = resolveGiscusThemeValue(configuredTheme)
+      || resolveGiscusThemeValue(SITE_CONFIG?.giscus?.theme)
+      || "dark";
+
+    if (!force && state.currentGiscusTheme === resolvedTheme) {
+      return;
+    }
+
+    state.currentGiscusTheme = resolvedTheme;
+
+    if (!postGiscusConfig({ theme: resolvedTheme })) {
+      state.pendingGiscusTheme = resolvedTheme;
+      return;
+    }
+
+    state.pendingGiscusTheme = null;
+  }
+
+  function bindGiscusThemeListeners() {
+    if (!elements.giscusContainer || state.giscusThemeListenersBound) {
+      return;
+    }
+
+    elements.giscusContainer.addEventListener("load", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLIFrameElement) || !target.classList.contains("giscus-frame")) {
+        return;
+      }
+
+      flushPendingGiscusTheme();
+    }, true);
+
+    state.giscusThemeListenersBound = true;
   }
 
   function updateNavigationButtons(chapterId) {
@@ -1132,10 +1264,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       return Boolean(value) && !String(value).includes("REPLACE") && !String(value).includes("[");
     });
 
+    state.giscusConfigured = configured;
+
     if (!configured) {
+      state.currentGiscusTheme = null;
+      state.pendingGiscusTheme = null;
       elements.giscusPlaceholder.classList.remove("hidden");
       return;
     }
+
+    bindGiscusThemeListeners();
+
+    const initialTheme = resolveGiscusThemeValue(getConfiguredGiscusTheme(state.currentChapterId))
+      || resolveGiscusThemeValue(giscusConfig.theme)
+      || "dark";
 
     const script = document.createElement("script");
     script.src = "https://giscus.app/client.js";
@@ -1148,7 +1290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     script.setAttribute("data-reactions-enabled", giscusConfig.reactionsEnabled || "1");
     script.setAttribute("data-emit-metadata", giscusConfig.emitMetadata || "0");
     script.setAttribute("data-input-position", giscusConfig.inputPosition || "top");
-    script.setAttribute("data-theme", giscusConfig.theme || "dark");
+    script.setAttribute("data-theme", initialTheme);
     script.setAttribute("data-lang", giscusConfig.lang || "en");
     script.setAttribute("data-loading", giscusConfig.loading || "lazy");
     script.setAttribute("crossorigin", "anonymous");
@@ -1156,6 +1298,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     elements.giscusContainer.replaceChildren(script);
     elements.giscusPlaceholder.classList.add("hidden");
+
+    state.currentGiscusTheme = initialTheme;
+    state.pendingGiscusTheme = initialTheme;
+
+    window.setTimeout(() => {
+      flushPendingGiscusTheme();
+    }, 0);
   }
 
   async function setupChapterExperience(chapterId, chapterTitle) {
@@ -1165,6 +1314,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     applyTheme(chapterId);
+    applyGiscusTheme(chapterId);
     updateChapterFooter(chapterTitle);
     updateNavigationButtons(chapterId);
 

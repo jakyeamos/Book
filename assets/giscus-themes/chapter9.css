@@ -1,0 +1,95 @@
+/* Tuned giscus theme for chapter9. */
+main {
+  --chapter-accent: #e7c98b;
+  --chapter-accent-strong: #f5dbaa;
+  --chapter-accent-soft: #c2a569;
+  --chapter-surface: #3b2b20;
+  --chapter-surface-elevated: #614a38;
+  --chapter-surface-overlay: #251911;
+  --chapter-text: #fffaf2;
+  --chapter-border: #8d724d;
+  --chapter-shadow: rgba(28, 18, 11, 0.45);
+
+  --color-canvas-default: var(--chapter-surface);
+  --color-canvas-overlay: var(--chapter-surface-overlay);
+  --color-canvas-inset: color-mix(in srgb, var(--chapter-surface) 86%, #000 14%);
+  --color-canvas-subtle: color-mix(in srgb, var(--chapter-surface-elevated) 78%, #0b1120 22%);
+
+  --color-border-default: color-mix(in srgb, var(--chapter-border) 80%, #1f2937 20%);
+  --color-border-muted: color-mix(in srgb, var(--chapter-border) 58%, #0f172a 42%);
+  --color-neutral-muted: color-mix(in srgb, var(--chapter-accent-soft) 28%, transparent);
+
+  --color-fg-default: var(--chapter-text);
+  --color-fg-muted: color-mix(in srgb, var(--chapter-text) 70%, #9ca3af 30%);
+  --color-fg-subtle: color-mix(in srgb, var(--chapter-text) 52%, #64748b 48%);
+
+  --color-accent-fg: var(--chapter-accent);
+  --color-accent-emphasis: var(--chapter-accent-strong);
+  --color-accent-muted: color-mix(in srgb, var(--chapter-accent-soft) 42%, transparent);
+  --color-accent-subtle: color-mix(in srgb, var(--chapter-accent-soft) 22%, transparent);
+
+  --color-btn-text: var(--chapter-text);
+  --color-btn-bg: color-mix(in srgb, var(--chapter-surface-elevated) 84%, #0f172a 16%);
+  --color-btn-border: color-mix(in srgb, var(--chapter-border) 72%, transparent);
+  --color-btn-hover-bg: color-mix(in srgb, var(--chapter-surface-elevated) 58%, var(--chapter-accent-soft) 42%);
+  --color-btn-hover-border: color-mix(in srgb, var(--chapter-accent-strong) 72%, #ffffff 28%);
+  --color-btn-active-bg: color-mix(in srgb, var(--chapter-surface) 58%, var(--chapter-accent-soft) 42%);
+  --color-btn-selected-bg: color-mix(in srgb, var(--chapter-surface) 66%, var(--chapter-accent-soft) 34%);
+
+  --color-btn-primary-text: #08111d;
+  --color-btn-primary-bg: color-mix(in srgb, var(--chapter-accent-strong) 72%, #ffffff 28%);
+  --color-btn-primary-hover-bg: color-mix(in srgb, var(--chapter-accent-strong) 58%, #ffffff 42%);
+  --color-btn-primary-selected-bg: color-mix(in srgb, var(--chapter-accent-strong) 64%, #ffffff 36%);
+
+  --color-action-list-item-default-hover-bg: color-mix(in srgb, var(--chapter-accent-soft) 18%, transparent);
+  --color-segmented-control-bg: color-mix(in srgb, var(--chapter-surface-overlay) 82%, #000 18%);
+  --color-segmented-control-button-bg: color-mix(in srgb, var(--chapter-surface-elevated) 86%, #000 14%);
+  --color-segmented-control-button-selected-border: color-mix(in srgb, var(--chapter-accent) 72%, #fff 28%);
+
+  --color-success-fg: color-mix(in srgb, var(--chapter-accent) 30%, #73d886 70%);
+  --color-attention-fg: color-mix(in srgb, var(--chapter-accent) 28%, #ffd47a 72%);
+  --color-danger-fg: #f58f9b;
+  --color-danger-muted: color-mix(in srgb, #f58f9b 40%, transparent);
+  --color-danger-subtle: color-mix(in srgb, #f58f9b 16%, transparent);
+
+  --color-primer-shadow-inset: 0 0 transparent;
+}
+
+main .gsc-comments > .gsc-header {
+  border-bottom: 1px solid color-mix(in srgb, var(--chapter-border) 72%, transparent);
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.9rem;
+}
+
+main .gsc-comment-box,
+main .gsc-comment,
+main .gsc-reactions,
+main .gsc-homepage-bg {
+  border: 1px solid color-mix(in srgb, var(--chapter-border) 74%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 10px 24px var(--chapter-shadow);
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--chapter-accent) 22%, transparent), transparent 56%),
+    color-mix(in srgb, var(--chapter-surface-elevated) 88%, var(--chapter-surface-overlay) 12%);
+}
+
+main .gsc-comment-box,
+main .gsc-reactions {
+  margin-bottom: 0.95rem;
+}
+
+main .gsc-comment-box-tabs {
+  border-bottom: 1px solid color-mix(in srgb, var(--chapter-border) 64%, transparent);
+}
+
+main .gsc-timeline {
+  gap: 0.78rem;
+}
+
+main .gsc-comment-content {
+  line-height: 1.58;
+}
+
+main .btn {
+  border-radius: 10px;
+}

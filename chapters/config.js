@@ -743,6 +743,7 @@ export const SITE_CONFIG = {
     emitMetadata: "0",
     inputPosition: "top",
     theme: "dark",
+    themeDirectory: "/assets/giscus-themes",
     lang: "en",
     loading: "lazy"
   }

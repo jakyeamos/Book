@@ -1,17 +1,17 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-10T18:50:56.891Z"
-last_activity: 2026-03-10 — Roadmap created; requirements mapped; ready to plan Phase 1
+status: complete
+stopped_at: Phase 07 legacy backlog closure complete; awaiting next planned phase
+last_updated: "2026-03-11T23:59:00.000Z"
+last_activity: 2026-03-11 - Manually executed legacy backlog closure checklist after Phase 06
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 23
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -20,62 +20,56 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-03-10)
 
-**Core value:** Every chapter feels like its own cinematic world — visuals, audio, and text effects serve the story, not decorate it.
-**Current focus:** Phase 1 — Content Migration
+**Core value:** Every chapter feels like its own cinematic world - visuals, audio, and text effects serve the story, not decorate it.  
+**Current focus:** Reconciled roadmap/state after manual closure of deferred legacy backlog.
 
 ## Current Position
 
-Phase: 1 of 5 (Content Migration)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-10 — Roadmap created; requirements mapped; ready to plan Phase 1
+Phase: 07 of 07 (Legacy Backlog Closure)
+Plan: Manual closure checklist + 23/23 planned items complete
+Status: Complete
+Last activity: 2026-03-11 - Legacy deferred backlog items executed and verified
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total planned items completed: 23
+- Additional manual closure pass: completed
+- Total execution time: current run
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-- Last 5 plans: none yet
-- Trend: -
-
-*Updated after each plan completion*
+| 1 | 5 | complete | session |
+| 2 | 3 | complete | session |
+| 3 | 3 | complete | session |
+| 4 | 3 | complete | session |
+| 5 | 2 | complete | session |
+| 06 | 7 | complete | session |
+| 07 | manual | complete | checklist |
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Content migration before visual effects: can't design chapter atmospheres without reading final content
-- Chapter themes as data config (`chapters/config.js`): prevents scattered-config debt from accumulating across files
-- GSAP 3.13+ (ScrollTrigger + SplitText): free since 2024, CDN-ready, no build step
-- tsParticles slim bundle: actively maintained particles.js successor, <50KB on CDN
-- `transform: translateY()` only for parallax: `background-attachment: fixed` is broken on iOS Safari
+- Legacy static-reader phases (1-5) remain complete and intact.
+- PRD direction was executed as Phase 06 with normalized content, admin/auth, DOCX staging, editorial lifecycle, audio studio, and reader sync foundations.
+- Deferred legacy backlog was manually closed in Phase 07 and verified via `docs/legacy-backlog-checklist.md`.
 
 ### Pending Todos
 
-None yet.
+- Define the next planned phase after backlog closure.
+- Decide whether to fully rewrite `.planning/REQUIREMENTS.md` to align to post-PRD/post-closure scope.
 
 ### Blockers/Concerns
 
-- Phase 1: Source chapters are docx files outside the repo — need to be read and converted to HTML manually. Files at: `C:/Users/gspea/Downloads/chapters-20260310T173927Z-1-001/chapters/`
-- Phase 4: Parallax layer images (`assets/ch1/fog.png` etc.) do not yet exist — will need to be created or sourced before Phase 4 can be fully validated
-- Phase 5: Particle presets only confirmed for chapters 1 and 2; remaining chapters need authoring decisions before Phase 5
+- `gsd execute-phase` auto-runner expects local `scripts/execute-plan-integrated.ts`, which is not present in this repo. Manual execution is currently required.
 
 ## Session Continuity
 
-Last session: 2026-03-10T18:50:56.889Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-content-migration/01-CONTEXT.md
+Last session: 2026-03-11
+Stopped at: Phase 07 complete; roadmap and legacy backlog reconciled
+Resume file: .planning/ROADMAP.md

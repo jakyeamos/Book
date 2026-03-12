@@ -1,19 +1,21 @@
 # Requirements: Immersive Book Site
 
 **Defined:** 2026-03-10
-**Core Value:** Every chapter feels like its own cinematic world — visuals, audio, and text effects serve the story.
+**Core Value:** Every chapter feels like its own cinematic world - visuals, audio, and text effects serve the story.
+
+> Reconciliation note (2026-03-11): This file still primarily reflects the legacy static-reader roadmap. Phase 06 PRD execution artifacts are complete in `.planning/phases/to-do/backlog/06-prd-author-studio-reader-upgrade-for-interactive-digital-book/` and should be merged into a refreshed requirements map before planning the next phase.
 
 ## v1 Requirements
 
 ### Content Migration
 
 - [ ] **CONT-01**: All HTML chapter content compared against docx source files; discrepancies documented
-- [ ] **CONT-02**: Chapter 1 (The Ritual — Xander) replaced in HTML with updated docx version (~1,800 words vs current ~300 words)
-- [ ] **CONT-03**: Chapter 2 (The Routine — Nico) replaced in HTML with updated docx version (~2,700 words vs current version)
-- [ ] **CONT-04**: Chapters 3–7 (Nico's backstory flashbacks: Left Alone, Breaking Through, Grad, All Good Things) added to HTML from `nico backstory(3-7D).docx`
+- [ ] **CONT-02**: Chapter 1 (The Ritual - Xander) replaced in HTML with updated docx version (~1,800 words vs current ~300 words)
+- [ ] **CONT-03**: Chapter 2 (The Routine - Nico) replaced in HTML with updated docx version (~2,700 words vs current version)
+- [ ] **CONT-04**: Chapters 3-7 (Nico's backstory flashbacks: Left Alone, Breaking Through, Grad, All Good Things) added to HTML from `nico backstory(3-7D).docx`
 - [ ] **CONT-05**: Chapter 7 (Static Between Stations) and Chapter 8 (Golden) added to HTML from `static between stations (8D).docx`
-- [ ] **CONT-06**: Chapters 9–10 (Gianna's Week / Gianna's POV) added to HTML from `Gianna_s POV(9-10W).docx`
-- [ ] **CONT-07**: Chapter 15 (Blackberries — Xander) added to HTML from `Blackberries (15D).docx`
+- [ ] **CONT-06**: Chapters 9-10 (Gianna's Week / Gianna's POV) added to HTML from `Gianna_s POV(9-10W).docx`
+- [ ] **CONT-07**: Chapter 15 (Blackberries - Xander) added to HTML from `Blackberries (15D).docx`
 - [ ] **CONT-08**: All chapter formatting conventions preserved (`.poetic-text`, `.bold-grow-*`, `.centered-text`, `.right-aligned`, date/location headers, chapter titles)
 - [ ] **CONT-09**: Chapter navigation dropdown updated to include all added chapters with correct titles
 
@@ -46,19 +48,19 @@
 
 - [ ] **CMTS-01**: Giscus comments block properly configured and functional for readers
 
-## Phase 6–8 Requirements
+## Phase 6-8 Requirements
 
 ### Content Completion (Phase 6)
 
-- [ ] **CONT-10**: Chapters 3–6 (`ch03.html`–`ch06.html`) filled with authored content from `chapters/raw/` sources; no stub files remain
-- [ ] **CONT-11**: Ch1 and Ch2 canonical versions decided — author reviews `chapters/DISCREPANCY.md` and signs off on which version is final
+- [ ] **CONT-10**: Chapters 3-6 (`ch03.html`-`ch06.html`) filled with authored content from `chapters/raw/` sources; no stub files remain
+- [ ] **CONT-11**: Ch1 and Ch2 canonical versions decided - author reviews `chapters/DISCREPANCY.md` and signs off on which version is final
 - [ ] **CONT-12**: `tools/validate-chapters.cjs` extended with minimum word-count check so stub chapters fail validation with a clear warning
 
 ### Assets & External Configuration (Phase 7)
 
 - [ ] **ASSET-01**: All ambient audio files referenced in `chapters/config.js` exist at their configured paths under `assets/ambient/` (or config updated to `null` for chapters with no asset)
 - [ ] **ASSET-02**: Parallax image assets for Ch1 and Ch2 exist at their configured paths under `assets/ch1/` and `assets/ch2/`, or `image` entries removed from `LAYER_LIBRARY` and gradient-only mode documented as intentional
-- [ ] **CMTS-02**: Giscus configured — GitHub Discussions category created on repo; `repo`, `repoId`, and `categoryId` populated in `SITE_CONFIG.giscus` in `chapters/config.js`
+- [ ] **CMTS-02**: Giscus configured - GitHub Discussions category created on repo; `repo`, `repoId`, and `categoryId` populated in `SITE_CONFIG.giscus` in `chapters/config.js`
 
 ### Code Quality & Accessibility (Phase 8)
 
@@ -79,13 +81,13 @@
 - **PERF-01**: Reading progress bar shows position within current chapter
 - **PERF-02**: Particle effects and parallax automatically reduce/disable on mobile for performance
 - **ACCS-01**: All animations respect `prefers-reduced-motion` media query (CSS media query in place; ParticleController honors it)
-- **ACCS-04**: Remaining drafted chapters (11–14) added to HTML when available
+- **ACCS-04**: Remaining drafted chapters (11-14) added to HTML when available
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Scrolljacking | Documented UX harm — breaks comprehension and mobile usability |
+| Scrolljacking | Documented UX harm - breaks comprehension and mobile usability |
 | Video backgrounds | Storage/bandwidth cost; GitHub Pages constraint |
 | Server-side features | Static hosting constraint; localStorage sufficient |
 | Build tooling / bundlers | Author must extend without a build step |
@@ -137,10 +139,13 @@
 | ACCS-03 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 22 total (Phases 1–5)
-- Phase 6–8 requirements: 15 total
+- v1 requirements: 22 total (Phases 1-5)
+- Phase 6-8 requirements: 15 total
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-11 — Phases 6–8 added from post-milestone audit*
+*Last updated: 2026-03-11 - Phases 6-8 added from post-milestone audit*
+
+
+

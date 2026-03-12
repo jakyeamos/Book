@@ -3,7 +3,7 @@
 **Defined:** 2026-03-10
 **Core Value:** Every chapter feels like its own cinematic world - visuals, audio, and text effects serve the story.
 
-> Reconciliation note (2026-03-11): This file still primarily reflects the legacy static-reader roadmap. Phase 06 PRD execution artifacts are complete in `.planning/phases/to-do/backlog/06-prd-author-studio-reader-upgrade-for-interactive-digital-book/` and should be merged into a refreshed requirements map before planning the next phase.
+> Reconciliation note (2026-03-12): This file still primarily reflects the legacy static-reader roadmap. Phase 06 PRD artifacts are present in `.planning/phases/to-do/backlog/06-prd-author-studio-reader-upgrade-for-interactive-digital-book/` and pass local smoke checks, but production acceptance is not yet signed off (`docs/phase06-acceptance-checklist.md`; live `/admin` and `/login` are currently 404 on Netlify). Merge this file into a refreshed requirements map only after acceptance evidence is completed.
 
 ## v1 Requirements
 
@@ -145,7 +145,8 @@
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-11 - Phases 6-8 added from post-milestone audit*
+*Last updated: 2026-03-12 - Reconciled with pending Phase 06 production acceptance*
+
 
 
 

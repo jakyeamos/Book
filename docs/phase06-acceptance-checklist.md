@@ -1,5 +1,11 @@
 # Phase 06 Acceptance Checklist
 
+Status snapshot (2026-03-12):
+- Local smoke scripts exist and pass.
+- Production acceptance is not signed off.
+- Live verification at `https://chsbook.netlify.app` showed `/admin` and `/login` returning HTTP 404.
+- Keep checklist items unchecked until human end-to-end verification is completed.
+
 ## Admin + Editorial
 - [ ] Admin login protects `/admin` route.
 - [ ] DOCX import creates staged draft.

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: book
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: book-audio
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: book-postgres
+          property: connectionString
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: AUDIO_ASSET_DIR
+        value: /var/data/book-audio
+
+databases:
+  - name: book-postgres
+    plan: starter

@@ -4,6 +4,8 @@
   "description": "Interactive digital book with chapter-based visuals, audio, and particles.",
   "main": "script.js",
   "scripts": {
+    "build": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json",
+    "start": "node .planning/.tmp-tsrun/platform/platform/api/src/server.js",
     "test": "node tools/validate-chapters.cjs --full",
     "validate:chapters": "node tools/validate-chapters.cjs --full",
     "validate:manifest": "node tools/validate-chapters.cjs --manifest",
@@ -11,6 +13,9 @@
     "convert:chapters": "node tools/convert-chapters.cjs",
     "platform:typecheck": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json --noEmit",
     "platform:backfill": "node scripts/backfill-normalized-content.cjs",
+    "platform:migrate": "npm run build && node .planning/.tmp-tsrun/platform/platform/scripts/migrate-postgres.js",
+    "platform:seed-content": "npm run build && node .planning/.tmp-tsrun/platform/platform/scripts/seed-postgres-content.js",
+    "platform:fullstack-smoke": "npm run build && node .planning/.tmp-tsrun/platform/platform/scripts/fullstack-admin-smoke.js",
     "platform:auth-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/auth-smoke.js",
     "platform:import-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/import-staging-smoke.js",
     "platform:editorial-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/editorial-workflow-smoke.js",
@@ -32,7 +37,11 @@
   "homepage": "https://github.com/jakyeamos/Book#readme",
   "devDependencies": {
     "@types/node": "^25.4.0",
-    "typescript": "^5.9.3",
-    "mammoth": "^1.11.0"
+    "@types/pg": "^8.20.0",
+    "mammoth": "^1.11.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "pg": "^8.20.0"
   }
 }

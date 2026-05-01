@@ -53,6 +53,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - May 1: Expanded editorial and audio smoke tests for chapter CMS behavior, MP3 upload, cue lifecycle, repair, and publish unblocking.
 - May 1: Added an `Admin Editors` button to reader controls that navigates to `/admin`, and narrowed audio unlock warnings to true autoplay-block cases with prompt re-show cooldown.
 - May 1: Fixed reader text highlighting to toggle off existing highlights instead of nesting `<mark>` elements when highlighting already-highlighted text.
+- May 1: Added a static `admin/index.html` entry page so `/admin` no longer resolves to 404 in the deployed/static site.
 
 ## Open Problems
 

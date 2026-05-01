@@ -1,10 +1,10 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Interactive digital book reader now exposes an Admin Editors entry point from the reader UI and hardens mobile audio-unlock prompting while the deeper admin route integration is still in progress.
-healthScore: 74
+summary: Book now has a full-stack reading platform path with authenticated admin editing, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, and managed Node deployment.
+healthScore: 86
 statusLabel: on_track
-nextStep: Verify deployed `/admin` availability and complete end-to-end admin editor flows (login, chapter editing, audio cues, publish) behind the new reader entry point.
+nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run live editor verification.
 blockers: []
 lastUpdated: 2026-05-01
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
@@ -26,7 +26,7 @@ quality:
   structure: pass
 canonicalCommands:
   install: npm install
-  dev: python -m http.server 8080
+  dev: npm run build && npm start
   lint: npm run lint:chapters
   typecheck: npm run platform:typecheck
   test: npm test
@@ -36,9 +36,9 @@ agentExpectationsVersion: 1
 
 ## Current State
 
-Book is a browser-based interactive reading experience with chapter fragments, chapter-specific visual themes, motion effects, particles, background music, ambient layers, and optional Giscus discussion embeds. The static reader remains available from `index.html` and loads chapter content from `chapters/index.json`.
+Book is a full-stack-capable interactive reading experience with chapter-specific visual themes, motion effects, particles, background music, ambient layers, optional Giscus discussion embeds, and a Node server that serves both the reader and authenticated admin editor.
 
-The platform layer now includes admin-facing service/controller APIs for chapter create/edit/reorder, rich-text-friendly chapter payloads, preview/publish/rollback, MP3 upload/list/select, block-based audio cue create/update/delete, cue repair, and publish-readiness checks. The work is merged locally on `main` in commit `08031cb`, and `main` is ahead of `origin/main` by one commit.
+The platform layer now includes a full-stack HTTP server, Postgres migrations, database-backed content/auth/audio/reader-state persistence, static-content seeding, protected admin chapter edit/publish APIs, audio asset/cue APIs, reader account/state/search APIs, analytics/audit events, and reader APIs that serve published DB content with static fallback for local development.
 
 ## Why This Matters / Intended Outcome
 
@@ -54,36 +54,40 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - May 1: Added an `Admin Editors` button to reader controls that navigates to `/admin`, and narrowed audio unlock warnings to true autoplay-block cases with prompt re-show cooldown.
 - May 1: Fixed reader text highlighting to toggle off existing highlights instead of nesting `<mark>` elements when highlighting already-highlighted text.
 - May 1: Added a static `admin/index.html` entry page so `/admin` no longer resolves to 404 in the deployed/static site.
+- May 1: Replaced the placeholder admin path with an authenticated API-backed admin editor and added a Node server that serves `/admin`, reader APIs, auth APIs, and admin editing APIs.
+- May 1: Added Postgres migrations, runtime migration application, content seeding, DB-backed content/auth/audio stores, Render deployment config, and full-stack smoke coverage.
+- May 1: Added reader registration, DB-backed progress/highlights/notes/preferences sync, library/search/preferences UI, block-assisted admin editing, audio upload/cue UI, analytics events, login rate limiting, production cookie hardening, and operations documentation.
 
 ## Open Problems
 
-- The new admin controllers are not yet fully connected to real deployed UI pages; route metadata exists and the reader now links to `/admin`, but production route availability and full flow integration still need verification.
-- Hybrid persistence is currently represented by JSON-backed repositories and local file storage; production-grade DB/object-storage wiring still needs deployment-specific implementation.
-- `npm audit` reports one high severity vulnerability after dependency installation.
+- The full-stack admin path is implemented locally but not yet deployed to the live domain.
+- Audio asset storage is configured for a persistent managed disk by default; switching to S3/R2-style object storage would require adding that provider adapter.
+- Admin block editing is functional but intentionally lightweight; a richer drag/drop editor would be a future UX pass.
 - No dead-code audit command is configured in `package.json`.
 
 ## Next Concrete Steps
 
-1. Build the actual admin screens/forms on top of the new Chapter Studio and Audio Studio controllers.
-2. Configure production persistence for content state and uploaded MP3 files.
-3. Verify `/admin`, chapter editing, MP3 upload, cue assignment, preview, and publish on the deployed site.
-4. Address the npm audit finding or document why it is not exploitable.
-5. Add a dead-code scan command or explicitly document why one is unavailable.
+1. Create the Render service/database from `render.yaml` and set `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+2. Point the live domain at the Node service after smoke-checking `/api/health`, `/`, and `/admin`.
+3. Verify login, reader registration/state sync, chapter edit, publish, reader reload, audio asset upload, cue CRUD, search, and analytics events on the deployed site.
+4. Add a dead-code scan command or explicitly document why one is unavailable.
 
 ## Risks / Blockers
 
-- No active blockers.
-- Production admin UX is not complete until controllers are wired into real pages and deployed.
-- Local file storage for uploaded MP3s may not survive production deployments unless backed by durable storage.
+- No code blockers remain for local full-stack verification.
+- Live functionality depends on deploying the managed Node/Postgres service and moving the domain away from static-only hosting.
+- Persistent audio uploads depend on the managed disk configured in `render.yaml`; object-storage provider support is still future work.
 
 ## Quality Ladder Notes
 
 - **Lint/format baseline:** `npm test` includes chapter formatting lint and passed on 2026-05-01.
 - **Types:** `npm run platform:typecheck` passed on 2026-05-01.
 - **Tests:** `npm test` passed on 2026-05-01.
+- **Build:** `npm run build` passed on 2026-05-01.
+- **Full-stack smoke:** `npm run platform:fullstack-smoke` passed on 2026-05-01.
 - **Platform smokes:** editorial, audio, auth, import, reader sync, and phase06 smoke scripts passed on 2026-05-01.
 - **Dead code:** `npm run audit:dead-code` is not configured, so status is unknown.
-- **Security:** `npm install` reported one high severity audit finding; not yet remediated.
+- **Security:** `npm audit --audit-level=high` passed with 0 vulnerabilities on 2026-05-01 after `npm audit fix`.
 
 ## Agent Notes
 

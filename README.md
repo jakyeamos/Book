@@ -32,11 +32,27 @@ python -m http.server 8080
 
 ## Scripts
 
+- `npm run build` compiles the full-stack platform server
+- `npm start` runs the Node server that serves the reader, `/admin`, and JSON APIs
 - `npm test` runs full chapter validation (manifest + chapter checks + formatting lint)
 - `npm run validate:chapters` runs full chapter validation
 - `npm run validate:manifest` validates `chapters/index.json`
 - `npm run lint:chapters` checks chapter HTML for inline styles
 - `npm run convert:chapters` converts source `.docx` files via Mammoth
+- `npm run platform:migrate` applies Postgres schema migrations
+- `npm run platform:seed-content` seeds current static chapters into Postgres
+- `npm run platform:fullstack-smoke` verifies the full-stack reader/admin API path
+
+## Full-Stack Deployment
+
+The live admin editor requires the Node server plus Postgres. `render.yaml` defines a managed Node deployment with a Postgres database and persistent audio asset disk. On startup, the server applies migrations, bootstraps the admin account from `ADMIN_EMAIL` / `ADMIN_PASSWORD`, seeds current static chapters when the database is empty, and serves:
+
+- `/` reader UI
+- `/admin` authenticated admin editor
+- `/api/reader/*` published content APIs
+- `/api/admin/*` protected editing and audio APIs
+
+See `docs/operations.md` for release checks, migration/seed commands, backups, restore steps, and security notes.
 
 ## Content Pipeline
 

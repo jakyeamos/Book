@@ -22,6 +22,16 @@ function clamp01(value) {
 }
 
 class AudioController {
+  static isAutoplayBlocked(error) {
+    const name = String(error?.name || "");
+    const message = String(error?.message || "");
+    if (name === "NotAllowedError") {
+      return true;
+    }
+
+    return /user (didn't|did not) interact|gesture|autoplay/i.test(message);
+  }
+
   constructor(primary, secondary, ambient, logger, options = {}) {
     this.primary = primary;
     this.secondary = secondary;
@@ -116,8 +126,12 @@ class AudioController {
     try {
       await this.standbyMain.play();
     } catch (error) {
-      this.logger.debug("Main audio play blocked by browser", error?.message || error);
-      this.notifyPlaybackBlocked("main", error);
+      if (AudioController.isAutoplayBlocked(error)) {
+        this.logger.debug("Main audio play blocked by browser", error?.message || error);
+        this.notifyPlaybackBlocked("main", error);
+      } else {
+        this.logger.error("Main audio play failed", error?.message || error);
+      }
       return;
     }
 
@@ -207,8 +221,12 @@ class AudioController {
     try {
       await this.ambient.play();
     } catch (error) {
-      this.logger.debug("Ambient audio play blocked by browser", error?.message || error);
-      this.notifyPlaybackBlocked("ambient", error);
+      if (AudioController.isAutoplayBlocked(error)) {
+        this.logger.debug("Ambient audio play blocked by browser", error?.message || error);
+        this.notifyPlaybackBlocked("ambient", error);
+      } else {
+        this.logger.error("Ambient audio play failed", error?.message || error);
+      }
       return;
     }
 
@@ -321,6 +339,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     darkModeButton: document.getElementById("dark-mode-toggle"),
     muteButton: document.getElementById("mute-toggle"),
     effectsButton: document.getElementById("effects-toggle"),
+    adminEditorsButton: document.getElementById("admin-editors-button"),
     highlightButton: document.getElementById("highlight-text-button"),
     bookContainer: document.querySelector(".book-container"),
     parallaxRoot: document.getElementById("parallax-root"),
@@ -369,7 +388,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     giscusConfigured: false,
     giscusThemeListenersBound: false,
     currentGiscusTheme: null,
-    pendingGiscusTheme: null
+    pendingGiscusTheme: null,
+    suppressAudioPromptUntil: 0
   };
 
   if (window.gsap && window.ScrollTrigger) {
@@ -1213,6 +1233,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function removeStoredHighlight(chapterId, text) {
+    if (!chapterId || !text) {
+      return;
+    }
+
+    const index = state.highlights.findIndex((item) => {
+      return item.chapterId === chapterId && item.text === text;
+    });
+
+    if (index === -1) {
+      return;
+    }
+
+    state.highlights.splice(index, 1);
+    localStorage.setItem("highlights", JSON.stringify(state.highlights));
+  }
+
+  function unwrapMark(mark) {
+    if (!mark?.parentNode) {
+      return;
+    }
+
+    const textNode = document.createTextNode(mark.textContent || "");
+    mark.replaceWith(textNode);
+    textNode.parentNode?.normalize();
+  }
+
+  function getIntersectingHighlightMarks(chapterElement, range) {
+    return Array.from(chapterElement.querySelectorAll("mark")).filter((mark) => {
+      try {
+        return range.intersectsNode(mark);
+      } catch (_error) {
+        return false;
+      }
+    });
+  }
+
   function highlightSelectedText() {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
@@ -1228,6 +1285,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const chapterElement = elements.chapterContainer.querySelector(".chapter");
     if (!chapterElement || !chapterElement.contains(range.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      return;
+    }
+
+    const intersectingMarks = getIntersectingHighlightMarks(chapterElement, range);
+    if (intersectingMarks.length > 0) {
+      intersectingMarks.forEach((mark) => {
+        const markText = (mark.textContent || "").trim();
+        if (state.currentChapterId && markText) {
+          removeStoredHighlight(state.currentChapterId, markText);
+        }
+        unwrapMark(mark);
+      });
+
       selection.removeAllRanges();
       return;
     }
@@ -1440,6 +1511,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    if (Date.now() < state.suppressAudioPromptUntil) {
+      return;
+    }
+
     elements.audioUnlockPrompt.classList.remove("hidden");
   }
 
@@ -1480,6 +1555,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     navigateChapter(1);
   });
 
+  if (elements.adminEditorsButton) {
+    elements.adminEditorsButton.addEventListener("click", () => {
+      window.location.assign("/admin");
+    });
+  }
+
   elements.darkModeButton.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
     const enabled = document.body.classList.contains("dark-mode");
@@ -1516,6 +1597,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (elements.audioUnlockButton) {
     elements.audioUnlockButton.addEventListener("click", async () => {
       hideAudioUnlockPrompt();
+      state.suppressAudioPromptUntil = Date.now() + 10000;
 
       if (!state.currentChapterId || audioController.isMuted) {
         return;

@@ -1,10 +1,10 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Interactive digital book reader now has an admin-facing CMS and cue studio service layer for chapter editing, MP3 uploads, block-based soundtrack cues, and publish safety, merged locally on main but not yet pushed.
+summary: Interactive digital book reader now exposes an Admin Editors entry point from the reader UI and hardens mobile audio-unlock prompting while the deeper admin route integration is still in progress.
 healthScore: 74
 statusLabel: on_track
-nextStep: Wire the new admin controllers to deployed UI routes and verify the full editor flow in production.
+nextStep: Verify deployed `/admin` availability and complete end-to-end admin editor flows (login, chapter editing, audio cues, publish) behind the new reader entry point.
 blockers: []
 lastUpdated: 2026-05-01
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
@@ -51,10 +51,12 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
 - May 1: Added publish workflow cue validation support so broken cues can block publishing.
 - May 1: Expanded editorial and audio smoke tests for chapter CMS behavior, MP3 upload, cue lifecycle, repair, and publish unblocking.
+- May 1: Added an `Admin Editors` button to reader controls that navigates to `/admin`, and narrowed audio unlock warnings to true autoplay-block cases with prompt re-show cooldown.
+- May 1: Fixed reader text highlighting to toggle off existing highlights instead of nesting `<mark>` elements when highlighting already-highlighted text.
 
 ## Open Problems
 
-- The new admin controllers are not yet connected to real deployed UI pages; route metadata exists, but production `/admin` UI integration still needs verification.
+- The new admin controllers are not yet fully connected to real deployed UI pages; route metadata exists and the reader now links to `/admin`, but production route availability and full flow integration still need verification.
 - Hybrid persistence is currently represented by JSON-backed repositories and local file storage; production-grade DB/object-storage wiring still needs deployment-specific implementation.
 - `npm audit` reports one high severity vulnerability after dependency installation.
 - No dead-code audit command is configured in `package.json`.

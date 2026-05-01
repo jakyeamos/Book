@@ -8,6 +8,13 @@ import {
 } from "../../../../shared/src/audio/cue-schema";
 import { AudioCueRepository } from "./cue.repository";
 
+type CueUpdateInput = Partial<Pick<AudioCueRecord, "assetId" | "layer" | "startAnchor" | "endAnchor" | "volume" | "fadeInMs" | "fadeOutMs" | "loop" | "overlapMode">>;
+
+function removeUndefined(updates: CueUpdateInput): CueUpdateInput {
+  const entries = Object.entries(updates).filter(([, value]) => value !== undefined);
+  return Object.fromEntries(entries) as CueUpdateInput;
+}
+
 export class AudioCueService {
   constructor(private readonly repository: AudioCueRepository) {}
 
@@ -50,6 +57,21 @@ export class AudioCueService {
       startAnchor,
       endAnchor,
     }));
+  }
+
+  updateCue(
+    cueId: string,
+    updates: CueUpdateInput,
+  ): AudioCueRecord {
+    const definedUpdates = removeUndefined(updates);
+    return this.repository.updateCue(cueId, (cue) => ({
+      ...cue,
+      ...definedUpdates,
+    }));
+  }
+
+  deleteCue(cueId: string): void {
+    this.repository.deleteCue(cueId);
   }
 
   listChapterCues(chapterId: string): AudioCueRecord[] {

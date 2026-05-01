@@ -69,7 +69,7 @@ export class ContentRepository {
 
   updateChapter(
     chapterId: string,
-    updates: Partial<Pick<ChapterRecord, "title" | "status" | "type" | "visibility" | "theme" | "orderIndex" | "normalizedDocument" | "compiledOutput">>,
+    updates: Partial<Pick<ChapterRecord, "slug" | "title" | "status" | "type" | "visibility" | "theme" | "orderIndex" | "normalizedDocument" | "compiledOutput">>,
   ): ChapterRecord {
     const chapter = this.getChapterById(chapterId);
     if (!chapter) {

@@ -38,6 +38,13 @@ export class AudioAssetLibraryService {
     durationSeconds: number;
     defaultVolume?: number;
   }): AudioAssetRecord {
+    if (input.type === "music" && !input.fileName.toLowerCase().endsWith(".mp3")) {
+      throw new Error("Music uploads must be MP3 files");
+    }
+    if (input.durationSeconds <= 0) {
+      throw new Error("Audio duration must be greater than zero");
+    }
+
     const storagePath = this.storage.saveAsset(input.fileName, input.content);
 
     const record: AudioAssetRecord = {

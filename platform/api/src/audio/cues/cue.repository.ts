@@ -80,6 +80,15 @@ export class AudioCueRepository {
     return updated;
   }
 
+  deleteCue(cueId: string): void {
+    const originalCount = this.store.cues.length;
+    this.store.cues = this.store.cues.filter((cue) => cue.id !== cueId);
+    if (this.store.cues.length === originalCount) {
+      throw new Error(`Cue not found: ${cueId}`);
+    }
+    this.save();
+  }
+
   markCueStatus(cueId: string, status: CueStatus, issues: string[]): AudioCueRecord {
     return this.updateCue(cueId, (cue) => ({
       ...cue,

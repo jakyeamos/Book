@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { ChapterStudioController } from "../../app/admin/src/chapters/chapter-studio-controller";
 import { EditorialWorkflowController } from "../../app/admin/src/chapters/editorial/workflow-controller";
 import { EditorialService } from "../api/src/content/editorial.service";
 import { compileChapter } from "../api/src/compile/chapter.compiler";
@@ -71,8 +72,41 @@ function run(): void {
   const editorial = new EditorialService(content);
   const workflow = new PublishWorkflowService(content);
   const controller = new EditorialWorkflowController(editorial, workflow);
+  const chapterStudio = new ChapterStudioController(content, editorial, workflow);
 
-  controller.reorder([chapterB.id, chapterA.id]);
+  const studioChapter = chapterStudio.createChapter({
+    title: "Gamma",
+    slug: "gamma",
+    orderIndex: 3,
+    body: [
+      { type: "heading", text: "Gamma", level: 2 },
+      { type: "paragraph", text: "Created entirely from the admin chapter studio." },
+    ],
+  });
+
+  if (studioChapter.blocks.length !== 2 || !studioChapter.previewHtml.includes("Created entirely")) {
+    throw new Error("Chapter studio create did not expose rich-text preview blocks");
+  }
+
+  const editedStudioChapter = chapterStudio.updateChapter(studioChapter.id, {
+    title: "Gamma Revised",
+    body: [
+      { type: "heading", text: "Gamma Revised", level: 2 },
+      { type: "paragraph", text: "Updated by a nontechnical admin through rich text." },
+      { type: "scene_break", text: "" },
+      { type: "paragraph", text: "Second section remains selectable for cues." },
+    ],
+  });
+
+  if (
+    editedStudioChapter.title !== "Gamma Revised" ||
+    editedStudioChapter.blocks.length !== 4 ||
+    !editedStudioChapter.previewHtml.includes("Updated by a nontechnical admin")
+  ) {
+    throw new Error("Chapter studio edit did not persist rich-text content");
+  }
+
+  chapterStudio.reorderChapters([chapterB.id, chapterA.id, studioChapter.id]);
   const ordered = controller.listChapters();
   if (ordered[0].id !== chapterB.id) {
     throw new Error("Chapter reorder did not persist expected order");
@@ -125,6 +159,12 @@ function run(): void {
 
   if (rolledBack.compiledOutput.runtime.wordCount !== targetRollbackVersion.compiledSnapshot.runtime.wordCount) {
     throw new Error("Rollback did not restore expected compiled snapshot");
+  }
+
+  chapterStudio.previewChapter(studioChapter.id);
+  const publishedStudioChapter = chapterStudio.publishChapter(studioChapter.id);
+  if (publishedStudioChapter.status !== "published") {
+    throw new Error("Chapter studio publish did not persist published status");
   }
 
   cleanup(contentStorePath);

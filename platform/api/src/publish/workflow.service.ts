@@ -1,10 +1,14 @@
+import { CueValidationService } from "../audio/cue-validation.service";
 import { ContentRepository } from "../content/content.repository";
 import { PublishService } from "../content/publish.service";
 
 export class PublishWorkflowService {
   private readonly publisher: PublishService;
 
-  constructor(private readonly content: ContentRepository) {
+  constructor(
+    private readonly content: ContentRepository,
+    private readonly cueValidator?: CueValidationService,
+  ) {
     this.publisher = new PublishService(content);
   }
 
@@ -14,6 +18,7 @@ export class PublishWorkflowService {
   }
 
   publishChapter(chapterId: string) {
+    this.cueValidator?.ensureChapterPublishable(chapterId);
     this.publisher.publish(chapterId);
     return this.content.getChapterById(chapterId);
   }

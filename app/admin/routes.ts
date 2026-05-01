@@ -19,7 +19,11 @@ export interface AdminRouteResolution {
 export const ADMIN_ROUTES: AdminRoute[] = [
   { path: "/admin", title: "Dashboard", requiresAuth: true, requiredRole: "admin" },
   { path: "/admin/chapters", title: "Chapters", requiresAuth: true, requiredRole: "admin" },
+  { path: "/admin/chapters/new", title: "New Chapter", requiresAuth: true, requiredRole: "admin" },
+  { path: "/admin/chapters/:chapterId/edit", title: "Edit Chapter", requiresAuth: true, requiredRole: "admin" },
   { path: "/admin/audio", title: "Audio Studio", requiresAuth: true, requiredRole: "admin" },
+  { path: "/admin/audio/assets", title: "Audio Assets", requiresAuth: true, requiredRole: "admin" },
+  { path: "/admin/audio/chapters/:chapterId/cues", title: "Chapter Cues", requiresAuth: true, requiredRole: "admin" },
   { path: "/admin/publish", title: "Publishing", requiresAuth: true, requiredRole: "admin" },
 ];
 

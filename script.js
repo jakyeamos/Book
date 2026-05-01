@@ -340,13 +340,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     muteButton: document.getElementById("mute-toggle"),
     effectsButton: document.getElementById("effects-toggle"),
     adminEditorsButton: document.getElementById("admin-editors-button"),
+    libraryButton: document.getElementById("library-toggle"),
+    accountButton: document.getElementById("account-toggle"),
     highlightButton: document.getElementById("highlight-text-button"),
     bookContainer: document.querySelector(".book-container"),
     parallaxRoot: document.getElementById("parallax-root"),
     giscusContainer: document.getElementById("giscus-container"),
     giscusPlaceholder: document.getElementById("giscus-placeholder"),
     audioUnlockPrompt: document.getElementById("audio-unlock-prompt"),
-    audioUnlockButton: document.getElementById("audio-unlock-button")
+    audioUnlockButton: document.getElementById("audio-unlock-button"),
+    readerPanel: document.getElementById("reader-panel"),
+    readerPanelClose: document.getElementById("reader-panel-close"),
+    readerSessionStatus: document.getElementById("reader-session-status"),
+    readerAuthForm: document.getElementById("reader-auth-form"),
+    readerEmail: document.getElementById("reader-email"),
+    readerPassword: document.getElementById("reader-password"),
+    readerRegisterButton: document.getElementById("reader-register-button"),
+    readerLibraryList: document.getElementById("reader-library-list"),
+    readerSearchForm: document.getElementById("reader-search-form"),
+    readerSearchInput: document.getElementById("reader-search-input"),
+    readerSearchResults: document.getElementById("reader-search-results"),
+    fontScaleInput: document.getElementById("font-scale-input"),
+    lineHeightInput: document.getElementById("line-height-input")
   };
 
   const primaryAudio = document.getElementById("background-audio");
@@ -389,7 +404,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     giscusThemeListenersBound: false,
     currentGiscusTheme: null,
     pendingGiscusTheme: null,
-    suppressAudioPromptUntil: 0
+    suppressAudioPromptUntil: 0,
+    readerSession: null,
+    readerState: {
+      progress: JSON.parse(localStorage.getItem("readerProgress") || "{}"),
+      highlights: JSON.parse(localStorage.getItem("highlights") || "[]"),
+      notes: [],
+      preferences: JSON.parse(localStorage.getItem("readerPreferences") || "{}")
+    }
   };
 
   if (window.gsap && window.ScrollTrigger) {
@@ -580,6 +602,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     lastScrollSaveAt = now;
     localStorage.setItem("scrollPosition", String(Math.round(window.scrollY)));
+    if (state.currentChapterId) {
+      void saveReaderState({
+        progress: {
+          chapterId: state.currentChapterId,
+          scrollY: Math.round(window.scrollY),
+          updatedAt: new Date().toISOString()
+        }
+      });
+    }
   }
 
   function populateChapterDropdown() {
@@ -593,6 +624,134 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function renderReaderLibrary() {
+    if (!elements.readerLibraryList) {
+      return;
+    }
+
+    elements.readerLibraryList.innerHTML = "";
+    state.chapterManifest.forEach((chapter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      const progressChapter = state.readerState.progress?.chapterId;
+      button.innerHTML = `<strong>Chapter ${chapter.number}: ${chapter.title}</strong>${progressChapter === chapter.id ? "<span class=\"reader-result-excerpt\">Last read</span>" : ""}`;
+      button.addEventListener("click", () => {
+        hideReaderPanel();
+        void showChapter(chapter.id, true);
+      });
+      elements.readerLibraryList.appendChild(button);
+    });
+  }
+
+  async function apiJson(path, options = {}) {
+    const response = await fetch(path, {
+      ...options,
+      headers: {
+        "content-type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.error || `Request failed: ${response.status}`);
+    }
+    return body;
+  }
+
+  function applyReaderPreferences(preferences = state.readerState.preferences) {
+    const fontScale = Number(preferences.fontScale || 1);
+    const lineHeight = Number(preferences.lineHeight || 1.65);
+    document.documentElement.style.setProperty("--reader-font-scale", String(fontScale));
+    document.documentElement.style.setProperty("--reader-line-height", String(lineHeight));
+    document.body.style.fontSize = `${fontScale}rem`;
+    document.body.style.lineHeight = String(lineHeight);
+    if (elements.fontScaleInput) {
+      elements.fontScaleInput.value = String(fontScale);
+    }
+    if (elements.lineHeightInput) {
+      elements.lineHeightInput.value = String(lineHeight);
+    }
+  }
+
+  async function saveReaderState(partial = {}) {
+    state.readerState = {
+      ...state.readerState,
+      ...partial
+    };
+    state.highlights = state.readerState.highlights || state.highlights;
+    localStorage.setItem("readerProgress", JSON.stringify(state.readerState.progress || {}));
+    localStorage.setItem("highlights", JSON.stringify(state.highlights));
+    localStorage.setItem("readerPreferences", JSON.stringify(state.readerState.preferences || {}));
+
+    if (!state.readerSession) {
+      return;
+    }
+
+    try {
+      state.readerState = await apiJson("/api/reader/state", {
+        method: "PUT",
+        body: JSON.stringify(state.readerState)
+      });
+    } catch (error) {
+      Logger.debug("Reader state sync failed", error?.message || error);
+    }
+  }
+
+  async function loadReaderSession() {
+    try {
+      const session = await apiJson("/api/auth/session");
+      state.readerSession = session.user;
+      if (elements.readerSessionStatus) {
+        elements.readerSessionStatus.textContent = `Signed in as ${session.user.email}`;
+      }
+      const remoteState = await apiJson("/api/reader/state");
+      state.readerState = remoteState;
+      state.highlights = Array.isArray(remoteState.highlights) ? remoteState.highlights : state.highlights;
+      applyReaderPreferences(remoteState.preferences || {});
+    } catch (_error) {
+      state.readerSession = null;
+      if (elements.readerSessionStatus) {
+        elements.readerSessionStatus.textContent = "Not signed in";
+      }
+      applyReaderPreferences();
+    }
+  }
+
+  function showReaderPanel() {
+    elements.readerPanel?.classList.remove("hidden");
+    renderReaderLibrary();
+  }
+
+  function hideReaderPanel() {
+    elements.readerPanel?.classList.add("hidden");
+  }
+
+  async function fetchPublishedManifest() {
+    try {
+      const response = await fetch("/api/reader/manifest");
+      if (!response.ok) {
+        return null;
+      }
+
+      const manifest = await response.json();
+      if (!Array.isArray(manifest) || manifest.length === 0) {
+        return null;
+      }
+
+      return manifest.map((entry, index) => ({
+        id: entry.id || entry.slug,
+        slug: entry.slug || entry.id,
+        file: entry.file || null,
+        title: entry.title || "Untitled",
+        number: entry.number || index + 1,
+        source: "api"
+      }));
+    } catch (error) {
+      Logger.debug("Published manifest unavailable; falling back to static chapters.", error?.message || error);
+      return null;
+    }
+  }
+
   async function fetchChapterMarkup(chapterId) {
     const chapterMeta = state.chapterManifest.find((entry) => entry.id === chapterId);
     if (!chapterMeta) {
@@ -601,6 +760,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (state.chapterCache.has(chapterId)) {
       return state.chapterCache.get(chapterId);
+    }
+
+    if (chapterMeta.source === "api" || !chapterMeta.file) {
+      const response = await fetch(`/api/reader/chapters/${chapterMeta.slug || chapterMeta.id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch published chapter ${chapterMeta.slug || chapterMeta.id}: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const markup = payload.html;
+      if (typeof markup !== "string") {
+        throw new Error(`Published chapter ${chapterMeta.slug || chapterMeta.id} did not include HTML.`);
+      }
+
+      state.chapterCache.set(chapterId, markup);
+      return markup;
     }
 
     const chapterPath = chapterMeta.file.includes("/")
@@ -1310,6 +1485,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (state.currentChapterId) {
         state.highlights.push({ chapterId: state.currentChapterId, text: selectedText });
         localStorage.setItem("highlights", JSON.stringify(state.highlights));
+        void saveReaderState({ highlights: state.highlights });
       }
     } catch (error) {
       Logger.debug("Unable to apply highlight for complex range", error?.message || error);
@@ -1317,6 +1493,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (chapterText.includes(selectedText) && state.currentChapterId) {
         state.highlights.push({ chapterId: state.currentChapterId, text: selectedText });
         localStorage.setItem("highlights", JSON.stringify(state.highlights));
+        void saveReaderState({ highlights: state.highlights });
         loadAndApplyHighlights(state.currentChapterId);
       }
     }
@@ -1462,15 +1639,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadManifestAndBoot() {
     try {
-      const response = await fetch("chapters/index.json");
-      if (!response.ok) {
-        throw new Error(`Manifest fetch failed: ${response.status}`);
+      const publishedManifest = await fetchPublishedManifest();
+      if (publishedManifest) {
+        state.chapterManifest = publishedManifest;
+      } else {
+        const response = await fetch("chapters/index.json");
+        if (!response.ok) {
+          throw new Error(`Manifest fetch failed: ${response.status}`);
+        }
+
+        state.chapterManifest = await response.json();
       }
 
-      state.chapterManifest = await response.json();
       populateChapterDropdown();
+      renderReaderLibrary();
 
-      const savedChapter = localStorage.getItem("selectedChapter");
+      const savedChapter = state.readerState.progress?.chapterId || localStorage.getItem("selectedChapter");
       const initialChapter = state.chapterManifest.find((entry) => entry.id === savedChapter)
         ? savedChapter
         : state.chapterManifest[0]?.id;
@@ -1481,7 +1665,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       await showChapter(initialChapter, false);
 
-      const savedScroll = Number.parseInt(localStorage.getItem("scrollPosition") || "0", 10);
+      const savedScroll = Number.parseInt(String(state.readerState.progress?.scrollY ?? localStorage.getItem("scrollPosition") ?? "0"), 10);
       if (Number.isFinite(savedScroll) && savedScroll > 0) {
         setTimeout(() => {
           window.scrollTo(0, savedScroll);
@@ -1561,6 +1745,81 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  [elements.libraryButton, elements.accountButton].forEach((button) => {
+    button?.addEventListener("click", showReaderPanel);
+  });
+
+  elements.readerPanelClose?.addEventListener("click", hideReaderPanel);
+
+  elements.readerAuthForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await apiJson("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: elements.readerEmail.value,
+          password: elements.readerPassword.value
+        })
+      });
+      await loadReaderSession();
+      await saveReaderState();
+    } catch (error) {
+      elements.readerSessionStatus.textContent = error?.message || "Sign in failed";
+    }
+  });
+
+  elements.readerRegisterButton?.addEventListener("click", async () => {
+    try {
+      await apiJson("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: elements.readerEmail.value,
+          password: elements.readerPassword.value
+        })
+      });
+      await loadReaderSession();
+      await saveReaderState();
+    } catch (error) {
+      elements.readerSessionStatus.textContent = error?.message || "Registration failed";
+    }
+  });
+
+  elements.readerSearchForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const query = elements.readerSearchInput.value.trim();
+    if (!query) {
+      return;
+    }
+    try {
+      const { results } = await apiJson(`/api/reader/search?q=${encodeURIComponent(query)}`);
+      elements.readerSearchResults.innerHTML = "";
+      results.forEach((result) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.innerHTML = `<strong>${result.title}</strong><span class="reader-result-excerpt">${result.excerpt}</span>`;
+        button.addEventListener("click", () => {
+          hideReaderPanel();
+          void showChapter(result.chapterId, true);
+        });
+        elements.readerSearchResults.appendChild(button);
+      });
+    } catch (error) {
+      elements.readerSearchResults.textContent = error?.message || "Search failed";
+    }
+  });
+
+  [elements.fontScaleInput, elements.lineHeightInput].forEach((input) => {
+    input?.addEventListener("input", () => {
+      const preferences = {
+        ...state.readerState.preferences,
+        fontScale: Number(elements.fontScaleInput.value),
+        lineHeight: Number(elements.lineHeightInput.value)
+      };
+      applyReaderPreferences(preferences);
+      void saveReaderState({ preferences });
+    });
+  });
+
   elements.darkModeButton.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
     const enabled = document.body.classList.contains("dark-mode");
@@ -1627,6 +1886,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeDarkMode();
   initializeMuteState();
   initializeEffectsState();
+  await loadReaderSession();
   setupGiscus();
   await loadManifestAndBoot();
 });

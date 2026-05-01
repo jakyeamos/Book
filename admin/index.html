@@ -5,16 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Editors | Book</title>
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="./admin.css">
 </head>
 <body>
-<main class="book-container chapter-theme" data-chapter="chapter1">
-    <section class="book-section">
-        <h1 class="chapter-title">Admin Editors</h1>
-        <p>This route now resolves correctly. The full authenticated admin UI is still being wired.</p>
-        <p>
-            <a href="../index.html">Back to Reader</a>
-        </p>
+<main class="admin-shell">
+    <section class="admin-hero">
+        <div>
+            <p class="admin-kicker">Book CMS</p>
+            <h1>Admin Editors</h1>
+            <p>Edit chapter markup, preview changes, manage browser drafts, and export publish-ready files.</p>
+        </div>
+        <a class="admin-reader-link" href="../index.html">Back to Reader</a>
+    </section>
+
+    <section id="auth-panel" class="admin-panel auth-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Admin Login</h2>
+                <p>Sign in to edit and publish live database-backed chapters.</p>
+            </div>
+            <span id="auth-status">Checking session</span>
+        </div>
+        <form id="login-form" class="login-form">
+            <label>
+                Email
+                <input id="login-email" type="email" autocomplete="username" required>
+            </label>
+            <label>
+                Password
+                <input id="login-password" type="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit">Sign In</button>
+        </form>
+    </section>
+
+    <section id="admin-workspace" class="admin-grid hidden">
+        <aside class="admin-panel chapter-list-panel">
+            <div class="panel-heading">
+                <h2>Chapters</h2>
+                <span id="chapter-count">Loading...</span>
+            </div>
+            <div id="chapter-list" class="chapter-list" aria-label="Chapter list"></div>
+        </aside>
+
+        <section class="admin-panel editor-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2 id="editor-title">Select a chapter</h2>
+                    <p id="editor-subtitle">Choose a chapter to edit its source fragment.</p>
+                </div>
+                <span id="draft-status" class="draft-status">No chapter selected</span>
+            </div>
+
+            <div class="field-row">
+                <label for="chapter-title-input">Chapter title</label>
+                <input id="chapter-title-input" type="text" autocomplete="off" disabled>
+            </div>
+
+            <div class="field-row">
+                <label for="chapter-html-input">Chapter HTML fragment</label>
+                <textarea id="chapter-html-input" spellcheck="true" disabled></textarea>
+            </div>
+
+            <div class="field-row">
+                <label>Block editor</label>
+                <div id="block-editor" class="block-editor"></div>
+            </div>
+
+            <div class="button-row">
+                <button id="save-draft-button" type="button" disabled>Save Draft</button>
+                <button id="preview-chapter-button" type="button" disabled>Mark Preview</button>
+                <button id="publish-chapter-button" type="button" disabled>Publish Live</button>
+            </div>
+        </section>
+
+        <section class="admin-panel preview-panel">
+            <div class="panel-heading">
+                <h2>Preview</h2>
+                <span id="preview-status">Waiting</span>
+            </div>
+            <div id="chapter-preview" class="chapter-preview">
+                <p>Select a chapter to preview edits.</p>
+            </div>
+        </section>
+
+        <section class="admin-panel cue-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Audio Cues</h2>
+                    <p>Review API-backed cues for the selected chapter. Asset upload and block cue creation use the admin API.</p>
+                </div>
+                <span id="cue-status">No chapter selected</span>
+            </div>
+
+            <div class="field-row">
+                <label for="cue-json-input">Stored cue JSON</label>
+                <textarea id="cue-json-input" spellcheck="false" readonly disabled></textarea>
+            </div>
+
+            <form id="audio-upload-form" class="audio-upload-form">
+                <input id="audio-title-input" type="text" placeholder="Track title">
+                <input id="audio-file-input" type="file" accept="audio/mpeg,audio/mp3">
+                <input id="audio-duration-input" type="number" min="1" step="1" placeholder="Duration seconds">
+                <button type="submit">Upload MP3</button>
+            </form>
+
+            <form id="cue-create-form" class="cue-create-form">
+                <select id="cue-asset-select" aria-label="Audio asset"></select>
+                <input id="cue-start-block-input" type="text" placeholder="Start block id">
+                <input id="cue-end-block-input" type="text" placeholder="End block id">
+                <button type="submit">Create Cue</button>
+            </form>
+        </section>
+
+        <section class="admin-panel ops-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Operations</h2>
+                    <p>Recent publish, reader, and audio events.</p>
+                </div>
+                <button id="refresh-events-button" type="button">Refresh</button>
+            </div>
+            <div id="admin-events-list" class="admin-events-list"></div>
+        </section>
     </section>
 </main>
+<script type="module" src="./admin.js"></script>
 </body>
 </html>

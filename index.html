@@ -16,7 +16,53 @@
     <button id="mute-toggle" aria-label="Mute audio">Mute</button>
     <button id="effects-toggle" aria-label="Toggle visual effects">Effects On</button>
     <button id="highlight-text-button">Highlight</button>
+    <button id="library-toggle" aria-label="Open reader library">Library</button>
+    <button id="account-toggle" aria-label="Open reader account">Account</button>
 </div>
+
+<aside id="reader-panel" class="reader-panel hidden" aria-label="Reader tools">
+    <section>
+        <div class="reader-panel-heading">
+            <h2>Reader Account</h2>
+            <button id="reader-panel-close" type="button">Close</button>
+        </div>
+        <p id="reader-session-status">Not signed in</p>
+        <form id="reader-auth-form" class="reader-auth-form">
+            <input id="reader-email" type="email" placeholder="Email" autocomplete="username">
+            <input id="reader-password" type="password" placeholder="Password" autocomplete="current-password">
+            <div>
+                <button id="reader-login-button" type="submit">Sign In</button>
+                <button id="reader-register-button" type="button">Create Account</button>
+            </div>
+        </form>
+    </section>
+
+    <section>
+        <h2>Library</h2>
+        <div id="reader-library-list" class="reader-library-list"></div>
+    </section>
+
+    <section>
+        <h2>Search</h2>
+        <form id="reader-search-form" class="reader-search-form">
+            <input id="reader-search-input" type="search" placeholder="Search chapters">
+            <button type="submit">Search</button>
+        </form>
+        <div id="reader-search-results" class="reader-search-results"></div>
+    </section>
+
+    <section>
+        <h2>Reading Preferences</h2>
+        <label>
+            Font scale
+            <input id="font-scale-input" type="range" min="0.9" max="1.35" step="0.05" value="1">
+        </label>
+        <label>
+            Line height
+            <input id="line-height-input" type="range" min="1.4" max="2" step="0.05" value="1.65">
+        </label>
+    </section>
+</aside>
 
 <audio id="background-audio" preload="auto"></audio>
 <audio id="background-audio-secondary" preload="auto"></audio>

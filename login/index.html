@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Book</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/login/login.css">
+</head>
+<body>
+<main class="login-shell">
+    <section class="login-panel">
+        <p class="login-kicker">Book Account</p>
+        <h1>Sign In</h1>
+        <p id="login-copy">Use an admin account for the editor or a reader account for synced notes and highlights.</p>
+        <p id="login-status" role="status">Checking session...</p>
+
+        <form id="login-form" class="login-form">
+            <label>
+                Email
+                <input id="login-email" type="email" autocomplete="username" required>
+            </label>
+            <label>
+                Password
+                <input id="login-password" type="password" autocomplete="current-password" required>
+            </label>
+            <div class="login-actions">
+                <button type="submit">Sign In</button>
+                <button id="register-button" type="button">Create Reader Account</button>
+            </div>
+        </form>
+    </section>
+</main>
+<script type="module" src="/login/login.js"></script>
+</body>
+</html>

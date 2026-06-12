@@ -37,10 +37,24 @@ async function run(): Promise<void> {
       throw new Error("Reader chapter endpoint did not return chapter HTML");
     }
 
-    const adminPage = await fetch(`${baseUrl}/admin`);
-    const adminHtml = await adminPage.text();
-    if (adminPage.status !== 200 || !adminHtml.includes("Admin Editors")) {
-      throw new Error("/admin did not serve the admin editor shell");
+    const anonymousAdminPage = await fetch(`${baseUrl}/admin`, { redirect: "manual" });
+    if (anonymousAdminPage.status !== 302 || anonymousAdminPage.headers.get("location") !== "/login?next=/admin") {
+      throw new Error("Anonymous /admin did not redirect to /login");
+    }
+
+    const loginPage = await fetch(`${baseUrl}/login`);
+    const loginHtml = await loginPage.text();
+    if (
+      loginPage.status !== 200
+      || !loginHtml.includes("Book Account")
+      || !loginHtml.includes("/login/login.js")
+    ) {
+      throw new Error("/login did not serve the login shell");
+    }
+
+    const anonymousHighlightsPage = await fetch(`${baseUrl}/me/highlights`, { redirect: "manual" });
+    if (anonymousHighlightsPage.status !== 302 || anonymousHighlightsPage.headers.get("location") !== "/login?next=%2Fme%2Fhighlights") {
+      throw new Error("Anonymous reader-only route did not redirect to /login");
     }
 
     const login = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/login", {
@@ -50,6 +64,18 @@ async function run(): Promise<void> {
     const cookie = login.headers.get("set-cookie") ?? "";
     if (login.status !== 200 || login.body.user.role !== "admin" || !cookie.includes("auth_token=")) {
       throw new Error("Admin login did not issue an admin session");
+    }
+
+    const adminPage = await fetch(`${baseUrl}/admin`, {
+      headers: { cookie },
+    });
+    const adminHtml = await adminPage.text();
+    if (
+      adminPage.status !== 200
+      || !adminHtml.includes("Admin Editors")
+      || !adminHtml.includes("/admin/admin.js")
+    ) {
+      throw new Error("/admin did not serve the admin editor shell");
     }
 
     const chapters = await requestJson<Array<{ id: string }>>(baseUrl, "/api/admin/chapters", {
@@ -71,6 +97,14 @@ async function run(): Promise<void> {
     const readerCookie = readerLogin.headers.get("set-cookie") ?? "";
     if (readerLogin.status !== 201 || readerLogin.body.user.role !== "reader") {
       throw new Error("Reader registration did not create a reader session");
+    }
+
+    const readerHighlightsPage = await fetch(`${baseUrl}/me/highlights`, {
+      headers: { cookie: readerCookie },
+    });
+    const readerHighlightsHtml = await readerHighlightsPage.text();
+    if (readerHighlightsPage.status !== 200 || !readerHighlightsHtml.includes("Reader Account")) {
+      throw new Error("Authenticated reader-only route did not serve the reader shell");
     }
 
     const savedState = await requestJson<{ progress: { chapterId: string }; highlights: unknown[] }>(baseUrl, "/api/reader/state", {

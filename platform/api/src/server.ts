@@ -1104,6 +1104,11 @@ function sendJson(response: http.ServerResponse, status: number, body: unknown, 
   response.end(JSON.stringify(body));
 }
 
+function sendRedirect(response: http.ServerResponse, location: string): void {
+  response.writeHead(302, { location });
+  response.end();
+}
+
 function sessionCookie(token: string, maxAge?: number): string {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   const maxAgePart = typeof maxAge === "number" ? `; Max-Age=${maxAge}` : "";
@@ -1427,6 +1432,27 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         await audio.deleteCue(cueDeleteMatch[1]);
         sendJson(response, 200, { ok: true });
         return;
+      }
+
+      if (method === "GET" && pathname === "/admin") {
+        try {
+          await requireAdmin(request, auth);
+        } catch (_error) {
+          sendRedirect(response, "/login?next=/admin");
+          return;
+        }
+      }
+
+      if (method === "GET" && (pathname === "/me/highlights" || pathname === "/me/notes")) {
+        const context = await auth.session(authToken(request));
+        if (!context) {
+          sendRedirect(response, `/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+
+        if (await serveStatic(rootDir, "/", response)) {
+          return;
+        }
       }
 
       if (await serveStatic(rootDir, pathname, response)) {

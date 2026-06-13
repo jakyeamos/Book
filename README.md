@@ -41,11 +41,11 @@ python -m http.server 8080
 - `pnpm run convert:chapters` converts source `.docx` files via Mammoth
 - `pnpm run platform:migrate` applies Postgres schema migrations
 - `pnpm run platform:seed-content` seeds current static chapters into Postgres
-- `pnpm run platform:fullstack-smoke` verifies the full-stack reader/admin API path locally, or a deployed Render service when `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD` are set
+- `pnpm run platform:fullstack-smoke` verifies the full-stack reader/admin API path locally with disposable smoke credentials, or a deployed Render service when `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD` are set
 
 ## Full-Stack Deployment
 
-The live admin editor requires the Node server plus Postgres. `render.yaml` defines a managed Node deployment with a Postgres database and persistent audio asset disk. On startup, the server applies migrations, bootstraps the admin account from `ADMIN_EMAIL` / `ADMIN_PASSWORD`, seeds current static chapters when the database is empty, and serves:
+The live admin editor requires the Node server plus Postgres. `render.yaml` defines a managed Node deployment with a Postgres database and persistent audio asset disk. On startup, the server applies migrations, bootstraps the admin account only from explicit `ADMIN_EMAIL` / `ADMIN_PASSWORD`, seeds current static chapters when the database is empty, and serves:
 
 - `/` reader UI
 - `/admin` authenticated admin editor
@@ -53,6 +53,8 @@ The live admin editor requires the Node server plus Postgres. `render.yaml` defi
 - `/api/admin/*` protected editing and audio APIs
 
 See `docs/operations.md` for release checks, migration/seed commands, backups, restore steps, and security notes.
+
+For local admin development with `pnpm start`, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` before starting the server. Reader accounts are created through `/login`; there are no built-in reader credentials.
 
 ## Content Pipeline
 

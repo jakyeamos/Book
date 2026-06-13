@@ -14,16 +14,39 @@ function run(): void {
 
   const users = new UserRepository(storePath);
   const auth = new AuthService(users);
-  auth.bootstrapDefaults();
+  auth.bootstrapAdmin({
+    email: "smoke-admin@example.com",
+    password: "smoke-admin-password",
+  });
+  users.ensureUser({
+    email: "smoke-reader@example.com",
+    displayName: "Smoke Reader",
+    role: "reader",
+    password: "smoke-reader-password",
+  });
+
+  for (const credentials of [
+    { email: "admin@example.com", password: "change-me-admin" },
+    { email: "reader@example.com", password: "change-me-reader" },
+  ]) {
+    try {
+      auth.login(credentials);
+      throw new Error(`Default credentials unexpectedly worked for ${credentials.email}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Default credentials unexpectedly worked")) {
+        throw error;
+      }
+    }
+  }
 
   const admin = auth.login({
-    email: "admin@example.com",
-    password: "change-me-admin",
+    email: "smoke-admin@example.com",
+    password: "smoke-admin-password",
   });
 
   const reader = auth.login({
-    email: "reader@example.com",
-    password: "change-me-reader",
+    email: "smoke-reader@example.com",
+    password: "smoke-reader-password",
   });
 
   const adminRequest = {
@@ -32,6 +55,10 @@ function run(): void {
 
   const readerRequest = {
     headers: { authorization: `Bearer ${reader.session.token}` },
+  };
+
+  const readerCookieRequest = {
+    cookies: { auth_token: reader.session.token },
   };
 
   const adminAccess = resolveAdminRoutes(adminRequest, auth);
@@ -44,7 +71,7 @@ function run(): void {
     throw new Error("Reader session should not have admin route access");
   }
 
-  const readerIndicator = buildReaderSessionIndicator(readerRequest, auth);
+  const readerIndicator = buildReaderSessionIndicator(readerCookieRequest, auth);
   if (!readerIndicator.isLoggedIn) {
     throw new Error("Expected reader to be logged in for session indicator");
   }

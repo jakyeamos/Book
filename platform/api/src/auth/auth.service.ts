@@ -7,22 +7,21 @@ export interface LoginInput {
   ttlHours?: number;
 }
 
+export interface BootstrapAdminInput {
+  email: string;
+  password: string;
+  displayName?: string;
+}
+
 export class AuthService {
   constructor(private readonly users: UserRepository) {}
 
-  bootstrapDefaults(): void {
+  bootstrapAdmin(input: BootstrapAdminInput): void {
     this.users.ensureUser({
-      email: "admin@example.com",
-      displayName: "Admin",
+      email: input.email,
+      displayName: input.displayName ?? "Admin",
       role: "admin",
-      password: "change-me-admin",
-    });
-
-    this.users.ensureUser({
-      email: "reader@example.com",
-      displayName: "Reader",
-      role: "reader",
-      password: "change-me-reader",
+      password: input.password,
     });
   }
 

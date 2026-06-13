@@ -1,5 +1,7 @@
 import { AddressInfo } from "node:net";
+import * as fs from "node:fs";
 import * as http from "node:http";
+import * as path from "node:path";
 import { createBookServer } from "../api/src/server";
 
 interface SmokeTarget {
@@ -7,6 +9,8 @@ interface SmokeTarget {
   adminEmail: string;
   adminPassword: string;
   server?: http.Server;
+  previousAudioAssetDir?: string;
+  smokeAssetDir?: string;
 }
 
 async function requestJson<T>(
@@ -40,8 +44,66 @@ function envValue(...names: string[]): string | undefined {
   return undefined;
 }
 
+function setEnvValue(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}
+
+async function expectProductionBootstrapFailure(
+  setup: () => void,
+  expectedMessage: string,
+): Promise<void> {
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalAdminEmail = process.env.ADMIN_EMAIL;
+  const originalAdminPassword = process.env.ADMIN_PASSWORD;
+
+  try {
+    process.env.NODE_ENV = "production";
+    setup();
+    const server = await createBookServer({ mode: "memory" });
+    server.close();
+    throw new Error(`Production bootstrap unexpectedly succeeded: ${expectedMessage}`);
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes(expectedMessage)) {
+      throw error;
+    }
+  } finally {
+    setEnvValue("NODE_ENV", originalNodeEnv);
+    setEnvValue("ADMIN_EMAIL", originalAdminEmail);
+    setEnvValue("ADMIN_PASSWORD", originalAdminPassword);
+  }
+}
+
+async function assertProductionAdminBootstrap(): Promise<void> {
+  await expectProductionBootstrapFailure(() => {
+    delete process.env.ADMIN_EMAIL;
+    delete process.env.ADMIN_PASSWORD;
+  }, "Production admin bootstrap requires ADMIN_EMAIL and ADMIN_PASSWORD");
+
+  await expectProductionBootstrapFailure(() => {
+    process.env.ADMIN_EMAIL = "admin@example.com";
+    process.env.ADMIN_PASSWORD = "change-me-admin";
+  }, "ADMIN_PASSWORD must not use the old default admin password in production");
+}
+
 async function createLocalTarget(): Promise<SmokeTarget> {
-  const server = await createBookServer({ mode: "memory" });
+  const timestamp = Date.now();
+  const adminEmail = `admin-smoke-${timestamp}@example.com`;
+  const adminPassword = `admin-smoke-password-${timestamp}`;
+  const smokeAssetDir = path.join(".planning", "data", `fullstack-smoke-assets-${timestamp}`);
+  const previousAudioAssetDir = process.env.AUDIO_ASSET_DIR;
+  process.env.AUDIO_ASSET_DIR = smokeAssetDir;
+  const server = await createBookServer({
+    mode: "memory",
+    bootstrapAdmin: {
+      email: adminEmail,
+      password: adminPassword,
+    },
+  });
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
     server.listen(0, "127.0.0.1", () => {
@@ -53,9 +115,11 @@ async function createLocalTarget(): Promise<SmokeTarget> {
   const address = server.address() as AddressInfo;
   return {
     baseUrl: `http://127.0.0.1:${address.port}`,
-    adminEmail: "admin@example.com",
-    adminPassword: "change-me-admin",
+    adminEmail,
+    adminPassword,
     server,
+    previousAudioAssetDir,
+    smokeAssetDir,
   };
 }
 
@@ -88,9 +152,19 @@ async function closeTarget(target: SmokeTarget): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     target.server?.close((error: Error | undefined) => (error ? reject(error) : resolve()));
   });
+  if (target.previousAudioAssetDir === undefined) {
+    delete process.env.AUDIO_ASSET_DIR;
+  } else {
+    process.env.AUDIO_ASSET_DIR = target.previousAudioAssetDir;
+  }
+  if (target.smokeAssetDir) {
+    fs.rmSync(target.smokeAssetDir, { recursive: true, force: true });
+  }
 }
 
 async function run(): Promise<void> {
+  await assertProductionAdminBootstrap();
+
   const target = await resolveTarget();
   const { adminEmail, adminPassword, baseUrl } = target;
 
@@ -111,8 +185,16 @@ async function run(): Promise<void> {
     }
 
     const anonymousAdminPage = await fetch(`${baseUrl}/admin`, { redirect: "manual" });
-    if (anonymousAdminPage.status !== 302 || anonymousAdminPage.headers.get("location") !== "/login?next=/admin") {
+    if (anonymousAdminPage.status !== 302 || anonymousAdminPage.headers.get("location") !== "/login?next=%2Fadmin") {
       throw new Error("Anonymous /admin did not redirect to /login");
+    }
+
+    const anonymousAdminSubroute = await fetch(`${baseUrl}/admin/chapters`, { redirect: "manual" });
+    if (
+      anonymousAdminSubroute.status !== 302
+      || anonymousAdminSubroute.headers.get("location") !== "/login?next=%2Fadmin%2Fchapters"
+    ) {
+      throw new Error("Anonymous /admin subroute did not redirect to /login");
     }
 
     const loginPage = await fetch(`${baseUrl}/login`);
@@ -128,6 +210,19 @@ async function run(): Promise<void> {
     const anonymousHighlightsPage = await fetch(`${baseUrl}/me/highlights`, { redirect: "manual" });
     if (anonymousHighlightsPage.status !== 302 || anonymousHighlightsPage.headers.get("location") !== "/login?next=%2Fme%2Fhighlights") {
       throw new Error("Anonymous reader-only route did not redirect to /login");
+    }
+
+    for (const credentials of [
+      { email: "admin@example.com", password: "change-me-admin" },
+      { email: "reader@example.com", password: "change-me-reader" },
+    ]) {
+      const defaultLogin = await requestJson<{ user?: { role: string }; error?: string }>(baseUrl, "/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      });
+      if (defaultLogin.status === 200) {
+        throw new Error(`Default credentials unexpectedly worked for ${credentials.email}`);
+      }
     }
 
     const login = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/login", {
@@ -149,6 +244,18 @@ async function run(): Promise<void> {
       || !adminHtml.includes("/admin/admin.js")
     ) {
       throw new Error("/admin did not serve the admin editor shell");
+    }
+
+    const adminSubroute = await fetch(`${baseUrl}/admin/chapters`, {
+      headers: { cookie },
+    });
+    const adminSubrouteHtml = await adminSubroute.text();
+    if (
+      adminSubroute.status !== 200
+      || !adminSubrouteHtml.includes("Admin Editors")
+      || !adminSubrouteHtml.includes("/admin/admin.js")
+    ) {
+      throw new Error("Authenticated /admin subroute did not serve the admin editor shell");
     }
 
     const chapters = await requestJson<Array<{ id: string }>>(baseUrl, "/api/admin/chapters", {

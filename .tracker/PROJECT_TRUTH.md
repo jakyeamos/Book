@@ -1,12 +1,12 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book now has a full-stack reading platform path with a shared login route, authenticated admin editing, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, and managed Node deployment.
-healthScore: 86
+summary: Book now has a full-stack reading platform path with a shared login route, authenticated admin editing, protected admin subroutes, explicit production admin bootstrap, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, and managed Node deployment.
+healthScore: 88
 statusLabel: on_track
-nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run live editor verification.
+nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` against the deployed service.
 blockers: []
-lastUpdated: 2026-06-12
+lastUpdated: 2026-06-13
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -16,7 +16,7 @@ goals:
 repoType: app
 sourceOfTruth: mixed
 primaryLanguage: TypeScript
-activeBranch: main
+activeBranch: codex/fix-login-route
 lastCommitDate: "2026-05-01"
 quality:
   lint: pass
@@ -47,6 +47,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 ## Recent Progress
 
 - Jun 12: Added a shared `/login` route and server redirects so anonymous `/admin`, `/me/highlights`, and `/me/notes` requests no longer fall through to 404; authenticated reader-only routes serve the reader shell.
+- Jun 13: Closed remaining deployed auth gaps: extensionless `/admin/*` routes now require admin access and serve the admin shell, shared route guards read the runtime `auth_token` cookie, and production startup requires explicit admin bootstrap credentials instead of default accounts.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -61,7 +62,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Open Problems
 
-- The full-stack admin and login paths are implemented locally but not yet verified on the live domain.
+- The full-stack admin, login, admin subroute, and reader-only paths are verified locally but not yet verified on the live domain.
 - Audio asset storage is configured for a persistent managed disk by default; switching to S3/R2-style object storage would require adding that provider adapter.
 - Admin block editing is functional but intentionally lightweight; a richer drag/drop editor would be a future UX pass.
 - No dead-code audit command is configured in `package.json`.
@@ -75,20 +76,20 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Risks / Blockers
 
-- No code blockers remain for local full-stack verification.
+- No code blockers remain for local full-stack verification of `/login`, `/admin`, `/admin/*`, or reader-only account routes.
 - Live functionality depends on deploying the managed Node/Postgres service and moving the domain away from static-only hosting.
 - Persistent audio uploads depend on the managed disk configured in `render.yaml`; object-storage provider support is still future work.
 
 ## Quality Ladder Notes
 
 - **Lint/format baseline:** `npm test` includes chapter formatting lint and passed on 2026-05-01.
-- **Types:** `pnpm run platform:typecheck` passed on 2026-06-12.
+- **Types:** `pnpm run platform:typecheck` passed on 2026-06-13.
 - **Tests:** `npm test` passed on 2026-05-01.
 - **Build:** `pnpm run build` passed on 2026-06-12.
-- **Full-stack smoke:** `node .planning/.tmp-tsrun/platform/platform/scripts/fullstack-admin-smoke.js` passed on 2026-06-12 after `pnpm run build`; it requires localhost bind permission in the Codex sandbox.
-- **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-12; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
+- **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 with localhost bind permission in the Codex sandbox.
+- **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** `npm run audit:dead-code` is not configured, so status is unknown.
-- **Security:** `npm audit --audit-level=high` passed with 0 vulnerabilities on 2026-05-01 after `npm audit fix`.
+- **Security:** `npm audit --audit-level=high` passed with 0 vulnerabilities on 2026-05-01 after `npm audit fix`; production admin bootstrap now rejects missing credentials and the removed `change-me-admin` default.
 
 ## Agent Notes
 

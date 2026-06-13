@@ -15,7 +15,7 @@ export function readAuthToken(request: RequestLike): string | undefined {
     }
   }
 
-  const cookieToken = request.cookies?.sessionToken;
+  const cookieToken = request.cookies?.auth_token ?? request.cookies?.sessionToken;
   if (cookieToken) {
     return cookieToken;
   }

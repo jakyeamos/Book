@@ -36,6 +36,13 @@ export interface CreateBookServerOptions {
   mode?: "memory" | "postgres";
   rootDir?: string;
   databaseUrl?: string;
+  bootstrapAdmin?: AdminBootstrapConfig;
+}
+
+interface AdminBootstrapConfig {
+  email: string;
+  password: string;
+  displayName?: string;
 }
 
 interface PublicChapter {
@@ -58,7 +65,7 @@ interface ContentStore {
 }
 
 interface AuthStore {
-  bootstrapDefaults(): Promise<void>;
+  bootstrapAdmin(config: AdminBootstrapConfig | undefined): Promise<void>;
   registerReader(email: string, password: string, displayName?: string): Promise<{ user: UserRecord; session: AuthSessionRecord }>;
   login(email: string, password: string): Promise<{ user: UserRecord; session: AuthSessionRecord }>;
   session(token: string | undefined): Promise<{ user: UserRecord; session: AuthSessionRecord } | undefined>;
@@ -119,6 +126,42 @@ interface AudioStore {
 
 function rootFromOptions(options: CreateBookServerOptions): string {
   return options.rootDir ?? process.cwd();
+}
+
+function envValue(name: string): string | undefined {
+  const value = process.env[name];
+  return value && value.trim() ? value.trim() : undefined;
+}
+
+function validateAdminBootstrapConfig(config: AdminBootstrapConfig | undefined): AdminBootstrapConfig | undefined {
+  if (!config) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Production admin bootstrap requires ADMIN_EMAIL and ADMIN_PASSWORD.");
+    }
+    return undefined;
+  }
+
+  const email = config.email.trim();
+  const password = config.password.trim();
+  if (!email || !password) {
+    throw new Error("Admin bootstrap requires both ADMIN_EMAIL and ADMIN_PASSWORD.");
+  }
+
+  if (process.env.NODE_ENV === "production" && password === "change-me-admin") {
+    throw new Error("ADMIN_PASSWORD must not use the old default admin password in production.");
+  }
+
+  return { email, password, displayName: config.displayName };
+}
+
+function readAdminBootstrapConfig(options: CreateBookServerOptions): AdminBootstrapConfig | undefined {
+  if (options.bootstrapAdmin) {
+    return validateAdminBootstrapConfig(options.bootstrapAdmin);
+  }
+
+  const email = envValue("ADMIN_EMAIL");
+  const password = envValue("ADMIN_PASSWORD");
+  return validateAdminBootstrapConfig(email || password ? { email: email ?? "", password: password ?? "" } : undefined);
 }
 
 function stripTags(value: string): string {
@@ -540,9 +583,12 @@ class MemoryAuthStore implements AuthStore {
   private users: UserRecord[] = [];
   private sessions: AuthSessionRecord[] = [];
 
-  async bootstrapDefaults(): Promise<void> {
-    this.ensureUser("admin@example.com", "Admin", "admin", "change-me-admin");
-    this.ensureUser("reader@example.com", "Reader", "reader", "change-me-reader");
+  async bootstrapAdmin(config: AdminBootstrapConfig | undefined): Promise<void> {
+    if (!config) {
+      return;
+    }
+
+    this.ensureUser(config.email, config.displayName ?? "Admin", "admin", config.password);
   }
 
   async registerReader(email: string, password: string, displayName?: string): Promise<{ user: UserRecord; session: AuthSessionRecord }> {
@@ -616,9 +662,12 @@ class MemoryAuthStore implements AuthStore {
 class PostgresAuthStore implements AuthStore {
   constructor(private readonly pool: Pool) {}
 
-  async bootstrapDefaults(): Promise<void> {
-    const email = normalizeEmail(process.env.ADMIN_EMAIL || "admin@example.com");
-    const password = process.env.ADMIN_PASSWORD || "change-me-admin";
+  async bootstrapAdmin(config: AdminBootstrapConfig | undefined): Promise<void> {
+    if (!config) {
+      return;
+    }
+
+    const email = normalizeEmail(config.email);
     const existing = await this.pool.query("SELECT id FROM users WHERE email = $1", [email]);
     if (existing.rows.length > 0) {
       return;
@@ -628,7 +677,7 @@ class PostgresAuthStore implements AuthStore {
     await this.pool.query(
       `INSERT INTO users (id, email, display_name, role, password_hash, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [makeUserId(email), email, "Admin", "admin", hashPassword(password), now, now],
+      [makeUserId(email), email, config.displayName ?? "Admin", "admin", hashPassword(config.password), now, now],
     );
   }
 
@@ -1180,6 +1229,10 @@ async function serveStatic(rootDir: string, requestPath: string, response: http.
   return true;
 }
 
+function isAdminShellRoute(pathname: string): boolean {
+  return pathname === "/admin" || (pathname.startsWith("/admin/") && path.extname(pathname) === "");
+}
+
 function chapterPayload(chapter: ChapterRecord): Record<string, unknown> {
   return {
     id: chapter.id,
@@ -1205,9 +1258,10 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
   const audio: AudioStore = pool ? new PostgresAudioStore(pool, rootDir) : new MemoryAudioStore(rootDir);
   const readerState: ReaderStateStore = pool ? new PostgresReaderStateStore(pool) : new MemoryReaderStateStore();
   const events: AppEventStore = pool ? new PostgresAppEventStore(pool) : new MemoryAppEventStore();
+  const adminBootstrap = readAdminBootstrapConfig(options);
 
   await content.bootstrapFromStatic();
-  await auth.bootstrapDefaults();
+  await auth.bootstrapAdmin(adminBootstrap);
   const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
   function assertLoginAllowed(request: http.IncomingMessage): void {
@@ -1434,11 +1488,15 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         return;
       }
 
-      if (method === "GET" && pathname === "/admin") {
+      if (method === "GET" && isAdminShellRoute(pathname)) {
         try {
           await requireAdmin(request, auth);
         } catch (_error) {
-          sendRedirect(response, "/login?next=/admin");
+          sendRedirect(response, `/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+
+        if (await serveStatic(rootDir, "/admin", response)) {
           return;
         }
       }
@@ -1473,7 +1531,7 @@ export async function seedPostgresContent(options: CreateBookServerOptions = {})
   try {
     await applyMigrations(pool);
     await new PostgresContentStore(pool, rootDir).bootstrapFromStatic();
-    await new PostgresAuthStore(pool).bootstrapDefaults();
+    await new PostgresAuthStore(pool).bootstrapAdmin(readAdminBootstrapConfig(options));
   } finally {
     await pool.end();
   }

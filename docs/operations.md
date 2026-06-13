@@ -26,9 +26,11 @@ pnpm run platform:fullstack-smoke
 
 - `DATABASE_URL`: Postgres connection string.
 - `ADMIN_EMAIL`: first admin account email.
-- `ADMIN_PASSWORD`: first admin account password.
+- `ADMIN_PASSWORD`: first admin account password. Production startup fails if this is missing or still set to the removed `change-me-admin` default.
 - `NODE_ENV=production`: enables secure auth cookies.
 - `AUDIO_ASSET_DIR`: persistent disk path for uploaded audio assets.
+
+The platform no longer creates default admin or reader accounts. Production admin setup must be explicit through `ADMIN_EMAIL` and `ADMIN_PASSWORD`; reader accounts are created through registration. For local admin development, export `ADMIN_EMAIL` and `ADMIN_PASSWORD` before `pnpm start`.
 
 ## Database Migration And Seed
 

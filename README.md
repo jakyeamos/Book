@@ -20,6 +20,8 @@ Book is a browser-based interactive reading experience that loads chapter fragme
 pnpm install
 ```
 
+This repository is locked with `pnpm-lock.yaml`; do not use npm or yarn to install dependencies.
+
 2. Start a local HTTP server (required for `fetch()` chapter loading):
 
 ```bash
@@ -45,7 +47,7 @@ python -m http.server 8080
 
 ## Full-Stack Deployment
 
-The live admin editor requires the Node server plus Postgres. `render.yaml` defines a managed Node deployment with a Postgres database and persistent audio asset disk. On startup, the server applies migrations, bootstraps the admin account only from explicit `ADMIN_EMAIL` / `ADMIN_PASSWORD`, seeds current static chapters when the database is empty, and serves:
+The live admin editor requires the Node server plus Postgres. `render.yaml` defines a managed Node deployment with a Postgres database, persistent audio asset disk, and pnpm locked install/build commands. On startup, the server applies migrations, bootstraps the admin account only from explicit `ADMIN_EMAIL` / `ADMIN_PASSWORD`, seeds current static chapters when the database is empty, and serves:
 
 - `/` reader UI
 - `/admin` authenticated admin editor

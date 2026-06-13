@@ -108,7 +108,7 @@ All localStorage access is in `script.js`. No cookies or sessionStorage used.
 
 ## Offline / Authoring Tooling
 
-**mammoth (npm package, Node.js only):**
+**mammoth (Node package, Node.js only):**
 - Converts `.docx` Word files to raw HTML for the chapter authoring pipeline
 - Used in: `tools/convert-chapters.cjs`
 - Not loaded in the browser; purely a local developer tool

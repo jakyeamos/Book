@@ -24,6 +24,7 @@ quality:
   tests: pass
   deadCode: unknown
   structure: pass
+  dependencies: pnpm
 canonicalCommands:
   install: pnpm install
   dev: pnpm run build && pnpm start
@@ -48,6 +49,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 - Jun 12: Added a shared `/login` route and server redirects so anonymous `/admin`, `/me/highlights`, and `/me/notes` requests no longer fall through to 404; authenticated reader-only routes serve the reader shell.
 - Jun 13: Closed remaining deployed auth gaps: extensionless `/admin/*` routes now require admin access and serve the admin shell, shared route guards read the runtime `auth_token` cookie, and production startup requires explicit admin bootstrap credentials instead of default accounts.
+- Jun 13: Normalized runtime, deployment, and operations dependency commands to pnpm and replaced the npm lockfile with `pnpm-lock.yaml`.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -88,8 +90,8 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - **Build:** `pnpm run build` passed on 2026-06-13 through `pnpm run platform:fullstack-smoke`.
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 with localhost bind permission in the Codex sandbox.
 - **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
-- **Dead code:** `npm run audit:dead-code` is not configured, so status is unknown.
-- **Security:** `npm audit --audit-level=high` passed with 0 vulnerabilities on 2026-05-01 after `npm audit fix`; production admin bootstrap now rejects missing credentials and the removed `change-me-admin` default.
+- **Dead code:** no `audit:dead-code` script is configured, so status is unknown.
+- **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.
 
 ## Agent Notes
 

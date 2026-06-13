@@ -60,7 +60,7 @@
 - Purpose: One-time conversion of source `.docx` files to raw HTML, and validation of chapter HTML structure
 - Location: `tools/convert-chapters.cjs`, `tools/validate-chapters.cjs`
 - Contains: Node.js CommonJS scripts using `mammoth` for DOCX-to-HTML conversion
-- Depends on: `mammoth` npm package, local filesystem paths
+- Depends on: `mammoth` Node package, local filesystem paths
 - Used by: Developers manually; not part of the served application
 
 ## Data Flow

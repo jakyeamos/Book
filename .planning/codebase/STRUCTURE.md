@@ -10,7 +10,7 @@ Book/                          # Project root — served as GitHub Pages site
 ├── script.js                  # All application logic (ES module, ~1230 lines)
 ├── styles.css                 # All styles — layout, animations, theming (~9KB)
 ├── package.json               # Node metadata; only runtime dep is mammoth (tooling only)
-├── package-lock.json          # Lockfile
+├── pnpm-lock.yaml             # pnpm lockfile
 ├── .gitignore                 # Ignores node_modules/ and .planning/
 ├── Eva_Angelina.mp3           # Primary music track (root-level asset)
 ├── Mojo_Pin.mp3               # Primary music track (root-level asset)
@@ -172,7 +172,7 @@ Note: `assets/` directory is referenced in config (e.g., `assets/ch1/fog.png`, `
 - Committed: No (listed in `.gitignore`)
 
 **`node_modules/`:**
-- Purpose: npm dependencies (only `mammoth` — used by tooling only, not the served app)
+- Purpose: pnpm-installed dependencies (including `mammoth`, used by tooling only and not the served app)
 - Generated: Yes
 - Committed: No (listed in `.gitignore`)
 

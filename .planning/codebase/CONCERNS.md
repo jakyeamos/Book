@@ -172,10 +172,10 @@
 - Impact: Full script execution in reader's browser context.
 - Migration plan: Add SRI `integrity` attributes (see Security section above).
 
-**`mammoth` npm dependency used only by `tools/convert-chapters.cjs`:**
+**`mammoth` Node dependency used only by `tools/convert-chapters.cjs`:**
 - Risk: `mammoth` is a runtime dependency in `package.json` (not devDependency). It is only used by the local conversion tool, not by the deployed site. Including it as a regular dependency signals it should be in production bundles, which is misleading and increases package size for contributors.
 - Files: `package.json` (line 21), `tools/convert-chapters.cjs`
-- Impact: No production impact (browser does not use npm packages). Developer confusion only.
+- Impact: No production impact (browser does not load Node packages). Developer confusion only.
 - Migration plan: Move `mammoth` to `devDependencies`.
 
 ---

@@ -19,8 +19,8 @@
 - No `.nvmrc` or `.python-version` present; no pinned Node version in project
 
 **Package Manager:**
-- npm
-- Lockfile: present (`package-lock.json`, lockfileVersion 3)
+- pnpm
+- Lockfile: present (`pnpm-lock.yaml`)
 
 ## Module System
 
@@ -58,7 +58,7 @@
 
 ## Key Dependencies
 
-**Runtime (npm):**
+**Runtime (pnpm-managed Node packages):**
 - `mammoth` ^1.11.0 — converts `.docx` Word files to HTML for chapter authoring pipeline
   - Used only in `tools/convert-chapters.cjs` (offline tooling, not loaded in browser)
 
@@ -88,7 +88,7 @@
 
 **Development:**
 - Node.js (any recent version) for running tooling scripts in `tools/`
-- Any HTTP server to serve `index.html` (e.g., `npx serve`, `python -m http.server`, VS Code Live Server)
+- Any HTTP server to serve `index.html` (e.g., `python -m http.server`, VS Code Live Server)
 - `file://` protocol explicitly unsupported — fetch API calls will fail
 
 **Production:**

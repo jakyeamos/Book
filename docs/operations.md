@@ -11,6 +11,8 @@ pnpm run platform:typecheck
 pnpm test
 ```
 
+Runtime and release commands use pnpm exclusively. Render installs from `pnpm-lock.yaml` with `pnpm install --frozen-lockfile` before running `pnpm run build`.
+
 After Render deploys, run the same full-stack smoke against the deployed service:
 
 ```bash

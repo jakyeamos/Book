@@ -57,7 +57,7 @@
 - Libraries accessed via `window.gsap`, `window.ScrollTrigger`, `window.tsParticles` — never assumed present without guard check
 
 **CJS tool files:**
-- `require()` at top: Node built-ins first (`fs`, `path`), then npm packages (`mammoth`)
+- `require()` at top: Node built-ins first (`fs`, `path`), then external packages (`mammoth`)
 
 **Path Aliases:**
 - None — relative paths used throughout

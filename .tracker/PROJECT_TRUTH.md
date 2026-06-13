@@ -82,10 +82,10 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Quality Ladder Notes
 
-- **Lint/format baseline:** `npm test` includes chapter formatting lint and passed on 2026-05-01.
+- **Lint/format baseline:** `pnpm test` includes chapter formatting lint and passed on 2026-06-13.
 - **Types:** `pnpm run platform:typecheck` passed on 2026-06-13.
-- **Tests:** `npm test` passed on 2026-05-01.
-- **Build:** `pnpm run build` passed on 2026-06-12.
+- **Tests:** `pnpm test` passed on 2026-06-13.
+- **Build:** `pnpm run build` passed on 2026-06-13 through `pnpm run platform:fullstack-smoke`.
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 with localhost bind permission in the Codex sandbox.
 - **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** `npm run audit:dead-code` is not configured, so status is unknown.

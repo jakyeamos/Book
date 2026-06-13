@@ -35,5 +35,5 @@ Scope: Legacy backlog items deferred after PRD pivot (from old Phase 6-8 track).
 
 ## Verification
 
-- `npm run validate:chapters` passes with updated guardrails.
+- `pnpm run validate:chapters` passes with updated guardrails.
 - Workflow now deploys as static Pages artifact and writes `.nojekyll`.

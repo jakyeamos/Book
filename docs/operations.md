@@ -5,11 +5,22 @@
 Run these checks before deploying:
 
 ```bash
-npm run build
-npm run platform:fullstack-smoke
-npm run platform:typecheck
-npm test
+pnpm run build
+pnpm run platform:fullstack-smoke
+pnpm run platform:typecheck
+pnpm test
 ```
+
+After Render deploys, run the same full-stack smoke against the deployed service:
+
+```bash
+BOOK_SMOKE_BASE_URL="https://book.onrender.com" \
+BOOK_SMOKE_ADMIN_EMAIL="$ADMIN_EMAIL" \
+BOOK_SMOKE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+pnpm run platform:fullstack-smoke
+```
+
+`BOOK_SMOKE_BASE_URL` may be omitted when the script runs inside Render with `RENDER_EXTERNAL_URL` available. The smoke validates health/readiness, anonymous route protection, admin login, reader chapter APIs, reader registration and state sync, search, audio asset/cue APIs, and audit events. It does not exercise DOCX import, chapter reordering/visibility changes, rollback, or broken-cue publish blocking on production because those flows need a dedicated disposable staging chapter.
 
 ## Required Production Environment
 
@@ -22,8 +33,8 @@ npm test
 ## Database Migration And Seed
 
 ```bash
-npm run platform:migrate
-npm run platform:seed-content
+pnpm run platform:migrate
+pnpm run platform:seed-content
 ```
 
 The server also applies migrations on boot and seeds static chapters when the `chapters` table is empty.

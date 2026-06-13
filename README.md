@@ -17,7 +17,7 @@ Book is a browser-based interactive reading experience that loads chapter fragme
 1. Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Start a local HTTP server (required for `fetch()` chapter loading):
@@ -32,16 +32,16 @@ python -m http.server 8080
 
 ## Scripts
 
-- `npm run build` compiles the full-stack platform server
-- `npm start` runs the Node server that serves the reader, `/admin`, and JSON APIs
-- `npm test` runs full chapter validation (manifest + chapter checks + formatting lint)
-- `npm run validate:chapters` runs full chapter validation
-- `npm run validate:manifest` validates `chapters/index.json`
-- `npm run lint:chapters` checks chapter HTML for inline styles
-- `npm run convert:chapters` converts source `.docx` files via Mammoth
-- `npm run platform:migrate` applies Postgres schema migrations
-- `npm run platform:seed-content` seeds current static chapters into Postgres
-- `npm run platform:fullstack-smoke` verifies the full-stack reader/admin API path
+- `pnpm run build` compiles the full-stack platform server
+- `pnpm start` runs the Node server that serves the reader, `/admin`, and JSON APIs
+- `pnpm test` runs full chapter validation (manifest + chapter checks + formatting lint)
+- `pnpm run validate:chapters` runs full chapter validation
+- `pnpm run validate:manifest` validates `chapters/index.json`
+- `pnpm run lint:chapters` checks chapter HTML for inline styles
+- `pnpm run convert:chapters` converts source `.docx` files via Mammoth
+- `pnpm run platform:migrate` applies Postgres schema migrations
+- `pnpm run platform:seed-content` seeds current static chapters into Postgres
+- `pnpm run platform:fullstack-smoke` verifies the full-stack reader/admin API path locally, or a deployed Render service when `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD` are set
 
 ## Full-Stack Deployment
 
@@ -59,7 +59,7 @@ See `docs/operations.md` for release checks, migration/seed commands, backups, r
 1. Convert `.docx` inputs to raw HTML with `tools/convert-chapters.cjs`.
 2. Curate chapter fragments into `chapters/chNN.html`.
 3. Register chapter entries in `chapters/index.json`.
-4. Run `npm test` before committing.
+4. Run `pnpm test` before committing.
 
 ## Repository Layout
 

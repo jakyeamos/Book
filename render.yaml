@@ -3,8 +3,8 @@ services:
     name: book
     runtime: node
     plan: starter
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: corepack enable && pnpm install --no-frozen-lockfile && pnpm run build
+    startCommand: pnpm start
     healthCheckPath: /api/health
     disk:
       name: book-audio

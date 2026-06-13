@@ -1,5 +1,13 @@
 import { AddressInfo } from "node:net";
+import * as http from "node:http";
 import { createBookServer } from "../api/src/server";
+
+interface SmokeTarget {
+  baseUrl: string;
+  adminEmail: string;
+  adminPassword: string;
+  server?: http.Server;
+}
 
 async function requestJson<T>(
   baseUrl: string,
@@ -17,16 +25,81 @@ async function requestJson<T>(
   return { body, headers: response.headers, status: response.status };
 }
 
-async function run(): Promise<void> {
-  const app = await createBookServer({ mode: "memory" });
-  await new Promise<void>((resolve) => {
-    app.listen(0, "127.0.0.1", resolve);
+function cleanBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function envValue(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+async function createLocalTarget(): Promise<SmokeTarget> {
+  const server = await createBookServer({ mode: "memory" });
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolve();
+    });
   });
 
-  const address = app.address() as AddressInfo;
-  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const address = server.address() as AddressInfo;
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    adminEmail: "admin@example.com",
+    adminPassword: "change-me-admin",
+    server,
+  };
+}
+
+async function resolveTarget(): Promise<SmokeTarget> {
+  const deployedBaseUrl = envValue("BOOK_SMOKE_BASE_URL", "SMOKE_BASE_URL", "RENDER_EXTERNAL_URL");
+  if (!deployedBaseUrl) {
+    return createLocalTarget();
+  }
+
+  const adminEmail = envValue("BOOK_SMOKE_ADMIN_EMAIL", "ADMIN_EMAIL");
+  const adminPassword = envValue("BOOK_SMOKE_ADMIN_PASSWORD", "ADMIN_PASSWORD");
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "Deployed smoke requires BOOK_SMOKE_ADMIN_EMAIL/BOOK_SMOKE_ADMIN_PASSWORD or ADMIN_EMAIL/ADMIN_PASSWORD.",
+    );
+  }
+
+  return {
+    baseUrl: cleanBaseUrl(deployedBaseUrl),
+    adminEmail,
+    adminPassword,
+  };
+}
+
+async function closeTarget(target: SmokeTarget): Promise<void> {
+  if (!target.server) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    target.server?.close((error: Error | undefined) => (error ? reject(error) : resolve()));
+  });
+}
+
+async function run(): Promise<void> {
+  const target = await resolveTarget();
+  const { adminEmail, adminPassword, baseUrl } = target;
 
   try {
+    const health = await requestJson<{ ok: boolean }>(baseUrl, "/api/health");
+    if (health.status !== 200 || !health.body.ok) {
+      throw new Error("Health endpoint did not report ok");
+    }
+
     const manifest = await requestJson<Array<{ id: string; title: string }>>(baseUrl, "/api/reader/manifest");
     if (manifest.status !== 200 || manifest.body.length === 0) {
       throw new Error("Reader manifest endpoint did not return published chapters");
@@ -59,7 +132,7 @@ async function run(): Promise<void> {
 
     const login = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email: "admin@example.com", password: "change-me-admin" }),
+      body: JSON.stringify({ email: adminEmail, password: adminPassword }),
     });
     const cookie = login.headers.get("set-cookie") ?? "";
     if (login.status !== 200 || login.body.user.role !== "admin" || !cookie.includes("auth_token=")) {
@@ -92,7 +165,11 @@ async function run(): Promise<void> {
 
     const readerLogin = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email: "reader-smoke@example.com", password: "reader-password", displayName: "Smoke Reader" }),
+      body: JSON.stringify({
+        email: envValue("BOOK_SMOKE_READER_EMAIL") ?? `reader-smoke-${Date.now()}@example.com`,
+        password: envValue("BOOK_SMOKE_READER_PASSWORD") ?? "reader-password",
+        displayName: "Smoke Reader",
+      }),
     });
     const readerCookie = readerLogin.headers.get("set-cookie") ?? "";
     if (readerLogin.status !== 201 || readerLogin.body.user.role !== "reader") {
@@ -130,8 +207,8 @@ async function run(): Promise<void> {
       method: "POST",
       headers: { cookie },
       body: JSON.stringify({
-        fileName: "smoke.mp3",
-        title: "Smoke Asset",
+        fileName: `smoke-${Date.now()}.mp3`,
+        title: `Smoke Asset ${Date.now()}`,
         type: "music",
         contentBase64: Buffer.from("fake mp3").toString("base64"),
         durationSeconds: 12,
@@ -152,6 +229,14 @@ async function run(): Promise<void> {
       throw new Error("Audio studio API did not create asset and cue");
     }
 
+    const deleteCue = await fetch(`${baseUrl}/api/admin/audio/cues/${encodeURIComponent(cue.body.id)}`, {
+      method: "DELETE",
+      headers: { cookie },
+    });
+    if (deleteCue.status !== 200) {
+      throw new Error("Audio studio API did not delete smoke cue");
+    }
+
     const analytics = await requestJson<{ events: Array<{ eventType: string }> }>(baseUrl, "/api/admin/analytics/events", {
       headers: { cookie },
     });
@@ -159,9 +244,7 @@ async function run(): Promise<void> {
       throw new Error("Analytics/audit events endpoint returned no events");
     }
   } finally {
-    await new Promise<void>((resolve, reject) => {
-      app.close((error: Error | undefined) => (error ? reject(error) : resolve()));
-    });
+    await closeTarget(target);
   }
 }
 

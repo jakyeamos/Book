@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 06 acceptance + deployment validation pending
-last_updated: "2026-03-12T03:48:00.000Z"
-last_activity: 2026-03-12 - Added plans 06-10 and 06-11 for security and durable storage hardening
+stopped_at: Phase 06 deployed Render smoke ready; production acceptance still pending
+last_updated: "2026-06-13T00:00:00.000Z"
+last_activity: 2026-06-13 - Adapted full-stack admin smoke for Render base URL/admin credentials and documented automated acceptance coverage
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (PRD Author Studio + Reader Upgrade)
 Plan: 06-08 deployment parity -> 06-09 acceptance signoff -> 06-10 security hardening -> 06-11 durable storage
-Status: In Progress (implementation complete locally, acceptance pending)
-Last activity: 2026-03-12 - New executable plans added for deployability, acceptance, security, and persistence hardening
+Status: In Progress (implementation complete locally, deployed Render smoke available, acceptance pending)
+Last activity: 2026-06-13 - Full-stack smoke can now target Render with `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD`
 
 Progress: [#######---] 71%
 
@@ -58,7 +58,7 @@ Progress: [#######---] 71%
 
 - Legacy static-reader phases (1-5) remain complete and intact.
 - Phase 06 code artifacts and local smoke checks exist.
-- Production admin/login routes are currently unavailable on Netlify (`/admin` and `/login` return 404).
+- Production admin/login routes were unavailable on Netlify (`/admin` and `/login` returned 404 in March 2026); Render-targeted smoke coverage is now available for the Node deployment.
 - Security and durable storage hardening are now explicitly planned before final closure.
 
 ### Pending Todos

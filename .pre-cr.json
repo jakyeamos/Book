@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "testCommand": "pnpm test",
+  "coverageAdapters": [
+    {
+      "name": "book-coverage-marker",
+      "command": "node scripts/pre-cr-coverage.cjs",
+      "coveragePath": ".pre-cr/coverage.lcov",
+      "coverageFormat": "lcov"
+    }
+  ],
+  "threshold": 0
+}

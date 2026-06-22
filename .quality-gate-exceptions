@@ -1,0 +1,2 @@
+oversized-source platform/api/src/server.ts - existing platform API server exceeds the portable size limit; keep tracked until the server can be split by route responsibility.
+oversized-source platform/scripts/fullstack-admin-smoke.ts - existing fullstack smoke script exceeds the portable size limit; keep tracked until smoke coverage can be partitioned.

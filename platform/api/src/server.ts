@@ -60,8 +60,12 @@ interface ContentStore {
   searchPublishedChapters(query: string): Promise<Array<{ chapterId: string; title: string; excerpt: string }>>;
   listAdminChapters(): Promise<ChapterRecord[]>;
   getChapter(chapterId: string): Promise<ChapterRecord | undefined>;
+  createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord>;
   updateChapter(chapterId: string, updates: { title?: string; html?: string }): Promise<ChapterRecord>;
   setChapterStatus(chapterId: string, status: ChapterStatus): Promise<ChapterRecord>;
+  listVersions(chapterId: string): Promise<ChapterVersionRecord[]>;
+  rollbackChapter(chapterId: string, versionId: string): Promise<ChapterRecord>;
+  deleteChapter(chapterId: string): Promise<void>;
 }
 
 interface AuthStore {
@@ -387,6 +391,29 @@ class MemoryContentStore implements ContentStore {
     return next;
   }
 
+  async createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord> {
+    const chapter = makeChapterRecord({
+      slug: input.slug,
+      title: input.title,
+      number: input.orderIndex ?? this.chapters.length + 1,
+      html: input.html,
+      sourceFile: "admin-staging",
+      status: "draft",
+    });
+    this.chapters = this.chapters.filter((item) => item.id !== chapter.id && item.slug !== chapter.slug);
+    this.chapters.push(chapter);
+    this.versions.push({
+      id: makeVersionId(chapter.id, chapter.version),
+      chapterId: chapter.id,
+      status: "draft",
+      normalizedSnapshot: chapter.normalizedDocument,
+      compiledSnapshot: chapter.compiledOutput,
+      rollbackEligible: false,
+      createdAt: nowIso(),
+    });
+    return chapter;
+  }
+
   async setChapterStatus(chapterId: string, status: ChapterStatus): Promise<ChapterRecord> {
     const chapter = await this.getChapter(chapterId);
     if (!chapter) {
@@ -406,6 +433,55 @@ class MemoryContentStore implements ContentStore {
       createdAt: nowIso(),
     });
     return next;
+  }
+
+  async listVersions(chapterId: string): Promise<ChapterVersionRecord[]> {
+    const chapter = await this.getChapter(chapterId);
+    const id = chapter?.id ?? chapterId;
+    return this.versions.filter((version) => version.chapterId === id);
+  }
+
+  async rollbackChapter(chapterId: string, versionId: string): Promise<ChapterRecord> {
+    const chapter = await this.getChapter(chapterId);
+    if (!chapter) {
+      throw new Error(`Chapter not found: ${chapterId}`);
+    }
+
+    const version = this.versions.find((item) => item.chapterId === chapter.id && item.id === versionId);
+    if (!version || !version.rollbackEligible) {
+      throw new Error(`Rollback version not found: ${versionId}`);
+    }
+
+    const nextVersion = this.versions.filter((item) => item.chapterId === chapter.id).length + 1;
+    const next: ChapterRecord = {
+      ...chapter,
+      status: "published",
+      normalizedDocument: version.normalizedSnapshot,
+      compiledOutput: version.compiledSnapshot,
+      version: nextVersion,
+      updatedAt: nowIso(),
+    };
+    this.chapters = this.chapters.map((item) => (item.id === chapter.id ? next : item));
+    this.versions.push({
+      id: makeVersionId(chapter.id, nextVersion),
+      chapterId: chapter.id,
+      status: "published",
+      normalizedSnapshot: next.normalizedDocument,
+      compiledSnapshot: next.compiledOutput,
+      rollbackEligible: true,
+      publishedAt: nowIso(),
+      createdAt: nowIso(),
+    });
+    return next;
+  }
+
+  async deleteChapter(chapterId: string): Promise<void> {
+    const chapter = await this.getChapter(chapterId);
+    if (!chapter) {
+      throw new Error(`Chapter not found: ${chapterId}`);
+    }
+    this.chapters = this.chapters.filter((item) => item.id !== chapter.id);
+    this.versions = this.versions.filter((version) => version.chapterId !== chapter.id);
   }
 }
 
@@ -489,6 +565,21 @@ class PostgresContentStore implements ContentStore {
     return next;
   }
 
+  async createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord> {
+    const existing = await this.listAdminChapters();
+    const chapter = makeChapterRecord({
+      slug: input.slug,
+      title: input.title,
+      number: input.orderIndex ?? existing.length + 1,
+      html: input.html,
+      sourceFile: "admin-staging",
+      status: "draft",
+    });
+    await this.upsertChapter(chapter);
+    await this.insertVersion(chapter, "draft");
+    return chapter;
+  }
+
   async setChapterStatus(chapterId: string, status: ChapterStatus): Promise<ChapterRecord> {
     const current = await this.getChapter(chapterId);
     if (!current) {
@@ -499,6 +590,50 @@ class PostgresContentStore implements ContentStore {
     await this.upsertChapter(next);
     await this.insertVersion(next, status);
     return next;
+  }
+
+  async listVersions(chapterId: string): Promise<ChapterVersionRecord[]> {
+    const chapter = await this.getChapter(chapterId);
+    const id = chapter?.id ?? chapterId;
+    const result = await this.pool.query("SELECT * FROM chapter_versions WHERE chapter_id = $1 ORDER BY created_at ASC", [id]);
+    return result.rows.map((row) => this.rowToVersion(row as Record<string, unknown>));
+  }
+
+  async rollbackChapter(chapterId: string, versionId: string): Promise<ChapterRecord> {
+    const current = await this.getChapter(chapterId);
+    if (!current) {
+      throw new Error(`Chapter not found: ${chapterId}`);
+    }
+
+    const result = await this.pool.query(
+      "SELECT * FROM chapter_versions WHERE chapter_id = $1 AND id = $2 AND rollback_eligible = 1",
+      [current.id, versionId],
+    );
+    const version = result.rows[0] ? this.rowToVersion(result.rows[0] as Record<string, unknown>) : undefined;
+    if (!version) {
+      throw new Error(`Rollback version not found: ${versionId}`);
+    }
+
+    const next: ChapterRecord = {
+      ...current,
+      status: "published",
+      normalizedDocument: version.normalizedSnapshot,
+      compiledOutput: version.compiledSnapshot,
+      version: current.version + 1,
+      updatedAt: nowIso(),
+    };
+    await this.upsertChapter(next);
+    await this.insertVersion(next, "published");
+    return next;
+  }
+
+  async deleteChapter(chapterId: string): Promise<void> {
+    const chapter = await this.getChapter(chapterId);
+    if (!chapter) {
+      throw new Error(`Chapter not found: ${chapterId}`);
+    }
+    await this.pool.query("DELETE FROM chapter_versions WHERE chapter_id = $1", [chapter.id]);
+    await this.pool.query("DELETE FROM chapters WHERE id = $1", [chapter.id]);
   }
 
   private async upsertChapter(chapter: ChapterRecord): Promise<void> {
@@ -575,6 +710,19 @@ class PostgresContentStore implements ContentStore {
       version: Number(row.version),
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
+    };
+  }
+
+  private rowToVersion(row: Record<string, unknown>): ChapterVersionRecord {
+    return {
+      id: String(row.id),
+      chapterId: String(row.chapter_id),
+      status: row.status as ChapterStatus,
+      normalizedSnapshot: JSON.parse(String(row.normalized_snapshot_json)) as NormalizedDocument,
+      compiledSnapshot: JSON.parse(String(row.compiled_snapshot_json)) as CompiledChapterOutput,
+      publishedAt: row.published_at ? String(row.published_at) : undefined,
+      rollbackEligible: Number(row.rollback_eligible) === 1,
+      createdAt: String(row.created_at),
     };
   }
 }
@@ -1246,6 +1394,37 @@ function chapterPayload(chapter: ChapterRecord): Record<string, unknown> {
   };
 }
 
+function versionPayload(version: ChapterVersionRecord): Record<string, unknown> {
+  return {
+    id: version.id,
+    chapterId: version.chapterId,
+    status: version.status,
+    rollbackEligible: version.rollbackEligible,
+    publishedAt: version.publishedAt,
+    createdAt: version.createdAt,
+  };
+}
+
+async function brokenCueMessages(content: ContentStore, audio: AudioStore, chapterId: string): Promise<string[]> {
+  const chapter = await content.getChapter(chapterId);
+  if (!chapter) {
+    throw new Error(`Chapter not found: ${chapterId}`);
+  }
+
+  const blockIds = new Set(chapter.normalizedDocument.blocks.map((block) => block.id));
+  const cues = await audio.listCues(chapter.id);
+  return cues.flatMap((cue) => {
+    const issues: string[] = [];
+    if (!blockIds.has(cue.startAnchor.blockId)) {
+      issues.push(`${cue.id}: start anchor block not found: ${cue.startAnchor.blockId}`);
+    }
+    if (!blockIds.has(cue.endAnchor.blockId)) {
+      issues.push(`${cue.id}: end anchor block not found: ${cue.endAnchor.blockId}`);
+    }
+    return issues;
+  });
+}
+
 export async function createBookServer(options: CreateBookServerOptions = {}): Promise<http.Server> {
   const rootDir = rootFromOptions(options);
   const mode = options.mode ?? (process.env.DATABASE_URL ? "postgres" : "memory");
@@ -1400,6 +1579,19 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         return;
       }
 
+      if (method === "POST" && pathname === "/api/admin/chapters") {
+        const body = await readJson(request);
+        const chapter = await content.createChapter({
+          slug: String(body.slug ?? ""),
+          title: String(body.title ?? ""),
+          html: String(body.html ?? ""),
+          orderIndex: typeof body.orderIndex === "number" ? body.orderIndex : undefined,
+        });
+        await events.record("chapter_created", (await auth.session(authToken(request)))?.user.id, { chapterId: chapter.id });
+        sendJson(response, 201, chapterPayload(chapter));
+        return;
+      }
+
       if (method === "GET" && pathname === "/api/admin/analytics/events") {
         sendJson(response, 200, { events: await events.list(100) });
         return;
@@ -1423,10 +1615,45 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         return;
       }
 
+      if (adminChapterMatch && method === "DELETE") {
+        await content.deleteChapter(adminChapterMatch[1]);
+        await events.record("chapter_deleted", (await auth.session(authToken(request)))?.user.id, { chapterId: adminChapterMatch[1] });
+        sendJson(response, 200, { ok: true });
+        return;
+      }
+
+      const versionsMatch = /^\/api\/admin\/chapters\/([^/]+)\/versions$/.exec(pathname);
+      if (versionsMatch && method === "GET") {
+        sendJson(response, 200, { versions: (await content.listVersions(versionsMatch[1])).map(versionPayload) });
+        return;
+      }
+
       const publishMatch = /^\/api\/admin\/chapters\/([^/]+)\/publish$/.exec(pathname);
       if (publishMatch && method === "POST") {
+        const brokenCues = await brokenCueMessages(content, audio, publishMatch[1]);
+        if (brokenCues.length > 0) {
+          await events.record("chapter_publish_blocked", (await auth.session(authToken(request)))?.user.id, {
+            chapterId: publishMatch[1],
+            brokenCueCount: brokenCues.length,
+          });
+          sendJson(response, 409, { error: "Chapter has broken cues that must be repaired before publish", brokenCues });
+          return;
+        }
         const chapter = await content.setChapterStatus(publishMatch[1], "published");
         await events.record("chapter_published", (await auth.session(authToken(request)))?.user.id, { chapterId: chapter.id });
+        sendJson(response, 200, chapterPayload(chapter));
+        return;
+      }
+
+      const rollbackMatch = /^\/api\/admin\/chapters\/([^/]+)\/rollback$/.exec(pathname);
+      if (rollbackMatch && method === "POST") {
+        const body = await readJson(request);
+        const versionId = String(body.versionId ?? "");
+        const chapter = await content.rollbackChapter(rollbackMatch[1], versionId);
+        await events.record("chapter_rolled_back", (await auth.session(authToken(request)))?.user.id, {
+          chapterId: chapter.id,
+          versionId,
+        });
         sendJson(response, 200, chapterPayload(chapter));
         return;
       }

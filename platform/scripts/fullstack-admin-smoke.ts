@@ -167,6 +167,9 @@ async function run(): Promise<void> {
 
   const target = await resolveTarget();
   const { adminEmail, adminPassword, baseUrl } = target;
+  let adminCookie = "";
+  let disposableChapterId: string | undefined;
+  let disposableCueId: string | undefined;
 
   try {
     const health = await requestJson<{ ok: boolean }>(baseUrl, "/api/health");
@@ -230,6 +233,7 @@ async function run(): Promise<void> {
       body: JSON.stringify({ email: adminEmail, password: adminPassword }),
     });
     const cookie = login.headers.get("set-cookie") ?? "";
+    adminCookie = cookie;
     if (login.status !== 200 || login.body.user.role !== "admin" || !cookie.includes("auth_token=")) {
       throw new Error("Admin login did not issue an admin session");
     }
@@ -344,13 +348,178 @@ async function run(): Promise<void> {
       throw new Error("Audio studio API did not delete smoke cue");
     }
 
+    const stagingSlug = `smoke-staging-${Date.now()}`;
+    const stagingTitle = `Smoke Staging ${Date.now()}`;
+    const originalHtml = [
+      `<h2 class="chapter-title">${stagingTitle}</h2>`,
+      "<p>Disposable staging chapter publish baseline.</p>",
+      "<p>Disposable cue anchor target.</p>",
+    ].join("\n");
+
+    const staging = await requestJson<{ id: string; status: string; html: string }>(baseUrl, "/api/admin/chapters", {
+      method: "POST",
+      headers: { cookie },
+      body: JSON.stringify({
+        slug: stagingSlug,
+        title: stagingTitle,
+        html: originalHtml,
+      }),
+    });
+    disposableChapterId = staging.body.id;
+    if (staging.status !== 201 || staging.body.status !== "draft" || !disposableChapterId) {
+      throw new Error("Disposable staging chapter was not created as a draft");
+    }
+
+    const stagingPreview = await requestJson<{ status: string }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/preview`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    if (stagingPreview.status !== 200 || stagingPreview.body.status !== "preview") {
+      throw new Error("Disposable staging chapter preview failed");
+    }
+
+    const firstPublish = await requestJson<{ status: string }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/publish`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    if (firstPublish.status !== 200 || firstPublish.body.status !== "published") {
+      throw new Error("Disposable staging chapter initial publish failed");
+    }
+
+    const versions = await requestJson<{ versions: Array<{ id: string; status: string; rollbackEligible: boolean }> }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/versions`,
+      { headers: { cookie } },
+    );
+    const firstPublishedVersion = versions.body.versions.find(
+      (version) => version.status === "published" && version.rollbackEligible,
+    );
+    if (versions.status !== 200 || !firstPublishedVersion) {
+      throw new Error("Disposable staging chapter did not expose rollback-eligible publish version");
+    }
+
+    const stagingCue = await requestJson<{ id: string }>(baseUrl, "/api/admin/audio/cues", {
+      method: "POST",
+      headers: { cookie },
+      body: JSON.stringify({
+        chapterId: disposableChapterId,
+        assetId: asset.body.id,
+        layer: "music",
+        startBlockId: `blk_${disposableChapterId}_3`,
+        endBlockId: `blk_${disposableChapterId}_3`,
+      }),
+    });
+    disposableCueId = stagingCue.body.id;
+    if (stagingCue.status !== 201 || !disposableCueId) {
+      throw new Error("Disposable staging chapter cue was not created");
+    }
+
+    const brokenUpdate = await requestJson<{ status: string }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}`,
+      {
+        method: "PUT",
+        headers: { cookie },
+        body: JSON.stringify({
+          html: [
+            `<h2 class="chapter-title">${stagingTitle}</h2>`,
+            "<p>Revised staging chapter intentionally removes the cue anchor.</p>",
+          ].join("\n"),
+        }),
+      },
+    );
+    if (brokenUpdate.status !== 200 || brokenUpdate.body.status !== "draft") {
+      throw new Error("Disposable staging chapter broken-cue edit did not persist as draft");
+    }
+
+    const blockedPublish = await requestJson<{ error?: string; brokenCues?: string[] }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/publish`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    if (
+      blockedPublish.status !== 409
+      || !blockedPublish.body.error?.includes("broken cues")
+      || !Array.isArray(blockedPublish.body.brokenCues)
+      || blockedPublish.body.brokenCues.length === 0
+    ) {
+      throw new Error("Disposable staging chapter publish was not blocked by a broken cue");
+    }
+
+    const deleteStagingCue = await fetch(`${baseUrl}/api/admin/audio/cues/${encodeURIComponent(disposableCueId)}`, {
+      method: "DELETE",
+      headers: { cookie },
+    });
+    if (deleteStagingCue.status !== 200) {
+      throw new Error("Disposable staging chapter cue repair/delete failed");
+    }
+    disposableCueId = undefined;
+
+    const secondPublish = await requestJson<{ status: string }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/publish`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    if (secondPublish.status !== 200 || secondPublish.body.status !== "published") {
+      throw new Error("Disposable staging chapter publish did not recover after cue repair");
+    }
+
+    const rollback = await requestJson<{ status: string; html: string }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(disposableChapterId)}/rollback`,
+      {
+        method: "POST",
+        headers: { cookie },
+        body: JSON.stringify({ versionId: firstPublishedVersion.id }),
+      },
+    );
+    if (
+      rollback.status !== 200
+      || rollback.body.status !== "published"
+      || !rollback.body.html.includes("Disposable cue anchor target")
+    ) {
+      throw new Error("Disposable staging chapter rollback did not restore the original published snapshot");
+    }
+
     const analytics = await requestJson<{ events: Array<{ eventType: string }> }>(baseUrl, "/api/admin/analytics/events", {
       headers: { cookie },
     });
     if (analytics.status !== 200 || analytics.body.events.length === 0) {
       throw new Error("Analytics/audit events endpoint returned no events");
     }
+    const eventTypes = new Set(analytics.body.events.map((event) => event.eventType));
+    for (const expectedEvent of ["chapter_published", "chapter_publish_blocked", "chapter_rolled_back"]) {
+      if (!eventTypes.has(expectedEvent)) {
+        throw new Error(`Analytics/audit events did not include ${expectedEvent}`);
+      }
+    }
   } finally {
+    if (adminCookie && disposableCueId) {
+      await fetch(`${baseUrl}/api/admin/audio/cues/${encodeURIComponent(disposableCueId)}`, {
+        method: "DELETE",
+        headers: { cookie: adminCookie },
+      }).catch(() => undefined);
+    }
+    if (adminCookie && disposableChapterId) {
+      await fetch(`${baseUrl}/api/admin/chapters/${encodeURIComponent(disposableChapterId)}`, {
+        method: "DELETE",
+        headers: { cookie: adminCookie },
+      }).catch(() => undefined);
+    }
     await closeTarget(target);
   }
 }

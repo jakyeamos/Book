@@ -11,13 +11,13 @@ Status snapshot (2026-03-12):
 - [ ] DOCX import creates staged draft.
 - [ ] Staging metadata edits persist.
 - [ ] Chapter order, type, and visibility update from admin tools.
-- [ ] Publish and rollback both succeed.
+- [ ] Publish and rollback both succeed. Covered on a disposable staging chapter by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.
 
 ## Audio Studio
 - [ ] Music and ambient assets can be uploaded and listed. Music asset upload is covered by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`; ambient remains manual.
 - [ ] Multiple cues can be assigned to the same chapter. Single cue creation/deletion is covered by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`; multiple-cue authoring remains manual.
-- [ ] Broken cues are detected after anchor changes.
-- [ ] Publish is blocked until broken cues are repaired.
+- [ ] Broken cues are detected after anchor changes. Covered on a disposable staging chapter by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.
+- [ ] Publish is blocked until broken cues are repaired. Covered on a disposable staging chapter by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.
 
 ## Reader Sync
 - [ ] Logged-in reader highlights sync across sessions. Reader state persistence is covered by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`; cross-device UI verification remains manual.
@@ -28,4 +28,4 @@ Status snapshot (2026-03-12):
 ## Runtime Reliability
 - [ ] Chapter transitions avoid stale/racing state application.
 - [ ] Cue scheduling handles chapter changes and pause/resume.
-- [ ] Metrics are emitted for author, audio, publish, and reader outcomes. Reader and audio/admin audit events are covered by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`; publish metrics remain manual.
+- [ ] Metrics are emitted for author, audio, publish, and reader outcomes. Reader, audio/admin, publish success, publish-blocked, and rollback audit events are covered by `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.

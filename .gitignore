@@ -7,4 +7,4 @@ yarn-error.log*
 pnpm-debug.log*
 
 .planning/
-
+.pre-cr/

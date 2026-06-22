@@ -22,7 +22,7 @@ BOOK_SMOKE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
 pnpm run platform:fullstack-smoke
 ```
 
-`BOOK_SMOKE_BASE_URL` may be omitted when the script runs inside Render with `RENDER_EXTERNAL_URL` available. The smoke validates health/readiness, anonymous route protection, admin login, reader chapter APIs, reader registration and state sync, search, audio asset/cue APIs, and audit events. It does not exercise DOCX import, chapter reordering/visibility changes, rollback, or broken-cue publish blocking on production because those flows need a dedicated disposable staging chapter.
+`BOOK_SMOKE_BASE_URL` may be omitted when the script runs inside Render with `RENDER_EXTERNAL_URL` available. The smoke validates health/readiness, anonymous route protection, admin login, reader chapter APIs, reader registration and state sync, search, audio asset/cue APIs, audit events, and a disposable staging-chapter publish workflow. The staging workflow creates a timestamped chapter, previews and publishes it, creates a cue, verifies broken-cue publish blocking after an anchor-removing edit, repairs the block by deleting the smoke cue, republishes, rolls back to the first published snapshot, asserts publish/blocked/rollback events, and deletes the disposable chapter during cleanup. DOCX import and chapter reordering/visibility changes remain covered by local platform smokes or manual production review.
 
 ## Required Production Environment
 

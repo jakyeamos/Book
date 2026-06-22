@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book now has a full-stack reading platform path with a shared login route, authenticated admin editing, protected admin subroutes, explicit production admin bootstrap, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, and managed Node deployment.
+summary: Book now has a full-stack reading platform path with a shared login route, authenticated admin editing, protected admin subroutes, explicit production admin bootstrap, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, disposable staging publish smoke coverage, and managed Node deployment.
 healthScore: 88
 statusLabel: on_track
 nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` against the deployed service.
@@ -39,7 +39,7 @@ agentExpectationsVersion: 1
 
 Book is a full-stack-capable interactive reading experience with chapter-specific visual themes, motion effects, particles, background music, ambient layers, optional Giscus discussion embeds, and a Node server that serves the reader, shared login route, and authenticated admin editor.
 
-The platform layer now includes a full-stack HTTP server, Postgres migrations, database-backed content/auth/audio/reader-state persistence, static-content seeding, protected admin chapter edit/publish APIs, audio asset/cue APIs, reader account/state/search APIs, analytics/audit events, and reader APIs that serve published DB content with static fallback for local development.
+The platform layer now includes a full-stack HTTP server, Postgres migrations, database-backed content/auth/audio/reader-state persistence, static-content seeding, protected admin chapter create/edit/publish/rollback/delete APIs, audio asset/cue APIs, reader account/state/search APIs, analytics/audit events, and reader APIs that serve published DB content with static fallback for local development.
 
 ## Why This Matters / Intended Outcome
 
@@ -49,6 +49,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 - Jun 12: Added a shared `/login` route and server redirects so anonymous `/admin`, `/me/highlights`, and `/me/notes` requests no longer fall through to 404; authenticated reader-only routes serve the reader shell.
 - Jun 13: Closed remaining deployed auth gaps: extensionless `/admin/*` routes now require admin access and serve the admin shell, shared route guards read the runtime `auth_token` cookie, and production startup requires explicit admin bootstrap credentials instead of default accounts.
+- Jun 13: Added disposable staging-chapter coverage to `platform:fullstack-smoke` so publish, broken-cue publish blocking, publish recovery, rollback, cleanup, and publish-related audit events are exercised through the deployed HTTP API.
 - Jun 13: Normalized runtime, deployment, and operations dependency commands to pnpm and replaced the npm lockfile with `pnpm-lock.yaml`.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
@@ -73,7 +74,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 1. Create the Render service/database from `render.yaml` and set `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 2. Point the live domain at the Node service after smoke-checking `/api/health`, `/`, `/login`, and `/admin`.
-3. Verify login, reader registration/state sync, chapter edit, publish, reader reload, audio asset upload, cue CRUD, search, and analytics events on the deployed site.
+3. Verify deployed UI behavior after `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` passes against the Node service.
 4. Add a dead-code scan command or explicitly document why one is unavailable.
 
 ## Risks / Blockers
@@ -88,7 +89,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - **Types:** `pnpm run platform:typecheck` passed on 2026-06-13.
 - **Tests:** `pnpm test` passed on 2026-06-13.
 - **Build:** `pnpm run build` passed on 2026-06-13 through `pnpm run platform:fullstack-smoke`.
-- **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 with localhost bind permission in the Codex sandbox.
+- **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 and now covers a disposable staging chapter for publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
 - **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** no `audit:dead-code` script is configured, so status is unknown.
 - **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.

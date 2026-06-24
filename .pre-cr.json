@@ -9,5 +9,19 @@
       "coverageFormat": "lcov"
     }
   ],
-  "threshold": 0
+  "threshold": 80,
+  "checks": {
+    "coverage": true,
+    "security": true,
+    "checklist": true
+  },
+  "coveragePaths": [
+    "coverage/lcov.info",
+    "coverage/coverage-final.json",
+    ".nyc_output/coverage.json",
+    "coverage.lcov",
+    "lcov.info",
+    "coverage.out"
+  ],
+  "coverageFormat": "auto"
 }

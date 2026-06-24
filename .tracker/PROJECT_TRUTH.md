@@ -1,12 +1,12 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book now has a full-stack reading platform path with a shared login route, authenticated admin editing, protected admin subroutes, explicit production admin bootstrap, reader accounts/state sync, audio studio APIs/UI, search/library/preferences, analytics events, disposable staging publish smoke coverage, and managed Node deployment.
+summary: Book has a full-stack reading platform path plus current pre-cr quality gate configuration for coverage, security, and checklist checks.
 healthScore: 88
 statusLabel: on_track
 nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` against the deployed service.
 blockers: []
-lastUpdated: 2026-06-13
+lastUpdated: 2026-06-24
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -17,7 +17,7 @@ repoType: app
 sourceOfTruth: mixed
 primaryLanguage: TypeScript
 activeBranch: codex/fix-login-route
-lastCommitDate: "2026-05-01"
+lastCommitDate: "2026-06-24"
 quality:
   lint: pass
   types: pass
@@ -51,6 +51,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jun 13: Closed remaining deployed auth gaps: extensionless `/admin/*` routes now require admin access and serve the admin shell, shared route guards read the runtime `auth_token` cookie, and production startup requires explicit admin bootstrap credentials instead of default accounts.
 - Jun 13: Added disposable staging-chapter coverage to `platform:fullstack-smoke` so publish, broken-cue publish blocking, publish recovery, rollback, cleanup, and publish-related audit events are exercised through the deployed HTTP API.
 - Jun 13: Normalized runtime, deployment, and operations dependency commands to pnpm and replaced the npm lockfile with `pnpm-lock.yaml`.
+- Jun 24: Updated `.pre-cr.json` to use an 80% threshold with coverage, security, checklist checks, and auto coverage-path detection.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -85,9 +86,9 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Quality Ladder Notes
 
-- **Lint/format baseline:** `pnpm test` includes chapter formatting lint and passed on 2026-06-13.
-- **Types:** `pnpm run platform:typecheck` passed on 2026-06-13.
-- **Tests:** `pnpm test` passed on 2026-06-13.
+- **Lint/format baseline:** `pnpm run lint:chapters` passed on 2026-06-24.
+- **Types:** `pnpm run platform:typecheck` passed on 2026-06-24.
+- **Tests:** `pnpm test` passed on 2026-06-24.
 - **Build:** `pnpm run build` passed on 2026-06-13 through `pnpm run platform:fullstack-smoke`.
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 and now covers a disposable staging chapter for publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
 - **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.

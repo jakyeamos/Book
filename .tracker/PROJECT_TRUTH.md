@@ -87,6 +87,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Quality Ladder Notes
 
+- **AIOS gate audit metadata:** recorded 2026-06-25 warning-only gate events for changed-line coverage, secret-literal reminders, and oversized-source reminders. No product files changed in that cleanup commit.
 - **Lint/format baseline:** `pnpm run lint:chapters` passed on 2026-06-24.
 - **Types:** `pnpm run platform:typecheck` passed on 2026-06-25.
 - **Tests:** `pnpm test` passed on 2026-06-24.

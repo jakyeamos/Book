@@ -45,7 +45,7 @@ const elements = {
   publishVisibilityInput: document.getElementById("publish-visibility-input"),
   publishCancelButton: document.getElementById("publish-cancel-button"),
   publishConfirmButton: document.getElementById("publish-confirm-button"),
-  readinessList: document.getElementById("publish-readiness-list"),
+  publishReadinessList: document.getElementById("publish-readiness-list"),
   validationList: document.getElementById("chapter-validation-list"),
   previewModeInput: document.getElementById("preview-mode-input"),
   previewRuntime: document.getElementById("preview-runtime"),
@@ -76,7 +76,7 @@ const elements = {
   cueList: document.getElementById("cue-list"),
   refreshAudioButton: document.getElementById("refresh-audio-button"),
   readinessStatus: document.getElementById("deploy-readiness-status"),
-  readinessList: document.getElementById("deploy-readiness-list"),
+  deployReadinessList: document.getElementById("deploy-readiness-list"),
   refreshReadinessButton: document.getElementById("refresh-readiness-button"),
   eventsList: document.getElementById("admin-events-list"),
   refreshEventsButton: document.getElementById("refresh-events-button"),
@@ -155,7 +155,7 @@ function renderChapterList() {
 
 function renderPublishReadiness() {
   const readiness = state.selectedChapter?.publishReadiness;
-  elements.readinessList.innerHTML = "";
+  elements.publishReadinessList.innerHTML = "";
   const issues = readiness?.blockingIssues || [];
   const warnings = readiness?.warnings || [];
   const items = issues.length || warnings.length
@@ -168,7 +168,7 @@ function renderPublishReadiness() {
     const row = document.createElement("span");
     row.className = `readiness-item ${item.kind}`;
     row.textContent = item.message;
-    elements.readinessList.appendChild(row);
+    elements.publishReadinessList.appendChild(row);
   });
   elements.publishChapterButton.disabled = !state.selectedChapter || state.dirty || !readiness?.canPublish;
 }
@@ -394,7 +394,7 @@ async function loadDeployReadiness() {
   elements.readinessStatus.textContent = readiness.ok
     ? `Ready · ${readiness.mode}`
     : `Blocked · ${readiness.mode}`;
-  elements.readinessList.innerHTML = "";
+  elements.deployReadinessList.innerHTML = "";
   Object.entries(readiness.checks || {}).forEach(([key, value]) => {
     const row = document.createElement("div");
     row.className = "readiness-row";
@@ -404,7 +404,7 @@ async function loadDeployReadiness() {
     status.className = `status-pill ${value ? "ready" : "blocking"}`;
     status.textContent = value ? "pass" : "fail";
     row.append(label, status);
-    elements.readinessList.appendChild(row);
+    elements.deployReadinessList.appendChild(row);
   });
 }
 

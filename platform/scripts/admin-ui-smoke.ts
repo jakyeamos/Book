@@ -77,6 +77,8 @@ function run(): void {
   assertIncludes(html, 'id="publish-summary-list"', "Publish summary list");
   assertIncludes(html, 'id="publish-visibility-input"', "Publish visibility override");
   assertIncludes(read("admin/studio-publish.js"), "Confirm Publish", "Publish confirmation copy");
+  assertIncludes(adminScript, "publishReadinessList:", "Distinct publish readiness binding");
+  assertIncludes(adminScript, "deployReadinessList:", "Distinct deploy readiness binding");
   assertIncludes(read("admin/studio-blocks.js"), "Move up", "Block move control");
   assertIncludes(read("admin/studio-blocks.js"), "Duplicate", "Block duplicate control");
   assertIncludes(read("admin/studio-blocks.js"), "Move down", "Block move control");

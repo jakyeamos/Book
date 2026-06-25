@@ -40,6 +40,7 @@ function run(): void {
 
   assertIncludes(html, '<script type="module" src="/admin/admin.js"></script>', "Author Studio module entry");
   assertIncludes(adminScript, 'from "./studio-audio.js"', "Audio studio module import");
+  assertIncludes(adminScript, 'from "./studio-blocks.js"', "Block editor module import");
   assertIncludes(adminScript, 'from "./studio-imports.js"', "Import queue module import");
   assertIncludes(audioScript, "repair", "Audio repair UI wiring");
   assertIncludes(importScript, "/api/admin/import/docx", "Import DOCX UI wiring");
@@ -64,6 +65,14 @@ function run(): void {
   ]) {
     assertIncludes(html, `data-studio-flow="${flow}"`, "Browser automation flow hook");
   }
+
+  assertIncludes(html, 'id="chapter-validation-list"', "Inline chapter validation surface");
+  assertIncludes(html, 'id="save-status"', "Explicit save status surface");
+  assertIncludes(read("admin/studio-blocks.js"), "Move up", "Block move control");
+  assertIncludes(read("admin/studio-blocks.js"), "Duplicate", "Block duplicate control");
+  assertIncludes(read("admin/studio-blocks.js"), "Move down", "Block move control");
+  assertIncludes(importScript, "No imports staged", "Import queue empty state");
+  assertIncludes(audioScript, "No cues for this chapter", "Audio cue empty state");
 
   for (const className of [
     ".block-card",

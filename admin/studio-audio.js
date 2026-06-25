@@ -23,6 +23,10 @@ export function renderCueList({ elements, state, loadAudioStudio: reloadAudioStu
   if (!studio) {
     return;
   }
+  if (studio.cues.length === 0) {
+    elements.cueList.innerHTML = '<p class="empty-state">No cues for this chapter.</p>';
+    return;
+  }
   const assetOptions = studio.assets.map((asset) => ({ value: asset.id, label: asset.title }));
   const blockOptions = studio.blocks.map((block) => ({ value: block.id, label: block.label }));
   studio.cues.forEach((cue) => {

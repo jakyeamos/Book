@@ -1,4 +1,10 @@
-import { api, blockHtml, blockText, cloneBlocks, escapeHtml, selectOptions } from "./studio-utils.js";
+import { api, cloneBlocks, escapeHtml } from "./studio-utils.js";
+import {
+  renderBlockEditor as renderBlockEditorView,
+  renderChapterValidation,
+  renderPreviewFromBlocks as renderPreviewFromBlocksView,
+  serializeBlocks as serializeBlocksView,
+} from "./studio-blocks.js";
 import { bindImportForm, loadImports as loadImportsView } from "./studio-imports.js";
 import {
   bindAudioForms,
@@ -18,6 +24,7 @@ const elements = {
   editorTitle: document.getElementById("editor-title"),
   editorSubtitle: document.getElementById("editor-subtitle"),
   draftStatus: document.getElementById("draft-status"),
+  saveStatus: document.getElementById("save-status"),
   titleInput: document.getElementById("chapter-title-input"),
   slugInput: document.getElementById("chapter-slug-input"),
   orderInput: document.getElementById("chapter-order-input"),
@@ -30,6 +37,7 @@ const elements = {
   previewChapterButton: document.getElementById("preview-chapter-button"),
   publishChapterButton: document.getElementById("publish-chapter-button"),
   readinessList: document.getElementById("publish-readiness-list"),
+  validationList: document.getElementById("chapter-validation-list"),
   previewStatus: document.getElementById("preview-status"),
   preview: document.getElementById("chapter-preview"),
   blockEditor: document.getElementById("block-editor"),
@@ -71,13 +79,7 @@ const state = {
 };
 
 function renderPreviewFromBlocks() {
-  if (!state.selectedChapter) {
-    elements.preview.innerHTML = "<p>Select a chapter.</p>";
-    return;
-  }
-  const html = state.blocks.map(blockHtml).join("\n");
-  elements.preview.innerHTML = `<article class="chapter">${html}</article>`;
-  elements.previewStatus.textContent = state.dirty ? "Unsaved preview" : "Saved preview";
+  renderPreviewFromBlocksView({ elements, state });
 }
 
 function setDirty(value) {
@@ -89,6 +91,8 @@ function setDirty(value) {
   elements.draftStatus.textContent = value
     ? "Unsaved"
     : `${state.selectedChapter.status} · v${state.selectedChapter.version}`;
+  elements.saveStatus.textContent = value ? "Unsaved changes" : "Saved";
+  renderChapterValidation({ elements, state });
   renderPublishReadiness();
 }
 
@@ -154,104 +158,11 @@ function renderPublishReadiness() {
 }
 
 function serializeBlocks() {
-  return {
-    schemaVersion: state.selectedChapter?.normalizedDocument?.schemaVersion || 1,
-    blocks: state.blocks.map((block, index) => {
-      const id = block.id || `blk_${state.selectedChapter.id}_${index + 1}`;
-      if (block.type === "scene_break") {
-        return { id, type: "scene_break", spans: [] };
-      }
-      const span = block.spans?.[0];
-      return {
-        id,
-        type: block.type,
-        level: block.type === "heading" ? Number(block.level || 2) : undefined,
-        spans: [{
-          id: span?.id || `${id}_spn_1`,
-          text: blockText(block),
-          marks: span?.marks,
-        }],
-      };
-    }),
-  };
+  return serializeBlocksView({ state });
 }
 
 function renderBlockEditor() {
-  elements.blockEditor.innerHTML = "";
-  if (!state.selectedChapter) {
-    return;
-  }
-  state.blocks.forEach((block, index) => {
-    const card = document.createElement("article");
-    card.className = "block-card";
-
-    const typeSelect = document.createElement("select");
-    selectOptions(typeSelect, [
-      { value: "heading", label: "Heading" },
-      { value: "paragraph", label: "Paragraph" },
-      { value: "blockquote", label: "Quote" },
-      { value: "scene_break", label: "Break" },
-    ], block.type);
-    typeSelect.addEventListener("change", () => {
-      state.blocks[index].type = typeSelect.value;
-      if (typeSelect.value === "heading" && !state.blocks[index].level) {
-        state.blocks[index].level = 2;
-      }
-      setDirty(true);
-      renderBlockEditor();
-      renderPreviewFromBlocks();
-    });
-
-    const label = document.createElement("span");
-    label.className = "block-id";
-    label.textContent = block.id || `Block ${index + 1}`;
-
-    const textarea = document.createElement("textarea");
-    textarea.value = blockText(block);
-    textarea.disabled = block.type === "scene_break";
-    textarea.addEventListener("input", () => {
-      const current = state.blocks[index];
-      const span = current.spans?.[0] || { id: `${current.id}_spn_1`, text: "" };
-      current.spans = [{ ...span, text: textarea.value }];
-      setDirty(true);
-      renderPreviewFromBlocks();
-    });
-
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.textContent = "Remove";
-    removeButton.addEventListener("click", () => {
-      state.blocks.splice(index, 1);
-      setDirty(true);
-      renderBlockEditor();
-      renderPreviewFromBlocks();
-    });
-
-    card.append(typeSelect, label, textarea, removeButton);
-    elements.blockEditor.appendChild(card);
-  });
-
-  const addRow = document.createElement("div");
-  addRow.className = "block-add-row";
-  ["paragraph", "heading", "blockquote", "scene_break"].forEach((type) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = `Add ${type.replace("_", " ")}`;
-    button.addEventListener("click", () => {
-      const id = `blk_${state.selectedChapter.id}_${Date.now()}`;
-      state.blocks.push({
-        id,
-        type,
-        level: type === "heading" ? 2 : undefined,
-        spans: type === "scene_break" ? [] : [{ id: `${id}_spn_1`, text: "" }],
-      });
-      setDirty(true);
-      renderBlockEditor();
-      renderPreviewFromBlocks();
-    });
-    addRow.appendChild(button);
-  });
-  elements.blockEditor.appendChild(addRow);
+  renderBlockEditorView({ elements, state, setDirty, renderPreview: renderPreviewFromBlocks });
 }
 
 function applyChapterToEditor(chapter) {
@@ -266,6 +177,7 @@ function applyChapterToEditor(chapter) {
   elements.visibilityInput.value = chapter.visibility?.mode || "public";
   elements.tocInput.checked = chapter.visibility?.includeInToc !== false;
   elements.htmlInput.value = chapter.html || "";
+  elements.saveStatus.textContent = "Saved";
   setEditorEnabled(true);
   setDirty(false);
   renderBlockEditor();
@@ -296,6 +208,7 @@ async function saveChapterDraft() {
   if (!state.selectedChapter) {
     return;
   }
+  elements.saveStatus.textContent = "Saving...";
   const chapter = await api(`/api/admin/chapters/${encodeURIComponent(state.selectedChapter.id)}`, {
     method: "PUT",
     body: JSON.stringify({
@@ -316,6 +229,7 @@ async function saveChapterDraft() {
   }
   applyChapterToEditor(chapter);
   renderChapterList();
+  elements.saveStatus.textContent = "Saved";
   await Promise.all([loadVersions(), loadAudioStudio(), loadEvents()]);
 }
 
@@ -323,6 +237,7 @@ async function saveSource() {
   if (!state.selectedChapter) {
     return;
   }
+  elements.saveStatus.textContent = "Saving source...";
   const chapter = await api(`/api/admin/chapters/${encodeURIComponent(state.selectedChapter.id)}`, {
     method: "PUT",
     body: JSON.stringify({
@@ -332,6 +247,7 @@ async function saveSource() {
   });
   applyChapterToEditor(chapter);
   renderChapterList();
+  elements.saveStatus.textContent = "Saved";
   await Promise.all([loadVersions(), loadAudioStudio(), loadEvents()]);
 }
 
@@ -361,6 +277,10 @@ async function loadVersions() {
   const { versions } = await api(`/api/admin/chapters/${encodeURIComponent(state.selectedChapter.id)}/versions`);
   state.versions = versions;
   elements.versionList.innerHTML = "";
+  if (versions.length === 0) {
+    elements.versionList.innerHTML = '<p class="empty-state">No versions yet.</p>';
+    return;
+  }
   versions.slice().reverse().forEach((version) => {
     const row = document.createElement("div");
     row.className = "version-row";

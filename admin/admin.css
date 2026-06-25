@@ -137,7 +137,8 @@ textarea:disabled {
 }
 
 .status-pill,
-.readiness-item {
+.readiness-item,
+.validation-chip {
     display: inline-flex;
     align-items: center;
     min-height: 1.75rem;
@@ -147,6 +148,12 @@ textarea:disabled {
     color: var(--studio-muted);
     background: #151716;
     font-size: 0.82rem;
+}
+
+.editor-status-stack {
+    display: grid;
+    justify-items: end;
+    gap: 0.25rem;
 }
 
 .auth-panel {
@@ -266,6 +273,19 @@ textarea {
     margin-bottom: 0.9rem;
 }
 
+.chapter-validation-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    min-height: 0;
+    margin-bottom: 0.8rem;
+}
+
+.validation-chip {
+    border-color: rgba(200, 107, 91, 0.72);
+    color: var(--studio-danger);
+}
+
 .checkbox-label {
     align-self: end;
     display: flex;
@@ -320,7 +340,7 @@ textarea {
 
 .block-card {
     display: grid;
-    grid-template-columns: 130px minmax(120px, 0.7fr) minmax(260px, 1.8fr) auto;
+    grid-template-columns: 130px minmax(120px, 0.7fr) minmax(260px, 1.8fr) minmax(200px, auto);
     gap: 0.55rem;
     align-items: start;
     border: 1px solid var(--studio-line);
@@ -331,6 +351,12 @@ textarea {
 
 .block-card textarea {
     min-height: 5rem;
+}
+
+.block-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
 }
 
 .block-id {
@@ -431,6 +457,12 @@ textarea {
     grid-column: 1 / -1;
     margin: 0;
     font-size: 0.82rem;
+}
+
+.empty-state {
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.9rem;
 }
 
 @media (max-width: 1180px) {

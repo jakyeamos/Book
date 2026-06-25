@@ -4,6 +4,10 @@ export async function loadImports({ elements, state, loadChapters, loadEvents })
   const { drafts } = await api("/api/admin/import/drafts");
   state.drafts = drafts;
   elements.importDraftList.innerHTML = "";
+  if (drafts.length === 0) {
+    elements.importDraftList.innerHTML = '<p class="empty-state">No imports staged.</p>';
+    return;
+  }
   drafts.forEach((draft) => {
     const card = document.createElement("article");
     card.className = `draft-card ${draft.status}`;

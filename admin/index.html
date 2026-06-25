@@ -73,7 +73,10 @@
                         <h2 id="editor-title">Select a chapter</h2>
                         <span id="editor-subtitle" class="muted">No chapter selected</span>
                     </div>
-                    <span id="draft-status" class="status-pill">Idle</span>
+                    <div class="editor-status-stack">
+                        <span id="draft-status" class="status-pill">Idle</span>
+                        <span id="save-status" class="muted">No draft loaded</span>
+                    </div>
                 </div>
 
                 <div class="chapter-fields">
@@ -111,6 +114,7 @@
                         TOC
                     </label>
                 </div>
+                <div id="chapter-validation-list" class="chapter-validation-list"></div>
 
                 <div class="readiness-bar" data-studio-flow="publish-readiness">
                     <div>

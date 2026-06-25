@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Editors | Book</title>
+    <title>Author Studio | Book</title>
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/admin/admin.css">
 </head>
 <body>
 <main class="admin-shell">
-    <section class="admin-hero">
+    <header class="studio-topbar">
         <div>
             <p class="admin-kicker">Book CMS</p>
-            <h1>Admin Editors</h1>
-            <p>Edit chapter markup, preview changes, manage browser drafts, and export publish-ready files.</p>
+            <h1>Author Studio</h1>
         </div>
-        <a class="admin-reader-link" href="/">Back to Reader</a>
-    </section>
+        <div class="topbar-actions">
+            <span id="auth-status" class="status-pill">Checking session</span>
+            <a class="admin-reader-link" href="/">Reader</a>
+        </div>
+    </header>
 
     <section id="auth-panel" class="admin-panel auth-panel">
         <div class="panel-heading">
             <div>
                 <h2>Admin Login</h2>
-                <p>Sign in to edit and publish live database-backed chapters.</p>
             </div>
-            <span id="auth-status">Checking session</span>
         </div>
         <form id="login-form" class="login-form">
             <label>
@@ -39,94 +39,158 @@
         </form>
     </section>
 
-    <section id="admin-workspace" class="admin-grid hidden">
+    <section id="admin-workspace" class="studio-layout hidden">
         <aside class="admin-panel chapter-list-panel">
-            <div class="panel-heading">
+            <div class="panel-heading compact-heading">
                 <h2>Chapters</h2>
                 <span id="chapter-count">Loading...</span>
             </div>
             <div id="chapter-list" class="chapter-list" aria-label="Chapter list"></div>
         </aside>
 
-        <section class="admin-panel editor-panel">
-            <div class="panel-heading">
-                <div>
-                    <h2 id="editor-title">Select a chapter</h2>
-                    <p id="editor-subtitle">Choose a chapter to edit its source fragment.</p>
+        <section class="studio-main">
+            <section class="admin-panel import-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Import Queue</h2>
+                        <span id="import-status" class="muted">Idle</span>
+                    </div>
+                    <button id="refresh-imports-button" type="button">Refresh</button>
                 </div>
-                <span id="draft-status" class="draft-status">No chapter selected</span>
-            </div>
+                <form id="import-form" class="import-form">
+                    <input id="import-file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <input id="import-title-input" type="text" placeholder="Title">
+                    <input id="import-slug-input" type="text" placeholder="slug">
+                    <input id="import-order-input" type="number" min="0" step="1" placeholder="Order">
+                    <button type="submit">Import</button>
+                </form>
+                <div id="import-draft-list" class="draft-list"></div>
+            </section>
 
-            <div class="field-row">
-                <label for="chapter-title-input">Chapter title</label>
-                <input id="chapter-title-input" type="text" autocomplete="off" disabled>
-            </div>
+            <section class="admin-panel editor-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2 id="editor-title">Select a chapter</h2>
+                        <span id="editor-subtitle" class="muted">No chapter selected</span>
+                    </div>
+                    <span id="draft-status" class="status-pill">Idle</span>
+                </div>
 
-            <div class="field-row">
-                <label for="chapter-html-input">Chapter HTML fragment</label>
-                <textarea id="chapter-html-input" spellcheck="true" disabled></textarea>
-            </div>
+                <div class="chapter-fields">
+                    <label>
+                        Title
+                        <input id="chapter-title-input" type="text" autocomplete="off" disabled>
+                    </label>
+                    <label>
+                        Slug
+                        <input id="chapter-slug-input" type="text" autocomplete="off" disabled>
+                    </label>
+                    <label>
+                        Order
+                        <input id="chapter-order-input" type="number" min="0" step="1" disabled>
+                    </label>
+                    <label>
+                        Type
+                        <select id="chapter-type-input" disabled>
+                            <option value="standard">Standard</option>
+                            <option value="interlude">Interlude</option>
+                            <option value="hidden">Hidden</option>
+                            <option value="conditional">Conditional</option>
+                        </select>
+                    </label>
+                    <label>
+                        Visibility
+                        <select id="chapter-visibility-input" disabled>
+                            <option value="public">Public</option>
+                            <option value="direct-link">Direct link</option>
+                            <option value="conditional">Conditional</option>
+                        </select>
+                    </label>
+                    <label class="checkbox-label">
+                        <input id="chapter-toc-input" type="checkbox" disabled>
+                        TOC
+                    </label>
+                </div>
 
-            <div class="field-row">
-                <label>Block editor</label>
+                <div class="readiness-bar">
+                    <div>
+                        <strong>Publish Readiness</strong>
+                        <div id="publish-readiness-list" class="readiness-list"></div>
+                    </div>
+                    <div class="button-row">
+                        <button id="save-draft-button" type="button" disabled>Save Draft</button>
+                        <button id="preview-chapter-button" type="button" disabled>Preview</button>
+                        <button id="publish-chapter-button" type="button" disabled>Publish</button>
+                    </div>
+                </div>
+
                 <div id="block-editor" class="block-editor"></div>
-            </div>
 
-            <div class="button-row">
-                <button id="save-draft-button" type="button" disabled>Save Draft</button>
-                <button id="preview-chapter-button" type="button" disabled>Mark Preview</button>
-                <button id="publish-chapter-button" type="button" disabled>Publish Live</button>
-            </div>
-        </section>
+                <details class="source-details">
+                    <summary>Source</summary>
+                    <textarea id="chapter-html-input" spellcheck="false" disabled></textarea>
+                    <button id="save-source-button" type="button" disabled>Save Source</button>
+                </details>
+            </section>
 
-        <section class="admin-panel preview-panel">
-            <div class="panel-heading">
-                <h2>Preview</h2>
-                <span id="preview-status">Waiting</span>
-            </div>
-            <div id="chapter-preview" class="chapter-preview">
-                <p>Select a chapter to preview edits.</p>
-            </div>
-        </section>
-
-        <section class="admin-panel cue-panel">
-            <div class="panel-heading">
-                <div>
-                    <h2>Audio Cues</h2>
-                    <p>Review API-backed cues for the selected chapter. Asset upload and block cue creation use the admin API.</p>
+            <section class="admin-panel preview-panel">
+                <div class="panel-heading compact-heading">
+                    <h2>Preview</h2>
+                    <span id="preview-status" class="muted">Waiting</span>
                 </div>
-                <span id="cue-status">No chapter selected</span>
-            </div>
+                <div id="chapter-preview" class="chapter-preview">
+                    <p>Select a chapter.</p>
+                </div>
+            </section>
 
-            <div class="field-row">
-                <label for="cue-json-input">Stored cue JSON</label>
-                <textarea id="cue-json-input" spellcheck="false" readonly disabled></textarea>
-            </div>
+            <section class="admin-panel versions-panel">
+                <div class="panel-heading compact-heading">
+                    <h2>Versions</h2>
+                    <button id="refresh-versions-button" type="button">Refresh</button>
+                </div>
+                <div id="version-list" class="version-list"></div>
+            </section>
 
-            <form id="audio-upload-form" class="audio-upload-form">
-                <input id="audio-title-input" type="text" placeholder="Track title">
-                <input id="audio-file-input" type="file" accept="audio/mpeg,audio/mp3">
-                <input id="audio-duration-input" type="number" min="1" step="1" placeholder="Duration seconds">
-                <button type="submit">Upload MP3</button>
-            </form>
+            <section class="admin-panel cue-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Audio</h2>
+                        <span id="cue-status" class="muted">No chapter selected</span>
+                    </div>
+                    <button id="refresh-audio-button" type="button">Refresh</button>
+                </div>
 
-            <form id="cue-create-form" class="cue-create-form">
-                <select id="cue-asset-select" aria-label="Audio asset"></select>
-                <input id="cue-start-block-input" type="text" placeholder="Start block id">
-                <input id="cue-end-block-input" type="text" placeholder="End block id">
-                <button type="submit">Create Cue</button>
-            </form>
-        </section>
+                <form id="audio-upload-form" class="audio-upload-form">
+                    <input id="audio-title-input" type="text" placeholder="Track title">
+                    <select id="audio-type-input">
+                        <option value="music">Music</option>
+                        <option value="ambient">Ambient</option>
+                    </select>
+                    <input id="audio-file-input" type="file" accept="audio/mpeg,audio/mp3">
+                    <input id="audio-duration-input" type="number" min="1" step="1" placeholder="Seconds">
+                    <button type="submit">Upload</button>
+                </form>
 
-        <section class="admin-panel ops-panel">
-            <div class="panel-heading">
-                <div>
+                <form id="cue-create-form" class="cue-create-form">
+                    <select id="cue-asset-select" aria-label="Audio asset"></select>
+                    <select id="cue-layer-select" aria-label="Cue layer">
+                        <option value="music">Music</option>
+                        <option value="ambient">Ambient</option>
+                    </select>
+                    <select id="cue-start-block-select" aria-label="Cue start"></select>
+                    <select id="cue-end-block-select" aria-label="Cue end"></select>
+                    <button type="submit">Add Cue</button>
+                </form>
+                <div id="cue-list" class="cue-list"></div>
+            </section>
+
+            <section class="admin-panel ops-panel">
+                <div class="panel-heading compact-heading">
                     <h2>Operations</h2>
-                    <p>Recent publish, reader, and audio events.</p>
+                    <button id="refresh-events-button" type="button">Refresh</button>
                 </div>
-                <button id="refresh-events-button" type="button">Refresh</button>
-            </div>
-            <div id="admin-events-list" class="admin-events-list"></div>
+                <div id="admin-events-list" class="admin-events-list"></div>
+            </section>
         </section>
     </section>
 </main>

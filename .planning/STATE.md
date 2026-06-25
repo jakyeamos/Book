@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Added Author Studio server APIs for block updates, import drafts, audio cue update/repair, readiness checks, and scrypt password hash upgrades
+last_activity: 2026-06-25 - Rebuilt `/admin` as a block-first Author Studio with import queue, preview, versions, readiness, and visual audio cue controls
 progress:
   total_phases: 7
   completed_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
 Status: In Progress (local baseline green; Author Studio v1 implementation active)
-Last activity: 2026-06-25 - Server/API/security slice typechecked and targeted smokes passed
+Last activity: 2026-06-25 - Author Studio UI slice passed JS parse, typecheck, full-stack smoke, and browser QA
 
 Progress: [#######---] 71%
 
@@ -63,7 +63,6 @@ Progress: [#######---] 71%
 
 ### Pending Todos
 
-- Replace raw admin workflow with block-first Author Studio UI.
 - Expand smoke coverage for Author Studio v1 browser-facing APIs.
 - Run deployed Render smoke and update `docs/phase06-acceptance-checklist.md` with evidence.
 - Re-validate Phase 07 closure after Phase 06 is accepted and hardened.

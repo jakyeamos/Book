@@ -274,7 +274,7 @@ async function run(): Promise<void> {
     const adminHtml = await adminPage.text();
     if (
       adminPage.status !== 200
-      || !adminHtml.includes("Admin Editors")
+      || !adminHtml.includes("Author Studio")
       || !adminHtml.includes("/admin/admin.js")
     ) {
       throw new Error("/admin did not serve the admin editor shell");
@@ -286,7 +286,7 @@ async function run(): Promise<void> {
     const adminSubrouteHtml = await adminSubroute.text();
     if (
       adminSubroute.status !== 200
-      || !adminSubrouteHtml.includes("Admin Editors")
+      || !adminSubrouteHtml.includes("Author Studio")
       || !adminSubrouteHtml.includes("/admin/admin.js")
     ) {
       throw new Error("Authenticated /admin subroute did not serve the admin editor shell");

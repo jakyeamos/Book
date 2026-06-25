@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Polished Author Studio block editing with move/duplicate controls, inline validation, save feedback, and empty states
+last_activity: 2026-06-25 - Improved Author Studio preview parity with draft/published modes, runtime summary, and theme preview controls
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (Author Studio v1.1 authoring polish slice green; deployed Render acceptance pending)
-Last activity: 2026-06-25 - Added focused block editor module, move/duplicate block actions, validation chips, save status, and import/audio/version empty states
+Status: In Progress (Author Studio v1.1 preview parity slice green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Added accent/background theme inputs, draft/published preview mode, runtime metadata, and reader-like preview styling
 
 Progress: [#######---] 71%
 

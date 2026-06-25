@@ -31,6 +31,8 @@ const elements = {
   typeInput: document.getElementById("chapter-type-input"),
   visibilityInput: document.getElementById("chapter-visibility-input"),
   tocInput: document.getElementById("chapter-toc-input"),
+  themeAccentInput: document.getElementById("chapter-theme-accent-input"),
+  themeBackgroundInput: document.getElementById("chapter-theme-background-input"),
   htmlInput: document.getElementById("chapter-html-input"),
   sourceSaveButton: document.getElementById("save-source-button"),
   saveDraftButton: document.getElementById("save-draft-button"),
@@ -38,6 +40,8 @@ const elements = {
   publishChapterButton: document.getElementById("publish-chapter-button"),
   readinessList: document.getElementById("publish-readiness-list"),
   validationList: document.getElementById("chapter-validation-list"),
+  previewModeInput: document.getElementById("preview-mode-input"),
+  previewRuntime: document.getElementById("preview-runtime"),
   previewStatus: document.getElementById("preview-status"),
   preview: document.getElementById("chapter-preview"),
   blockEditor: document.getElementById("block-editor"),
@@ -108,6 +112,8 @@ function setEditorEnabled(enabled) {
     elements.typeInput,
     elements.visibilityInput,
     elements.tocInput,
+    elements.themeAccentInput,
+    elements.themeBackgroundInput,
     elements.htmlInput,
     elements.sourceSaveButton,
     elements.saveDraftButton,
@@ -176,6 +182,8 @@ function applyChapterToEditor(chapter) {
   elements.typeInput.value = chapter.type || "standard";
   elements.visibilityInput.value = chapter.visibility?.mode || "public";
   elements.tocInput.checked = chapter.visibility?.includeInToc !== false;
+  elements.themeAccentInput.value = chapter.theme?.accentColor || "";
+  elements.themeBackgroundInput.value = chapter.theme?.backgroundTint || "";
   elements.htmlInput.value = chapter.html || "";
   elements.saveStatus.textContent = "Saved";
   setEditorEnabled(true);
@@ -219,6 +227,10 @@ async function saveChapterDraft() {
       visibility: {
         mode: elements.visibilityInput.value,
         includeInToc: elements.tocInput.checked,
+      },
+      theme: {
+        accentColor: elements.themeAccentInput.value.trim() || undefined,
+        backgroundTint: elements.themeBackgroundInput.value.trim() || undefined,
       },
       normalizedDocument: serializeBlocks(),
     }),
@@ -376,11 +388,14 @@ elements.loginForm.addEventListener("submit", async (event) => {
   elements.typeInput,
   elements.visibilityInput,
   elements.tocInput,
+  elements.themeAccentInput,
+  elements.themeBackgroundInput,
 ].forEach((element) => {
   element.addEventListener("input", () => setDirty(true));
   element.addEventListener("change", () => setDirty(true));
 });
 elements.htmlInput.addEventListener("input", () => setDirty(true));
+elements.previewModeInput.addEventListener("change", renderPreviewFromBlocks);
 elements.saveDraftButton.addEventListener("click", () => void saveChapterDraft());
 elements.sourceSaveButton.addEventListener("click", () => void saveSource());
 elements.previewChapterButton.addEventListener("click", () => void markPreview());

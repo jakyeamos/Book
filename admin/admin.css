@@ -164,7 +164,8 @@ textarea:disabled {
 .import-form,
 .audio-upload-form,
 .cue-create-form,
-.chapter-fields {
+.chapter-fields,
+.theme-fields {
     display: grid;
     gap: 0.65rem;
 }
@@ -270,6 +271,11 @@ textarea {
 
 .chapter-fields {
     grid-template-columns: minmax(220px, 1.6fr) minmax(150px, 1fr) 90px 130px 130px 80px;
+    margin-bottom: 0.9rem;
+}
+
+.theme-fields {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
     margin-bottom: 0.9rem;
 }
 
@@ -404,6 +410,19 @@ textarea {
 .chapter-preview .chapter {
     max-width: 68ch;
     margin: 0 auto;
+    border-left: 4px solid var(--preview-accent, var(--studio-accent));
+    background: var(--preview-background, transparent);
+    padding: 1rem;
+}
+
+.preview-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.preview-controls select {
+    min-width: 130px;
 }
 
 .version-list,
@@ -487,6 +506,7 @@ textarea {
     .audio-upload-form,
     .cue-create-form,
     .chapter-fields,
+    .theme-fields,
     .block-card,
     .draft-card,
     .cue-card {

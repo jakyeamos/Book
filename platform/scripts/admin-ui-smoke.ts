@@ -68,9 +68,14 @@ function run(): void {
 
   assertIncludes(html, 'id="chapter-validation-list"', "Inline chapter validation surface");
   assertIncludes(html, 'id="save-status"', "Explicit save status surface");
+  assertIncludes(html, 'id="chapter-theme-accent-input"', "Theme accent preview control");
+  assertIncludes(html, 'id="chapter-theme-background-input"', "Theme background preview control");
+  assertIncludes(html, 'id="preview-mode-input"', "Draft/published preview mode control");
+  assertIncludes(html, 'id="preview-runtime"', "Preview runtime summary");
   assertIncludes(read("admin/studio-blocks.js"), "Move up", "Block move control");
   assertIncludes(read("admin/studio-blocks.js"), "Duplicate", "Block duplicate control");
   assertIncludes(read("admin/studio-blocks.js"), "Move down", "Block move control");
+  assertIncludes(read("admin/studio-blocks.js"), "Published preview unavailable", "Published preview fallback");
   assertIncludes(importScript, "No imports staged", "Import queue empty state");
   assertIncludes(audioScript, "No cues for this chapter", "Audio cue empty state");
 

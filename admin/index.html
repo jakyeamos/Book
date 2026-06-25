@@ -114,6 +114,16 @@
                         TOC
                     </label>
                 </div>
+                <div class="theme-fields">
+                    <label>
+                        Accent
+                        <input id="chapter-theme-accent-input" type="text" placeholder="#7fb7a3" autocomplete="off" disabled>
+                    </label>
+                    <label>
+                        Background
+                        <input id="chapter-theme-background-input" type="text" placeholder="#111312" autocomplete="off" disabled>
+                    </label>
+                </div>
                 <div id="chapter-validation-list" class="chapter-validation-list"></div>
 
                 <div class="readiness-bar" data-studio-flow="publish-readiness">
@@ -139,8 +149,17 @@
 
             <section class="admin-panel preview-panel" data-studio-flow="reader-preview">
                 <div class="panel-heading compact-heading">
-                    <h2>Preview</h2>
-                    <span id="preview-status" class="muted">Waiting</span>
+                    <div>
+                        <h2>Preview</h2>
+                        <span id="preview-runtime" class="muted">Waiting</span>
+                    </div>
+                    <div class="preview-controls">
+                        <select id="preview-mode-input" aria-label="Preview mode">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                        <span id="preview-status" class="muted">Waiting</span>
+                    </div>
                 </div>
                 <div id="chapter-preview" class="chapter-preview">
                     <p>Select a chapter.</p>

@@ -1,5 +1,22 @@
 import { blockHtml, blockText, selectOptions } from "./studio-utils.js";
 
+function safeCssValue(value) {
+  return typeof value === "string" && /^[#a-z0-9(),.%\s-]+$/i.test(value) ? value : undefined;
+}
+
+function previewThemeStyle(chapter) {
+  const styles = [];
+  const accent = safeCssValue(chapter.theme?.accentColor);
+  const background = safeCssValue(chapter.theme?.backgroundTint);
+  if (accent) {
+    styles.push(`--preview-accent: ${accent}`);
+  }
+  if (background) {
+    styles.push(`--preview-background: ${background}`);
+  }
+  return styles.length ? ` style="${styles.join("; ")}"` : "";
+}
+
 function ensureTextSpan(block) {
   if (block.type === "scene_break") {
     block.spans = [];
@@ -28,10 +45,21 @@ function duplicateBlock(block, chapterId) {
 export function renderPreviewFromBlocks({ elements, state }) {
   if (!state.selectedChapter) {
     elements.preview.innerHTML = "<p>Select a chapter.</p>";
+    elements.previewRuntime.textContent = "Waiting";
     return;
   }
-  const html = state.blocks.map(blockHtml).join("\n");
-  elements.preview.innerHTML = `<article class="chapter">${html}</article>`;
+  const mode = elements.previewModeInput.value;
+  const canShowPublished = mode === "published" && state.selectedChapter.status === "published" && !state.dirty;
+  const html = canShowPublished
+    ? state.selectedChapter.html
+    : state.blocks.map(blockHtml).join("\n");
+  const warning = mode === "published" && !canShowPublished
+    ? '<p class="empty-state">Published preview unavailable; showing draft preview.</p>'
+    : "";
+  elements.preview.innerHTML = `${warning}<article class="chapter"${previewThemeStyle(state.selectedChapter)}>${html}</article>`;
+  const runtime = state.selectedChapter.runtime;
+  const blockCount = state.blocks.length;
+  elements.previewRuntime.textContent = `${mode} · ${blockCount} blocks · ${runtime?.wordCount ?? 0} words`;
   elements.previewStatus.textContent = state.dirty ? "Unsaved preview" : "Saved preview";
 }
 

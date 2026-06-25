@@ -10,9 +10,9 @@ Status snapshot (2026-06-25):
 ## Admin + Editorial
 - [ ] Admin login protects `/admin` route on deployed Render. Evidence: `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.
 - [ ] Author Studio loads a block-first editor for an existing chapter without requiring raw HTML edits.
-- [ ] DOCX import creates a staged draft from `/admin`.
-- [ ] Staging metadata edits persist and approved drafts create chapters.
-- [ ] Chapter order, type, and visibility update from admin tools.
+- [ ] DOCX import creates a staged draft from `/admin`. Evidence: `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` reports `DOCX import creates staged draft over HTTP`.
+- [ ] Staging metadata edits persist and approved drafts create chapters. Evidence: `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` reports `Import metadata edits persist over HTTP`.
+- [ ] Chapter order, type, and visibility update from admin tools. Evidence: `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` reports `Chapter order/type/visibility survives live HTTP reload`.
 - [ ] Version history is visible in `/admin`.
 - [ ] Publish and rollback both succeed on deployed Render. Evidence: disposable staging chapter in `platform:fullstack-smoke`.
 
@@ -55,4 +55,4 @@ pnpm run platform:deployed-acceptance
 
 Latest evidence:
 
-- Pending deployed Render run.
+- Pending deployed Render run with the extended authoring checks added to `platform:deployed-acceptance`.

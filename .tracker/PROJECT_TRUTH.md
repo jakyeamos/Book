@@ -4,9 +4,9 @@ projectName: Book
 summary: Book has a full-stack reading platform path plus current pre-cr quality gate configuration for coverage, security, and checklist checks.
 healthScore: 88
 statusLabel: on_track
-nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` against the deployed service.
+nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` against the deployed service.
 blockers: []
-lastUpdated: 2026-06-24
+lastUpdated: 2026-06-25
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -16,8 +16,8 @@ goals:
 repoType: app
 sourceOfTruth: mixed
 primaryLanguage: TypeScript
-activeBranch: codex/fix-login-route
-lastCommitDate: "2026-06-24"
+activeBranch: codex/author-studio-v1-1
+lastCommitDate: "2026-06-25"
 quality:
   lint: pass
   types: pass
@@ -52,6 +52,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jun 13: Added disposable staging-chapter coverage to `platform:fullstack-smoke` so publish, broken-cue publish blocking, publish recovery, rollback, cleanup, and publish-related audit events are exercised through the deployed HTTP API.
 - Jun 13: Normalized runtime, deployment, and operations dependency commands to pnpm and replaced the npm lockfile with `pnpm-lock.yaml`.
 - Jun 24: Updated `.pre-cr.json` to use an 80% threshold with coverage, security, checklist checks, and auto coverage-path detection.
+- Jun 25: Extended deployed acceptance evidence and full-stack smoke assertions so DOCX import staging, draft metadata persistence, and chapter order/type/visibility reloads are covered through live HTTP APIs.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -75,7 +76,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 1. Create the Render service/database from `render.yaml` and set `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 2. Point the live domain at the Node service after smoke-checking `/api/health`, `/`, `/login`, and `/admin`.
-3. Verify deployed UI behavior after `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke` passes against the Node service.
+3. Verify deployed UI behavior after `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` passes against the Node service.
 4. Add a dead-code scan command or explicitly document why one is unavailable.
 
 ## Risks / Blockers
@@ -87,11 +88,11 @@ The project should become editable by nontechnical users. Chapter text, ordering
 ## Quality Ladder Notes
 
 - **Lint/format baseline:** `pnpm run lint:chapters` passed on 2026-06-24.
-- **Types:** `pnpm run platform:typecheck` passed on 2026-06-24.
+- **Types:** `pnpm run platform:typecheck` passed on 2026-06-25.
 - **Tests:** `pnpm test` passed on 2026-06-24.
-- **Build:** `pnpm run build` passed on 2026-06-13 through `pnpm run platform:fullstack-smoke`.
-- **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-13 and now covers a disposable staging chapter for publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
-- **Platform smokes:** `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, import, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
+- **Build:** `pnpm run build` passed on 2026-06-25 through `pnpm run platform:fullstack-smoke`.
+- **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-25 and now covers DOCX import staging, metadata persistence, approved chapter order/type/visibility reloads, disposable staging chapter publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
+- **Platform smokes:** `pnpm run platform:import-smoke` passed on 2026-06-25; `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** no `audit:dead-code` script is configured, so status is unknown.
 - **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.
 

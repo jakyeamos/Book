@@ -42,7 +42,7 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<{ s
   };
 }
 
-function runFullstackSmoke(): EvidenceLine {
+function runFullstackSmoke(): EvidenceLine[] {
   const result = spawnSync("pnpm", ["run", "platform:fullstack-smoke"], {
     cwd: process.cwd(),
     env: process.env,
@@ -51,18 +51,53 @@ function runFullstackSmoke(): EvidenceLine {
   });
 
   if (result.status !== 0) {
-    return {
-      check: "Deployed full-stack smoke",
-      status: "fail",
-      evidence: (result.stderr || result.stdout || "pnpm run platform:fullstack-smoke failed").trim(),
-    };
+    const evidence = (result.stderr || result.stdout || "pnpm run platform:fullstack-smoke failed").trim();
+    return [
+      {
+        check: "Deployed full-stack smoke",
+        status: "fail",
+        evidence,
+      },
+      {
+        check: "DOCX import creates staged draft over HTTP",
+        status: "fail",
+        evidence,
+      },
+      {
+        check: "Import metadata edits persist over HTTP",
+        status: "fail",
+        evidence,
+      },
+      {
+        check: "Chapter order/type/visibility survives live HTTP reload",
+        status: "fail",
+        evidence,
+      },
+    ];
   }
 
-  return {
-    check: "Deployed full-stack smoke",
-    status: "pass",
-    evidence: "platform:fullstack-smoke exited 0 against BOOK_SMOKE_BASE_URL",
-  };
+  return [
+    {
+      check: "Deployed full-stack smoke",
+      status: "pass",
+      evidence: "platform:fullstack-smoke exited 0 against BOOK_SMOKE_BASE_URL",
+    },
+    {
+      check: "DOCX import creates staged draft over HTTP",
+      status: "pass",
+      evidence: "platform:fullstack-smoke imported DOCX content through /api/admin/import/docx and observed staged status",
+    },
+    {
+      check: "Import metadata edits persist over HTTP",
+      status: "pass",
+      evidence: "platform:fullstack-smoke updated draft title, type, order, and visibility before approval",
+    },
+    {
+      check: "Chapter order/type/visibility survives live HTTP reload",
+      status: "pass",
+      evidence: "platform:fullstack-smoke updated approved chapter settings and reloaded them from chapter detail and list APIs",
+    },
+  ];
 }
 
 function renderMarkdown(baseUrl: string, evidence: EvidenceLine[]): string {
@@ -91,7 +126,7 @@ async function run(): Promise<void> {
   requireEnv("BOOK_SMOKE_ADMIN_PASSWORD");
 
   const evidence: EvidenceLine[] = [];
-  evidence.push(runFullstackSmoke());
+  evidence.push(...runFullstackSmoke());
 
   const readiness = await fetchJson<{ ok: boolean; checks?: Record<string, boolean> }>(`${baseUrl}/api/deploy/readiness`);
   evidence.push({
@@ -100,18 +135,27 @@ async function run(): Promise<void> {
     evidence: `HTTP ${readiness.status}; checks=${JSON.stringify(readiness.body.checks ?? {})}`,
   });
 
+  const readerShell = await fetchText(`${baseUrl}/`);
+  evidence.push({
+    check: "Reader root served by Node",
+    status: readerShell.status === 200 && readerShell.headers.get("x-book-platform") === "node" ? "pass" : "fail",
+    evidence: `HTTP ${readerShell.status}; platform=${readerShell.headers.get("x-book-platform") ?? ""}`,
+  });
+
   const login = await fetchText(`${baseUrl}/login`);
   evidence.push({
     check: "Login shell",
-    status: login.status === 200 && login.text.includes("Book Account") ? "pass" : "fail",
-    evidence: `HTTP ${login.status}; shell=${login.text.includes("Book Account")}`,
+    status: login.status === 200 && login.text.includes("Book Account") && login.headers.get("x-book-platform") === "node" ? "pass" : "fail",
+    evidence: `HTTP ${login.status}; shell=${login.text.includes("Book Account")}; platform=${login.headers.get("x-book-platform") ?? ""}`,
   });
 
   const anonymousAdmin = await fetchText(`${baseUrl}/admin`, { redirect: "manual" });
   evidence.push({
     check: "Admin route protection",
-    status: anonymousAdmin.status === 302 && anonymousAdmin.headers.get("location")?.startsWith("/login") ? "pass" : "fail",
-    evidence: `HTTP ${anonymousAdmin.status}; location=${anonymousAdmin.headers.get("location") ?? ""}`,
+    status: anonymousAdmin.status === 302
+      && anonymousAdmin.headers.get("location")?.startsWith("/login") === true
+      && anonymousAdmin.headers.get("x-book-platform") === "node" ? "pass" : "fail",
+    evidence: `HTTP ${anonymousAdmin.status}; location=${anonymousAdmin.headers.get("location") ?? ""}; platform=${anonymousAdmin.headers.get("x-book-platform") ?? ""}`,
   });
 
   const markdown = renderMarkdown(baseUrl, evidence);

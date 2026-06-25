@@ -2283,6 +2283,7 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
 
   return http.createServer(async (request, response) => {
     try {
+      response.setHeader("x-book-platform", "node");
       const method = request.method ?? "GET";
       const url = new URL(request.url ?? "/", "http://localhost");
       const pathname = url.pathname.replace(/\/+$/, "") || "/";

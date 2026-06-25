@@ -36,6 +36,12 @@ async function requestJson<T>(
   return { body, headers: response.headers, status: response.status };
 }
 
+function assertNodeOwned(response: Response, route: string): void {
+  if (response.headers.get("x-book-platform") !== "node") {
+    throw new Error(`${route} was not served by the Node platform service`);
+  }
+}
+
 function cleanBaseUrl(value: string): string {
   return value.replace(/\/+$/, "");
 }
@@ -217,12 +223,25 @@ async function run(): Promise<void> {
       throw new Error("Reader chapter endpoint did not return chapter HTML");
     }
 
+    const readerShell = await fetch(`${baseUrl}/`);
+    const readerHtml = await readerShell.text();
+    assertNodeOwned(readerShell, "/");
+    if (
+      readerShell.status !== 200
+      || !readerHtml.includes("Interactive Digital Book")
+      || !readerHtml.includes("script.js")
+    ) {
+      throw new Error("/ did not serve the reader shell");
+    }
+
     const anonymousAdminPage = await fetch(`${baseUrl}/admin`, { redirect: "manual" });
+    assertNodeOwned(anonymousAdminPage, "/admin");
     if (anonymousAdminPage.status !== 302 || anonymousAdminPage.headers.get("location") !== "/login?next=%2Fadmin") {
       throw new Error("Anonymous /admin did not redirect to /login");
     }
 
     const anonymousAdminSubroute = await fetch(`${baseUrl}/admin/chapters`, { redirect: "manual" });
+    assertNodeOwned(anonymousAdminSubroute, "/admin/chapters");
     if (
       anonymousAdminSubroute.status !== 302
       || anonymousAdminSubroute.headers.get("location") !== "/login?next=%2Fadmin%2Fchapters"
@@ -232,6 +251,7 @@ async function run(): Promise<void> {
 
     const loginPage = await fetch(`${baseUrl}/login`);
     const loginHtml = await loginPage.text();
+    assertNodeOwned(loginPage, "/login");
     if (
       loginPage.status !== 200
       || !loginHtml.includes("Book Account")
@@ -272,6 +292,7 @@ async function run(): Promise<void> {
       headers: { cookie },
     });
     const adminHtml = await adminPage.text();
+    assertNodeOwned(adminPage, "/admin");
     if (
       adminPage.status !== 200
       || !adminHtml.includes("Author Studio")
@@ -284,6 +305,7 @@ async function run(): Promise<void> {
       headers: { cookie },
     });
     const adminSubrouteHtml = await adminSubroute.text();
+    assertNodeOwned(adminSubroute, "/admin/chapters");
     if (
       adminSubroute.status !== 200
       || !adminSubrouteHtml.includes("Author Studio")
@@ -334,20 +356,52 @@ async function run(): Promise<void> {
       throw new Error("Import draft list did not include uploaded draft");
     }
 
-    const metadataUpdate = await requestJson<{ metadata: { title: string } }>(
+    const metadataUpdate = await requestJson<{
+      metadata: {
+        title: string;
+        chapterType: string;
+        orderIndex: number;
+        visibility: { mode: string; includeInToc: boolean };
+      };
+    }>(
       baseUrl,
       `/api/admin/import/drafts/${encodeURIComponent(importedDraft.body.id)}/metadata`,
       {
         method: "PUT",
         headers: { cookie },
-        body: JSON.stringify({ title: "Smoke Imported Chapter Revised" }),
+        body: JSON.stringify({
+          title: "Smoke Imported Chapter Revised",
+          chapterType: "interlude",
+          orderIndex: 97,
+          visibility: {
+            mode: "direct-link",
+            includeInToc: false,
+          },
+        }),
       },
     );
-    if (metadataUpdate.status !== 200 || metadataUpdate.body.metadata.title !== "Smoke Imported Chapter Revised") {
+    if (
+      metadataUpdate.status !== 200
+      || metadataUpdate.body.metadata.title !== "Smoke Imported Chapter Revised"
+      || metadataUpdate.body.metadata.chapterType !== "interlude"
+      || metadataUpdate.body.metadata.orderIndex !== 97
+      || metadataUpdate.body.metadata.visibility.mode !== "direct-link"
+      || metadataUpdate.body.metadata.visibility.includeInToc
+    ) {
       throw new Error("Import draft metadata update did not persist");
     }
 
-    const importApproval = await requestJson<{ chapter: { id: string; status: string; normalizedDocument: { blocks: unknown[] } } }>(
+    const importApproval = await requestJson<{
+      chapter: {
+        id: string;
+        status: string;
+        title: string;
+        number: number;
+        type: string;
+        visibility: { mode: string; includeInToc: boolean };
+        normalizedDocument: { blocks: unknown[] };
+      };
+    }>(
       baseUrl,
       `/api/admin/import/drafts/${encodeURIComponent(importedDraft.body.id)}/approve`,
       {
@@ -359,9 +413,88 @@ async function run(): Promise<void> {
     if (
       importApproval.status !== 200
       || importApproval.body.chapter.status !== "draft"
+      || importApproval.body.chapter.title !== "Smoke Imported Chapter Revised"
+      || importApproval.body.chapter.number !== 97
+      || importApproval.body.chapter.type !== "interlude"
+      || importApproval.body.chapter.visibility.mode !== "direct-link"
+      || importApproval.body.chapter.visibility.includeInToc
       || importApproval.body.chapter.normalizedDocument.blocks.length < 2
     ) {
-      throw new Error("Import draft approval did not create a block-backed chapter");
+      throw new Error("Import draft approval did not create a metadata-backed block chapter");
+    }
+
+    const chapterSettings = await requestJson<{
+      id: string;
+      number: number;
+      type: string;
+      visibility: { mode: string; conditionKey?: string; includeInToc: boolean };
+    }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(importedChapterId)}`,
+      {
+        method: "PUT",
+        headers: { cookie },
+        body: JSON.stringify({
+          orderIndex: 96,
+          type: "conditional",
+          visibility: {
+            mode: "conditional",
+            conditionKey: "smoke-authoring-gate",
+            includeInToc: false,
+          },
+        }),
+      },
+    );
+    if (
+      chapterSettings.status !== 200
+      || chapterSettings.body.number !== 96
+      || chapterSettings.body.type !== "conditional"
+      || chapterSettings.body.visibility.mode !== "conditional"
+      || chapterSettings.body.visibility.conditionKey !== "smoke-authoring-gate"
+      || chapterSettings.body.visibility.includeInToc
+    ) {
+      throw new Error("Imported chapter order/type/visibility update did not persist");
+    }
+
+    const reloadedChapter = await requestJson<{
+      number: number;
+      type: string;
+      visibility: { mode: string; conditionKey?: string; includeInToc: boolean };
+    }>(
+      baseUrl,
+      `/api/admin/chapters/${encodeURIComponent(importedChapterId)}`,
+      { headers: { cookie } },
+    );
+    if (
+      reloadedChapter.status !== 200
+      || reloadedChapter.body.number !== 96
+      || reloadedChapter.body.type !== "conditional"
+      || reloadedChapter.body.visibility.mode !== "conditional"
+      || reloadedChapter.body.visibility.conditionKey !== "smoke-authoring-gate"
+      || reloadedChapter.body.visibility.includeInToc
+    ) {
+      throw new Error("Imported chapter order/type/visibility did not survive reload");
+    }
+
+    const reorderedChapters = await requestJson<Array<{
+      id: string;
+      number: number;
+      type: string;
+      visibility: { mode: string; conditionKey?: string; includeInToc: boolean };
+    }>>(baseUrl, "/api/admin/chapters", {
+      headers: { cookie },
+    });
+    const reorderedImport = reorderedChapters.body.find((chapterItem) => chapterItem.id === importedChapterId);
+    if (
+      reorderedChapters.status !== 200
+      || !reorderedImport
+      || reorderedImport.number !== 96
+      || reorderedImport.type !== "conditional"
+      || reorderedImport.visibility.mode !== "conditional"
+      || reorderedImport.visibility.conditionKey !== "smoke-authoring-gate"
+      || reorderedImport.visibility.includeInToc
+    ) {
+      throw new Error("Imported chapter order/type/visibility did not survive chapter list reload");
     }
 
     const readerLogin = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/register", {

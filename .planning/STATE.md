@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Split Author Studio browser code into focused modules after the commit quality gate flagged the oversized admin entrypoint
+last_activity: 2026-06-25 - Completed Author Studio v1 local verification suite; deployed Render acceptance remains pending evidence-backed smoke results
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (local baseline green; Author Studio v1 implementation active)
-Last activity: 2026-06-25 - Author Studio module split passed typecheck, full-stack smoke, and diff whitespace checks
+Status: In Progress (Author Studio v1 local suite green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Author Studio v1 local verification passed typecheck, build, auth/import/editorial/audio/reader-sync/full-stack smokes, and full chapter validation
 
 Progress: [#######---] 71%
 
@@ -36,7 +36,7 @@ Progress: [#######---] 71%
 
 **Execution:**
 - Total planned artifacts completed: 23
-- Remaining queued work: Author Studio v1 integrated implementation
+- Remaining queued work: Deployed Render acceptance for Author Studio v1
 - Phase 06 blocking human-verify gate: open until deployed Render acceptance is checked
 - Deployment parity target: Render service with `/login`, `/admin`, reader APIs, admin APIs, Postgres, and audio disk verified
 

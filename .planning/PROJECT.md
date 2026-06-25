@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A cinematic, browser-based reading experience for a multi-POV literary fiction novel (~25 chapters planned, ~14 drafted). Three protagonists — Xander, Nico, and Gianna — whose lives intersect in Olympia, Washington in March 2036. The site needs two things: first, the latest chapter content migrated from source documents into the HTML; second, a per-chapter cinematic atmosphere (unique visuals, particles, parallax, soundtrack) that serves each chapter's specific tone. Hosted on GitHub Pages.
+A cinematic authoring and publishing product for a multi-POV literary fiction novel (~25 chapters planned, ~14 drafted). Three protagonists — Xander, Nico, and Gianna — whose lives intersect in Olympia, Washington in March 2036. The product now has two surfaces: an immersive reader shell and a private Author Studio for importing, editing, previewing, cueing audio, publishing, and rolling back chapters. The canonical production architecture is the Node server on Render with Postgres and persistent audio asset storage.
 
 ## Core Value
 
@@ -44,7 +44,7 @@ Every chapter feels like its own cinematic world — the visuals, audio, and tex
 
 ## Requirements
 
-### Validated
+### Validated Reader Baseline
 
 - ✓ Chapter navigation (prev/next/dropdown) — existing
 - ✓ Per-section background audio playback — existing
@@ -52,12 +52,18 @@ Every chapter feels like its own cinematic world — the visuals, audio, and tex
 - ✓ Text highlighting — existing
 - ✓ Scroll position memory — existing
 
-### Active
+### Active Product Requirements
 
-**Content migration (must happen first):**
-- [ ] All drafted chapters (1–14+) migrated from docx/md source files into HTML
-- [ ] Existing HTML chapters 1–2 replaced with updated docx versions (significantly expanded)
-- [ ] Chapter selector dropdown updated to reflect all chapters
+**Author Studio v1:**
+- [ ] Admin can log in to `/admin` on the deployed Render service
+- [ ] DOCX imports create staged drafts with editable metadata and reader-style previews
+- [ ] Existing chapters can be edited as normalized blocks without touching raw HTML
+- [ ] Raw HTML remains available only as an advanced/source mode
+- [ ] Version history and rollback are visible from the editor
+- [ ] Publish readiness blocks unsafe publishes, especially broken audio cues
+- [ ] Audio assets and cues can be authored visually without manually typing block IDs
+- [ ] Production readiness verifies the real database and audio storage path, not placeholder checks
+- [ ] Deployed acceptance is recorded in `docs/phase06-acceptance-checklist.md`
 
 **Cinematic experience:**
 - [ ] Per-chapter visual themes (distinct color palette, atmosphere, mood)
@@ -72,9 +78,9 @@ Every chapter feels like its own cinematic world — the visuals, audio, and tex
 
 ### Out of Scope
 
-- Server-side rendering — must stay static (GitHub Pages constraint)
-- Build tooling / bundlers — vanilla HTML/CSS/JS to keep it simple to extend
-- User accounts / saved reading progress server-side — localStorage is sufficient
+- Next.js/React migration — the current Author Studio pass stays vanilla HTML/CSS/JS
+- Multi-author collaboration — v1 is optimized for one author/admin
+- Public self-service admin signup — production admin bootstrap stays explicit
 - Video backgrounds — storage/bandwidth not justified for v1
 - Scrolljacking — documented UX harm
 - `background-attachment: fixed` — hard broken on iOS Safari
@@ -84,14 +90,14 @@ Every chapter feels like its own cinematic world — the visuals, audio, and tex
 - **Existing codebase:** `index.html` (426 lines, 2 chapters), `script.js` (466 lines), `styles.css` (352 lines)
 - **Audio assets:** Eva_Angelina.mp3, Mojo_Pin.mp3, Rose_Parade.mp3 already in repo
 - **Source chapters:** `Downloads/chapters-*/chapters/` — 7 docx files + 2 md files covering Ch 1–15 (with gaps)
-- **Platform:** GitHub Pages (Jekyll workflow in .github/)
-- **Known issues:** Debug log overlay visible in production; Giscus unconfigured; audio sections 4-6 unmapped; `background-attachment: fixed` not yet used but must be avoided
+- **Platform:** Render Node service with Postgres, persistent audio disk, and static reader/admin assets served by the same server
+- **Known issues:** Author Studio UI still exposes too much raw HTML/JSON/block-ID machinery; production acceptance is not signed off; planning docs are being realigned to the Node/Postgres product
 - **Roadmap:** ~25 chapters planned, 14 drafted, stored in docx files outside the repo
 
 ## Constraints
 
-- **Tech stack**: Vanilla HTML/CSS/JS — no build step, no frameworks
-- **Hosting**: GitHub Pages — static only, no server
+- **Tech stack**: Vanilla reader/admin HTML/CSS/JS plus TypeScript platform code compiled by `pnpm run build`
+- **Hosting**: Render web service with Postgres and persistent uploaded-audio storage
 - **Extensibility**: Each new chapter should require minimal code to theme (ideally one config object)
 - **Compatibility**: Must not break existing chapter content, audio mapping, or reading features
 - **Content sensitivity**: Story handles self-harm ideation and OCD with literary care — visual effects should amplify, not trivialize
@@ -101,11 +107,11 @@ Every chapter feels like its own cinematic world — the visuals, audio, and tex
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Content migration before visual effects | Can't design chapter atmospheres without reading final content | — Pending |
-| Keep vanilla JS (no framework) | GitHub Pages static constraint + author can extend without tooling | — Pending |
+| Keep vanilla JS for UI | Avoid a frontend migration while making the authoring loop usable | Active |
 | Chapter themes as data config | Dramatically different chapters need a scalable pattern, not hard-coded CSS | — Pending |
 | GSAP 3.13+ (ScrollTrigger + SplitText) | Free since 2024, covers parallax + text animations, zero build step | — Pending |
 | tsParticles slim (CDN) | particles.js abandoned; slim bundle <50KB | — Pending |
 | Web Audio API for crossfade | Dual `<audio>` element pattern for smooth crossfade without build step | — Pending |
 
 ---
-*Last updated: 2026-03-10 after deep questioning + research + chapter document review*
+*Last updated: 2026-06-25 after Author Studio v1 product-truth reconciliation*

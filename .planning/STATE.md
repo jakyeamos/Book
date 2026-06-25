@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 06 deployed Render smoke ready; production acceptance still pending
-last_updated: "2026-06-13T00:00:00.000Z"
-last_activity: 2026-06-13 - Adapted full-stack admin smoke for Render base URL/admin credentials and documented automated acceptance coverage
+stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
+last_updated: "2026-06-25T00:00:00.000Z"
+last_activity: 2026-06-25 - Started integrated Author Studio v1 improvement branch covering product truth, admin UX, APIs, security, readiness, and acceptance
 progress:
   total_phases: 7
   completed_phases: 5
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** Every chapter feels like its own cinematic world - visuals, audio, and text effects serve the story, not decorate it.
-**Current focus:** Reconcile local Phase 06 implementation artifacts with production acceptance and deployment reality.
+**Current focus:** Complete Author Studio v1 so the deployed product is a block-first authoring, preview, audio-cue, publish, and rollback workflow backed by Render/Postgres.
 
 ## Current Position
 
-Phase: 06 of 07 (PRD Author Studio + Reader Upgrade)
-Plan: 06-08 deployment parity -> 06-09 acceptance signoff -> 06-10 security hardening -> 06-11 durable storage
-Status: In Progress (implementation complete locally, deployed Render smoke available, acceptance pending)
-Last activity: 2026-06-13 - Full-stack smoke can now target Render with `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD`
+Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
+Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
+Status: In Progress (local baseline green; Author Studio v1 implementation active)
+Last activity: 2026-06-25 - Baseline typecheck/build/smokes passed before implementation
 
 Progress: [#######---] 71%
 
@@ -36,9 +36,9 @@ Progress: [#######---] 71%
 
 **Execution:**
 - Total planned artifacts completed: 23
-- Remaining queued plans: 4 (`06-08` to `06-11`)
-- Phase 06 blocking human-verify gate: open (06-09)
-- Deployment parity checks for admin/login routes: failing as of 2026-03-12
+- Remaining queued work: Author Studio v1 integrated implementation
+- Phase 06 blocking human-verify gate: open until deployed Render acceptance is checked
+- Deployment parity target: Render service with `/login`, `/admin`, reader APIs, admin APIs, Postgres, and audio disk verified
 
 **By Phase:**
 
@@ -49,7 +49,7 @@ Progress: [#######---] 71%
 | 3 | 3 | complete | signed off |
 | 4 | 3 | complete | signed off |
 | 5 | 2 | complete | signed off |
-| 06 | 11 | implementation complete (7/11) | acceptance/security/persistence pending |
+| 06 | 11 | implementation active (7/11 legacy plans complete) | Author Studio v1 UX/API/security/readiness/acceptance pending |
 | 07 | manual | provisional | re-validation pending |
 
 ## Accumulated Context
@@ -57,16 +57,16 @@ Progress: [#######---] 71%
 ### Decisions
 
 - Legacy static-reader phases (1-5) remain complete and intact.
-- Phase 06 code artifacts and local smoke checks exist.
-- Production admin/login routes were unavailable on Netlify (`/admin` and `/login` returned 404 in March 2026); Render-targeted smoke coverage is now available for the Node deployment.
-- Security and durable storage hardening are now explicitly planned before final closure.
+- Render + Node + Postgres + persistent audio disk is the canonical production architecture.
+- Local JSON stores remain acceptable only for local controller smoke harnesses.
+- Production acceptance must be backed by deployed Render smoke output and manual browser checks where smoke coverage is not enough.
 
 ### Pending Todos
 
-- Execute `06-08-PLAN.md` to close Netlify deployment parity (`/admin` + `/login` routing/auth surface).
-- Execute `06-09-PLAN.md` to complete human acceptance and evidence-backed signoff.
-- Execute `06-10-PLAN.md` to remove default credential/security gaps.
-- Execute `06-11-PLAN.md` to replace local JSON persistence with durable deployed storage.
+- Finish server/API work for block updates, import endpoints, audio studio update/repair, evidence-backed readiness, and scrypt password hashing.
+- Replace raw admin workflow with block-first Author Studio UI.
+- Expand smoke coverage for Author Studio v1 browser-facing APIs.
+- Run deployed Render smoke and update `docs/phase06-acceptance-checklist.md` with evidence.
 - Re-validate Phase 07 closure after Phase 06 is accepted and hardened.
 
 ### Blockers/Concerns
@@ -76,6 +76,6 @@ Progress: [#######---] 71%
 
 ## Session Continuity
 
-Last session: 2026-03-12
-Stopped at: Phase 06 acceptance and deployment gap reconciliation
-Resume file: .planning/phases/to-do/backlog/06-prd-author-studio-reader-upgrade-for-interactive-digital-book/06-08-PLAN.md
+Last session: 2026-06-25
+Stopped at: Author Studio v1 implementation branch in progress
+Resume file: current branch `codex/author-studio-v1`

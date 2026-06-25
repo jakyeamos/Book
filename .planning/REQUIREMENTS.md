@@ -3,7 +3,37 @@
 **Defined:** 2026-03-10
 **Core Value:** Every chapter feels like its own cinematic world - visuals, audio, and text effects serve the story.
 
-> Reconciliation note (2026-03-12): This file still primarily reflects the legacy static-reader roadmap. Phase 06 PRD artifacts are present in `.planning/phases/to-do/backlog/06-prd-author-studio-reader-upgrade-for-interactive-digital-book/` and pass local smoke checks, but production acceptance is not yet signed off (`docs/phase06-acceptance-checklist.md`; live `/admin` and `/login` are currently 404 on Netlify). Merge this file into a refreshed requirements map only after acceptance evidence is completed.
+> Reconciliation note (2026-06-25): Node/Postgres/Render is now the canonical product path. The static immersive reader remains important, but Author Studio v1 is the active product requirement set. Production acceptance is evidence-based and tracked in `docs/phase06-acceptance-checklist.md`.
+
+## Author Studio v1 Requirements
+
+### Product Truth And Operations
+
+- [ ] **ASV1-01**: Planning and operations docs describe Render + Node + Postgres + persistent audio disk as the canonical product architecture.
+- [ ] **ASV1-02**: Static reader docs are framed as reader-shell support, not the primary product architecture.
+- [ ] **ASV1-03**: Production readiness endpoint checks real reader, admin/auth, database mode, and audio storage writability.
+- [ ] **ASV1-04**: Production acceptance remains unchecked until the deployed Render service is verified with smoke credentials.
+
+### Authoring Workflow
+
+- [ ] **ASV1-10**: Admin can edit chapters through normalized blocks without touching raw HTML.
+- [ ] **ASV1-11**: Raw HTML editing is available only as an advanced/source mode.
+- [ ] **ASV1-12**: DOCX imports create staged drafts that can be listed, edited, approved, or rejected from `/admin`.
+- [ ] **ASV1-13**: Editor shows dirty state, save state, preview state, publish readiness, and version history.
+- [ ] **ASV1-14**: Rollback is available from the editor using published version snapshots.
+
+### Audio Workflow
+
+- [ ] **ASV1-20**: Admin can upload/list music and ambient audio assets.
+- [ ] **ASV1-21**: Admin can create and update chapter cues using visible block selections instead of raw block IDs.
+- [ ] **ASV1-22**: Cue cards show valid/broken status and repair or delete actions.
+- [ ] **ASV1-23**: Publishing is blocked when cue anchors are broken.
+
+### Security And Durability
+
+- [ ] **ASV1-30**: Production admin bootstrap requires explicit credentials and rejects removed defaults.
+- [ ] **ASV1-31**: Password hashes use `crypto.scrypt`; legacy salted SHA-256 hashes remain readable and are upgraded on successful login.
+- [ ] **ASV1-32**: Postgres and uploaded audio storage backup/restore steps are documented for releases.
 
 ## v1 Requirements
 
@@ -89,7 +119,8 @@
 |---------|--------|
 | Scrolljacking | Documented UX harm - breaks comprehension and mobile usability |
 | Video backgrounds | Storage/bandwidth cost; GitHub Pages constraint |
-| Server-side features | Static hosting constraint; localStorage sufficient |
+| Next.js/React rewrite | Author Studio v1 improves the current vanilla shell first |
+| Multi-author workflow | Solo-author/admin workflow is the v1 target |
 | Build tooling / bundlers | Author must extend without a build step |
 | `background-attachment: fixed` | Hard broken on iOS Safari |
 | Chapters not yet drafted (11-14) | Content doesn't exist yet |
@@ -145,8 +176,7 @@
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-12 - Reconciled with pending Phase 06 production acceptance*
-
+*Last updated: 2026-06-25 - Reconciled with Author Studio v1 product requirements*
 
 
 

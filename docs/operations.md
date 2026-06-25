@@ -26,6 +26,17 @@ pnpm run platform:fullstack-smoke
 
 `BOOK_SMOKE_BASE_URL` may be omitted when the script runs inside Render with `RENDER_EXTERNAL_URL` available. The smoke validates health/readiness, anonymous route protection, admin login, reader chapter APIs, reader registration and state sync, search, audio asset/cue APIs, audit events, and a disposable staging-chapter publish workflow. The staging workflow creates a timestamped chapter, previews and publishes it, creates a cue, verifies broken-cue publish blocking after an anchor-removing edit, repairs the block by deleting the smoke cue, republishes, rolls back to the first published snapshot, asserts publish/blocked/rollback events, and deletes the disposable chapter during cleanup. DOCX import and chapter reordering/visibility changes remain covered by local platform smokes or manual production review.
 
+For the release evidence artifact, run:
+
+```bash
+BOOK_SMOKE_BASE_URL="https://book.onrender.com" \
+BOOK_SMOKE_ADMIN_EMAIL="$ADMIN_EMAIL" \
+BOOK_SMOKE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+pnpm run platform:deployed-acceptance
+```
+
+`platform:deployed-acceptance` runs the deployed full-stack smoke and prints an Acceptance Evidence Log with the Render URL, readiness checks, login shell check, and admin route-protection check. Paste that output into `docs/phase06-acceptance-checklist.md` and only check items that the evidence directly covers.
+
 Production acceptance is tracked in `docs/phase06-acceptance-checklist.md`. Keep items unchecked until the deployed Render service has been verified with smoke output or an explicit manual browser check.
 
 ## Required Production Environment

@@ -22,6 +22,9 @@
     "platform:editorial-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/editorial-workflow-smoke.js",
     "platform:audio-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/audio-studio-smoke.js",
     "platform:reader-sync-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/reader-sync-smoke.js",
+    "platform:admin-ui-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/admin-ui-smoke.js",
+    "platform:acceptance-artifact-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/acceptance-artifact-smoke.js",
+    "platform:deployed-acceptance": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/deployed-acceptance.js",
     "platform:phase06-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/phase06-e2e-smoke.js"
   },
   "repository": {

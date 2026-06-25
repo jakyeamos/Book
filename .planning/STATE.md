@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Completed Author Studio v1 local verification suite; deployed Render acceptance remains pending evidence-backed smoke results
+last_activity: 2026-06-25 - Started Author Studio v1.1 with deployed acceptance evidence tooling and browser-flow smoke hooks
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (Author Studio v1 local suite green; deployed Render acceptance pending)
-Last activity: 2026-06-25 - Author Studio v1 local verification passed typecheck, build, auth/import/editorial/audio/reader-sync/full-stack smokes, and full chapter validation
+Status: In Progress (Author Studio v1.1 acceptance/browser coverage slice green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Added `platform:deployed-acceptance`, admin UI flow-hook smoke coverage, acceptance artifact smoke coverage, and an evidence log template
 
 Progress: [#######---] 71%
 
@@ -63,7 +63,7 @@ Progress: [#######---] 71%
 
 ### Pending Todos
 
-- Expand smoke coverage for Author Studio v1 browser-facing APIs.
+- Expand smoke coverage for Author Studio v1 browser-facing APIs. v1.1 added admin shell/module flow-hook coverage; rendered in-app browser QA remains required for UI changes.
 - Run deployed Render smoke and update `docs/phase06-acceptance-checklist.md` with evidence.
 - Re-validate Phase 07 closure after Phase 06 is accepted and hardened.
 

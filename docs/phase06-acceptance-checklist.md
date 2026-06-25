@@ -5,6 +5,7 @@ Status snapshot (2026-06-25):
 - Production acceptance is not signed off.
 - Render + Node + Postgres is the canonical production target.
 - Keep checklist items unchecked until the deployed Render service is verified with `BOOK_SMOKE_BASE_URL`, `BOOK_SMOKE_ADMIN_EMAIL`, and `BOOK_SMOKE_ADMIN_PASSWORD`, or with an explicit manual browser check noted beside the item.
+- Run `pnpm run platform:deployed-acceptance` after each Render deploy that should be considered release-ready, then paste the output into the evidence log below.
 
 ## Admin + Editorial
 - [ ] Admin login protects `/admin` route on deployed Render. Evidence: `BOOK_SMOKE_BASE_URL=... pnpm run platform:fullstack-smoke`.
@@ -38,3 +39,20 @@ Status snapshot (2026-06-25):
 - [ ] Password login works for scrypt hashes and legacy hashes are upgraded on successful login.
 - [ ] `/api/deploy/readiness` reports evidence-backed database and audio storage checks.
 - [ ] Postgres backup/restore and uploaded-audio backup/restore steps are documented in `docs/operations.md`.
+
+## Evidence Log
+
+Render URL:
+
+Command:
+
+```bash
+BOOK_SMOKE_BASE_URL="https://book.onrender.com" \
+BOOK_SMOKE_ADMIN_EMAIL="$ADMIN_EMAIL" \
+BOOK_SMOKE_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+pnpm run platform:deployed-acceptance
+```
+
+Latest evidence:
+
+- Pending deployed Render run.

@@ -20,7 +20,7 @@
         </div>
     </header>
 
-    <section id="auth-panel" class="admin-panel auth-panel">
+    <section id="auth-panel" class="admin-panel auth-panel" data-studio-flow="login">
         <div class="panel-heading">
             <div>
                 <h2>Admin Login</h2>
@@ -40,7 +40,7 @@
     </section>
 
     <section id="admin-workspace" class="studio-layout hidden">
-        <aside class="admin-panel chapter-list-panel">
+        <aside class="admin-panel chapter-list-panel" data-studio-flow="chapter-list">
             <div class="panel-heading compact-heading">
                 <h2>Chapters</h2>
                 <span id="chapter-count">Loading...</span>
@@ -49,7 +49,7 @@
         </aside>
 
         <section class="studio-main">
-            <section class="admin-panel import-panel">
+            <section class="admin-panel import-panel" data-studio-flow="import-docx">
                 <div class="panel-heading">
                     <div>
                         <h2>Import Queue</h2>
@@ -112,7 +112,7 @@
                     </label>
                 </div>
 
-                <div class="readiness-bar">
+                <div class="readiness-bar" data-studio-flow="publish-readiness">
                     <div>
                         <strong>Publish Readiness</strong>
                         <div id="publish-readiness-list" class="readiness-list"></div>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
 
-                <div id="block-editor" class="block-editor"></div>
+                <div id="block-editor" class="block-editor" data-studio-flow="block-editor"></div>
 
                 <details class="source-details">
                     <summary>Source</summary>
@@ -133,7 +133,7 @@
                 </details>
             </section>
 
-            <section class="admin-panel preview-panel">
+            <section class="admin-panel preview-panel" data-studio-flow="reader-preview">
                 <div class="panel-heading compact-heading">
                     <h2>Preview</h2>
                     <span id="preview-status" class="muted">Waiting</span>
@@ -143,7 +143,7 @@
                 </div>
             </section>
 
-            <section class="admin-panel versions-panel">
+            <section class="admin-panel versions-panel" data-studio-flow="version-rollback">
                 <div class="panel-heading compact-heading">
                     <h2>Versions</h2>
                     <button id="refresh-versions-button" type="button">Refresh</button>
@@ -151,7 +151,7 @@
                 <div id="version-list" class="version-list"></div>
             </section>
 
-            <section class="admin-panel cue-panel">
+            <section class="admin-panel cue-panel" data-studio-flow="audio-cues">
                 <div class="panel-heading">
                     <div>
                         <h2>Audio</h2>
@@ -184,7 +184,7 @@
                 <div id="cue-list" class="cue-list"></div>
             </section>
 
-            <section class="admin-panel ops-panel">
+            <section class="admin-panel ops-panel" data-studio-flow="operations-status">
                 <div class="panel-heading compact-heading">
                     <h2>Operations</h2>
                     <button id="refresh-events-button" type="button">Refresh</button>

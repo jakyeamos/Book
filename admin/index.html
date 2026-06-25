@@ -223,6 +223,27 @@
             </section>
         </section>
     </section>
+    <dialog id="publish-dialog" class="publish-dialog">
+        <div class="panel-heading compact-heading">
+            <div>
+                <h2>Publish Chapter</h2>
+                <span id="publish-dialog-status" class="muted">Review before publishing</span>
+            </div>
+        </div>
+        <ul id="publish-summary-list" class="publish-summary-list"></ul>
+        <label>
+            Publish visibility
+            <select id="publish-visibility-input">
+                <option value="public">Public</option>
+                <option value="direct-link">Direct link</option>
+                <option value="conditional">Conditional</option>
+            </select>
+        </label>
+        <div class="button-row publish-dialog-actions">
+            <button id="publish-cancel-button" type="button">Cancel</button>
+            <button id="publish-confirm-button" type="button">Confirm Publish</button>
+        </div>
+    </dialog>
 </main>
 <script type="module" src="/admin/admin.js"></script>
 </body>

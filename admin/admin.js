@@ -11,6 +11,7 @@ import {
   loadAudioStudio as loadAudioStudioView,
   renderCueList as renderCueListView,
 } from "./studio-audio.js";
+import { bindPublishDialog, openPublishDialog } from "./studio-publish.js";
 
 const elements = {
   authPanel: document.getElementById("auth-panel"),
@@ -38,6 +39,12 @@ const elements = {
   saveDraftButton: document.getElementById("save-draft-button"),
   previewChapterButton: document.getElementById("preview-chapter-button"),
   publishChapterButton: document.getElementById("publish-chapter-button"),
+  publishDialog: document.getElementById("publish-dialog"),
+  publishDialogStatus: document.getElementById("publish-dialog-status"),
+  publishSummaryList: document.getElementById("publish-summary-list"),
+  publishVisibilityInput: document.getElementById("publish-visibility-input"),
+  publishCancelButton: document.getElementById("publish-cancel-button"),
+  publishConfirmButton: document.getElementById("publish-confirm-button"),
   readinessList: document.getElementById("publish-readiness-list"),
   validationList: document.getElementById("chapter-validation-list"),
   previewModeInput: document.getElementById("preview-mode-input"),
@@ -275,10 +282,40 @@ async function markPreview() {
   applyChapterToEditor(chapter);
 }
 
-async function publishChapter() {
+async function updateVisibilityForPublish(mode) {
+  if (!state.selectedChapter || mode === state.selectedChapter.visibility?.mode) {
+    return;
+  }
+  const chapter = await api(`/api/admin/chapters/${encodeURIComponent(state.selectedChapter.id)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      title: elements.titleInput.value.trim(),
+      slug: elements.slugInput.value.trim(),
+      orderIndex: Number(elements.orderInput.value || state.selectedChapter.number),
+      type: elements.typeInput.value,
+      visibility: {
+        mode,
+        includeInToc: elements.tocInput.checked,
+      },
+      theme: {
+        accentColor: elements.themeAccentInput.value.trim() || undefined,
+        backgroundTint: elements.themeBackgroundInput.value.trim() || undefined,
+      },
+      normalizedDocument: serializeBlocks(),
+    }),
+  });
+  const index = state.chapters.findIndex((item) => item.id === chapter.id);
+  if (index >= 0) {
+    state.chapters[index] = chapter;
+  }
+  applyChapterToEditor(chapter);
+}
+
+async function publishChapter(mode = state.selectedChapter?.visibility?.mode) {
   if (!state.selectedChapter || state.dirty) {
     return;
   }
+  await updateVisibilityForPublish(mode);
   const chapter = await api(`/api/admin/chapters/${encodeURIComponent(state.selectedChapter.id)}/publish`, { method: "POST" });
   applyChapterToEditor(chapter);
   await Promise.all([loadChapters(), loadVersions(), loadEvents()]);
@@ -421,7 +458,7 @@ elements.previewModeInput.addEventListener("change", renderPreviewFromBlocks);
 elements.saveDraftButton.addEventListener("click", () => void saveChapterDraft());
 elements.sourceSaveButton.addEventListener("click", () => void saveSource());
 elements.previewChapterButton.addEventListener("click", () => void markPreview());
-elements.publishChapterButton.addEventListener("click", () => void publishChapter());
+elements.publishChapterButton.addEventListener("click", () => openPublishDialog({ elements, state }));
 elements.refreshVersionsButton.addEventListener("click", () => void loadVersions());
 elements.refreshImportsButton.addEventListener("click", () => void loadImports());
 elements.refreshAudioButton.addEventListener("click", () => void loadAudioStudio());
@@ -430,6 +467,7 @@ elements.refreshEventsButton.addEventListener("click", () => void loadEvents());
 
 bindImportForm({ elements, state, loadImports });
 bindAudioForms({ elements, state, loadAudioStudio, reloadSelectedChapter, loadEvents });
+bindPublishDialog({ elements, state, onConfirm: publishChapter });
 
 window.addEventListener("beforeunload", (event) => {
   if (!state.dirty) {

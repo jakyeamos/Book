@@ -42,6 +42,7 @@ function run(): void {
   assertIncludes(adminScript, 'from "./studio-audio.js"', "Audio studio module import");
   assertIncludes(adminScript, 'from "./studio-blocks.js"', "Block editor module import");
   assertIncludes(adminScript, 'from "./studio-imports.js"', "Import queue module import");
+  assertIncludes(adminScript, 'from "./studio-publish.js"', "Publish safety module import");
   assertIncludes(audioScript, "repair", "Audio repair UI wiring");
   assertIncludes(importScript, "/api/admin/import/docx", "Import DOCX UI wiring");
 
@@ -72,6 +73,10 @@ function run(): void {
   assertIncludes(html, 'id="chapter-theme-background-input"', "Theme background preview control");
   assertIncludes(html, 'id="preview-mode-input"', "Draft/published preview mode control");
   assertIncludes(html, 'id="preview-runtime"', "Preview runtime summary");
+  assertIncludes(html, 'id="publish-dialog"', "Publish confirmation dialog");
+  assertIncludes(html, 'id="publish-summary-list"', "Publish summary list");
+  assertIncludes(html, 'id="publish-visibility-input"', "Publish visibility override");
+  assertIncludes(read("admin/studio-publish.js"), "Confirm Publish", "Publish confirmation copy");
   assertIncludes(read("admin/studio-blocks.js"), "Move up", "Block move control");
   assertIncludes(read("admin/studio-blocks.js"), "Duplicate", "Block duplicate control");
   assertIncludes(read("admin/studio-blocks.js"), "Move down", "Block move control");

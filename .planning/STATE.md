@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Added operational durability tools, detailed readiness evidence, and admin-visible deploy status
+last_activity: 2026-06-25 - Hardened publish flow with confirmation summary and visibility override before publish
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (Author Studio v1.1 operational durability slice green; deployed Render acceptance pending)
-Last activity: 2026-06-25 - Added Postgres/audio backup and restore commands, detailed `/api/deploy/readiness` evidence, ops readiness smoke, and an admin readiness panel
+Status: In Progress (Author Studio v1.1 publish safety slice green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Added publish confirmation dialog, publish summary, and direct-link/conditional/public visibility override path that preserves normalized blocks
 
 Progress: [#######---] 71%
 

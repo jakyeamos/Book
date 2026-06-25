@@ -324,7 +324,16 @@ textarea {
     margin-top: 0.45rem;
 }
 
+.button-row.no-margin {
+    margin-top: 0;
+}
+
 .readiness-item.ready {
+    border-color: rgba(143, 207, 143, 0.6);
+    color: var(--studio-ok);
+}
+
+.status-pill.ready {
     border-color: rgba(143, 207, 143, 0.6);
     color: var(--studio-ok);
 }
@@ -335,6 +344,7 @@ textarea {
 }
 
 .readiness-item.blocking,
+.status-pill.blocking,
 .validation-errors {
     color: var(--studio-danger);
 }
@@ -428,6 +438,7 @@ textarea {
 .version-list,
 .draft-list,
 .cue-list,
+.deploy-readiness-list,
 .admin-events-list {
     display: grid;
     gap: 0.55rem;
@@ -436,11 +447,18 @@ textarea {
 .version-row,
 .draft-card,
 .cue-card,
+.readiness-row,
 .admin-event {
     border: 1px solid var(--studio-line);
     border-radius: 8px;
     background: #151716;
     padding: 0.65rem;
+}
+
+.readiness-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
 .version-row {

@@ -21,11 +21,23 @@ function run(): void {
   if (!pkg.scripts?.["platform:deployed-acceptance"]) {
     throw new Error("package.json missing platform:deployed-acceptance");
   }
+  for (const scriptName of [
+    "ops:backup:postgres",
+    "ops:restore:postgres",
+    "ops:backup:audio",
+    "ops:restore:audio",
+  ]) {
+    if (!pkg.scripts?.[scriptName]) {
+      throw new Error(`package.json missing ${scriptName}`);
+    }
+  }
 
   assertIncludes(checklist, "## Evidence Log", "Acceptance checklist");
   assertIncludes(checklist, "pnpm run platform:deployed-acceptance", "Acceptance checklist command");
   assertIncludes(checklist, "Render URL:", "Acceptance evidence template");
   assertIncludes(operations, "pnpm run platform:deployed-acceptance", "Operations deployed acceptance command");
+  assertIncludes(operations, "pnpm run ops:backup:postgres", "Operations Postgres backup command");
+  assertIncludes(operations, "pnpm run ops:restore:audio", "Operations audio restore command");
   assertIncludes(operations, "Acceptance Evidence Log", "Operations acceptance artifact guidance");
 
   console.log("platform acceptance artifact smoke test: ok");

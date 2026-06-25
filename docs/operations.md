@@ -65,20 +65,34 @@ The server also applies migrations on boot and seeds static chapters when the `c
 Back up Postgres with the provider snapshot feature before releases. For a manual export:
 
 ```bash
-pg_dump "$DATABASE_URL" > book-$(date +%Y-%m-%d).sql
+pnpm run ops:backup:postgres
 ```
 
-Back up uploaded audio by snapshotting or copying the mounted directory configured by `AUDIO_ASSET_DIR`.
+The script requires `DATABASE_URL` and writes to `backups/postgres/` unless `BACKUP_DIR` is set.
+
+Back up uploaded audio by snapshotting or copying the mounted directory configured by `AUDIO_ASSET_DIR`:
+
+```bash
+pnpm run ops:backup:audio
+```
+
+The script requires `AUDIO_ASSET_DIR` and writes to `backups/audio/` unless `BACKUP_DIR` is set.
 
 ## Restore
 
 Restore the database into a fresh Postgres instance:
 
 ```bash
-psql "$DATABASE_URL" < book-YYYY-MM-DD.sql
+pnpm run ops:restore:postgres -- backups/postgres/book-postgres-YYYY-MM-DDTHH-MM-SS.sql
 ```
 
-Then restore the audio asset directory before restarting the app.
+Then restore the audio asset directory before restarting the app:
+
+```bash
+pnpm run ops:restore:audio -- backups/audio/audio-YYYY-MM-DDTHH-MM-SS
+```
+
+Restore scripts require `DATABASE_URL` or `AUDIO_ASSET_DIR` respectively. They accept the backup source as the first argument or through `BACKUP_FILE` / `AUDIO_RESTORE_SOURCE`.
 
 ## Security Notes
 

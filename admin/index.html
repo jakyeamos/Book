@@ -209,9 +209,16 @@
 
             <section class="admin-panel ops-panel" data-studio-flow="operations-status">
                 <div class="panel-heading compact-heading">
-                    <h2>Operations</h2>
-                    <button id="refresh-events-button" type="button">Refresh</button>
+                    <div>
+                        <h2>Operations</h2>
+                        <span id="deploy-readiness-status" class="muted">Readiness not checked</span>
+                    </div>
+                    <div class="button-row no-margin">
+                        <button id="refresh-readiness-button" type="button">Check Readiness</button>
+                        <button id="refresh-events-button" type="button">Refresh Events</button>
+                    </div>
                 </div>
+                <div id="deploy-readiness-list" class="deploy-readiness-list"></div>
                 <div id="admin-events-list" class="admin-events-list"></div>
             </section>
         </section>

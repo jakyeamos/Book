@@ -68,6 +68,9 @@ const elements = {
   cueEndBlockSelect: document.getElementById("cue-end-block-select"),
   cueList: document.getElementById("cue-list"),
   refreshAudioButton: document.getElementById("refresh-audio-button"),
+  readinessStatus: document.getElementById("deploy-readiness-status"),
+  readinessList: document.getElementById("deploy-readiness-list"),
+  refreshReadinessButton: document.getElementById("refresh-readiness-button"),
   eventsList: document.getElementById("admin-events-list"),
   refreshEventsButton: document.getElementById("refresh-events-button"),
 };
@@ -349,6 +352,25 @@ async function loadEvents() {
   });
 }
 
+async function loadDeployReadiness() {
+  const readiness = await api("/api/deploy/readiness");
+  elements.readinessStatus.textContent = readiness.ok
+    ? `Ready · ${readiness.mode}`
+    : `Blocked · ${readiness.mode}`;
+  elements.readinessList.innerHTML = "";
+  Object.entries(readiness.checks || {}).forEach(([key, value]) => {
+    const row = document.createElement("div");
+    row.className = "readiness-row";
+    const label = document.createElement("span");
+    label.textContent = key;
+    const status = document.createElement("span");
+    status.className = `status-pill ${value ? "ready" : "blocking"}`;
+    status.textContent = value ? "pass" : "fail";
+    row.append(label, status);
+    elements.readinessList.appendChild(row);
+  });
+}
+
 async function bootAdmin() {
   setEditorEnabled(false);
   try {
@@ -356,7 +378,7 @@ async function bootAdmin() {
     elements.authStatus.textContent = "Signed in";
     elements.authPanel.classList.add("hidden");
     elements.workspace.classList.remove("hidden");
-    await Promise.all([loadChapters(), loadImports(), loadEvents()]);
+    await Promise.all([loadChapters(), loadImports(), loadEvents(), loadDeployReadiness()]);
   } catch (_error) {
     elements.authStatus.textContent = "Sign in required";
     elements.workspace.classList.add("hidden");
@@ -403,6 +425,7 @@ elements.publishChapterButton.addEventListener("click", () => void publishChapte
 elements.refreshVersionsButton.addEventListener("click", () => void loadVersions());
 elements.refreshImportsButton.addEventListener("click", () => void loadImports());
 elements.refreshAudioButton.addEventListener("click", () => void loadAudioStudio());
+elements.refreshReadinessButton.addEventListener("click", () => void loadDeployReadiness());
 elements.refreshEventsButton.addEventListener("click", () => void loadEvents());
 
 bindImportForm({ elements, state, loadImports });

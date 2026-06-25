@@ -25,7 +25,12 @@
     "platform:admin-ui-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/admin-ui-smoke.js",
     "platform:acceptance-artifact-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/acceptance-artifact-smoke.js",
     "platform:deployed-acceptance": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/deployed-acceptance.js",
-    "platform:phase06-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/phase06-e2e-smoke.js"
+    "platform:ops-readiness-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/ops-readiness-smoke.js",
+    "platform:phase06-smoke": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json && node .planning/.tmp-tsrun/platform/platform/scripts/phase06-e2e-smoke.js",
+    "ops:backup:postgres": "node scripts/backup-postgres.cjs",
+    "ops:restore:postgres": "node scripts/restore-postgres.cjs",
+    "ops:backup:audio": "node scripts/backup-audio.cjs",
+    "ops:restore:audio": "node scripts/restore-audio.cjs"
   },
   "repository": {
     "type": "git",

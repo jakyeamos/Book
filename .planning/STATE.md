@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Improved Author Studio preview parity with draft/published modes, runtime summary, and theme preview controls
+last_activity: 2026-06-25 - Added operational durability tools, detailed readiness evidence, and admin-visible deploy status
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (Author Studio v1.1 preview parity slice green; deployed Render acceptance pending)
-Last activity: 2026-06-25 - Added accent/background theme inputs, draft/published preview mode, runtime metadata, and reader-like preview styling
+Status: In Progress (Author Studio v1.1 operational durability slice green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Added Postgres/audio backup and restore commands, detailed `/api/deploy/readiness` evidence, ops readiness smoke, and an admin readiness panel
 
 Progress: [#######---] 71%
 
@@ -37,7 +37,7 @@ Progress: [#######---] 71%
 **Execution:**
 - Total planned artifacts completed: 23
 - Remaining queued work: Deployed Render acceptance for Author Studio v1
-- Phase 06 blocking human-verify gate: open until deployed Render acceptance is checked
+- Phase 06 blocking human-verify gate: open until deployed Render acceptance is checked with `pnpm run platform:deployed-acceptance`
 - Deployment parity target: Render service with `/login`, `/admin`, reader APIs, admin APIs, Postgres, and audio disk verified
 
 **By Phase:**

@@ -2229,16 +2229,20 @@ function metadataPatchFromUnknown(value: unknown): Partial<StagedChapterMetadata
   return patch;
 }
 
-async function audioStorageWritable(rootDir: string): Promise<boolean> {
+async function audioStorageProbe(rootDir: string): Promise<{ assetDir: string; writable: boolean; error?: string }> {
   const assetDir = process.env.AUDIO_ASSET_DIR || path.join(rootDir, "assets", "library");
   const probePath = path.join(assetDir, `.readiness-${process.pid}-${Date.now()}`);
   try {
     await fs.promises.mkdir(assetDir, { recursive: true });
     await fs.promises.writeFile(probePath, "ok", "utf8");
     await fs.promises.unlink(probePath);
-    return true;
-  } catch {
-    return false;
+    return { assetDir, writable: true };
+  } catch (error) {
+    return {
+      assetDir,
+      writable: false,
+      error: error instanceof Error ? error.message : "Unknown storage error",
+    };
   }
 }
 
@@ -2290,16 +2294,37 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
 
       if (pathname === "/api/deploy/readiness") {
         const manifest = await content.listPublishedChapters();
-        const storage = await audioStorageWritable(rootDir);
-        const database = mode === "postgres" || process.env.NODE_ENV !== "production";
+        const storage = await audioStorageProbe(rootDir);
+        const postgresRequired = process.env.NODE_ENV === "production";
+        const database = mode === "postgres" || !postgresRequired;
         sendJson(response, 200, {
-          ok: manifest.length > 0 && storage && database,
+          ok: manifest.length > 0 && storage.writable && database,
           mode,
           checks: {
             readerApi: manifest.length > 0,
             adminApi: true,
             auth: true,
             database,
+            storage: storage.writable,
+          },
+          details: {
+            generatedAt: new Date().toISOString(),
+            reader: {
+              publishedChapterCount: manifest.length,
+            },
+            admin: {
+              shellRoute: "/admin",
+              apiRoute: "/api/admin/chapters",
+            },
+            auth: {
+              explicitAdminBootstrap: true,
+              secureCookies: process.env.NODE_ENV === "production",
+            },
+            database: {
+              mode,
+              postgresRequired,
+              configured: mode === "postgres",
+            },
             storage,
           },
         });

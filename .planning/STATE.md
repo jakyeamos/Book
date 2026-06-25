@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Rebuilt `/admin` as a block-first Author Studio with import queue, preview, versions, readiness, and visual audio cue controls
+last_activity: 2026-06-25 - Split Author Studio browser code into focused modules after the commit quality gate flagged the oversized admin entrypoint
 progress:
   total_phases: 7
   completed_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
 Status: In Progress (local baseline green; Author Studio v1 implementation active)
-Last activity: 2026-06-25 - Author Studio UI slice passed JS parse, typecheck, full-stack smoke, and browser QA
+Last activity: 2026-06-25 - Author Studio module split passed typecheck, full-stack smoke, and diff whitespace checks
 
 Progress: [#######---] 71%
 

@@ -5,7 +5,7 @@ milestone_name: milestone
 status: in_progress
 stopped_at: Author Studio v1 implementation active; production acceptance still pending deployed Render verification
 last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 - Fixed Author Studio readiness binding collision found during rendered browser QA
+last_activity: 2026-06-25 - Completed Author Studio v1.1 local verification and rendered browser QA; deployed Render acceptance remains pending
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 
 Phase: 06 of 07 (Author Studio v1 + Reader Upgrade)
 Plan: product truth -> server/API/security -> admin Author Studio UX -> smoke coverage -> deployed acceptance
-Status: In Progress (Author Studio v1.1 browser QA bug fix green; deployed Render acceptance pending)
-Last activity: 2026-06-25 - Split publish readiness and deploy readiness element bindings so both panels render the correct evidence
+Status: In Progress (Author Studio v1.1 local suite and browser QA green; deployed Render acceptance pending)
+Last activity: 2026-06-25 - Final v1.1 verification passed typecheck, build, admin UI, acceptance artifact, ops readiness, auth/import/editorial/audio/reader-sync/full-stack smokes, chapter validation, and desktop/mobile rendered QA
 
 Progress: [#######---] 71%
 

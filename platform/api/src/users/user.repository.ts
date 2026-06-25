@@ -99,6 +99,22 @@ export class UserRepository {
     this.save();
   }
 
+  updatePasswordHash(userId: string, passwordHash: string): void {
+    this.store.users = this.store.users.map((user) => {
+      if (user.id !== userId) {
+        return user;
+      }
+
+      return {
+        ...user,
+        passwordHash,
+        updatedAt: nowIso(),
+      };
+    });
+
+    this.save();
+  }
+
   createSession(userId: string, role: "admin" | "reader", ttlHours = 24): AuthSessionRecord {
     const session: AuthSessionRecord = {
       id: makeSessionId(userId),
@@ -178,18 +194,34 @@ export class UserRepository {
 
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
-  const digest = crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
-  return `${salt}:${digest}`;
+  const digest = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `scrypt:${salt}:${digest}`;
 }
 
 export function verifyPassword(password: string, passwordHash: string): boolean {
+  if (passwordHash.startsWith("scrypt:")) {
+    const [, salt, digest] = passwordHash.split(":");
+    if (!salt || !digest) {
+      return false;
+    }
+    const calculated = crypto.scryptSync(password, salt, 64);
+    const expected = Buffer.from(digest, "hex");
+    return expected.length === calculated.length && crypto.timingSafeEqual(expected, calculated);
+  }
+
   const [salt, digest] = passwordHash.split(":");
   if (!salt || !digest) {
     return false;
   }
 
   const calculated = crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(digest, "utf8"), Buffer.from(calculated, "utf8"));
+  const expected = Buffer.from(digest, "utf8");
+  const actual = Buffer.from(calculated, "utf8");
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+export function needsPasswordRehash(passwordHash: string): boolean {
+  return !passwordHash.startsWith("scrypt:");
 }
 
 function issueToken(): string {

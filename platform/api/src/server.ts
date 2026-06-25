@@ -29,8 +29,21 @@ import {
   nowIso,
 } from "../../shared/src/document/schema";
 import { AuthSessionRecord, UserRecord, makeSessionId, makeUserId, normalizeEmail } from "../../shared/src/users/schema";
+import {
+  ImportJobRecord,
+  StagedChapterDraft,
+  StagedChapterMetadata,
+  makeDefaultStagedMetadata,
+  makeImportJobId,
+  makeStagedDraftId,
+} from "../../shared/src/import/schema";
+import { compileChapter } from "./compile/chapter.compiler";
 import { applyMigrations, createPostgresPool } from "./db/postgres";
-import { hashPassword, verifyPassword } from "./users/user.repository";
+import { hashPassword, needsPasswordRehash, verifyPassword } from "./users/user.repository";
+
+const mammoth: {
+  convertToHtml(input: { buffer: Buffer }): Promise<{ value: string; messages: Array<{ message: string }> }>;
+} = require("mammoth");
 
 export interface CreateBookServerOptions {
   mode?: "memory" | "postgres";
@@ -60,12 +73,35 @@ interface ContentStore {
   searchPublishedChapters(query: string): Promise<Array<{ chapterId: string; title: string; excerpt: string }>>;
   listAdminChapters(): Promise<ChapterRecord[]>;
   getChapter(chapterId: string): Promise<ChapterRecord | undefined>;
-  createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord>;
-  updateChapter(chapterId: string, updates: { title?: string; html?: string }): Promise<ChapterRecord>;
+  createChapter(input: CreateAdminChapterInput): Promise<ChapterRecord>;
+  updateChapter(chapterId: string, updates: UpdateAdminChapterInput): Promise<ChapterRecord>;
   setChapterStatus(chapterId: string, status: ChapterStatus): Promise<ChapterRecord>;
   listVersions(chapterId: string): Promise<ChapterVersionRecord[]>;
   rollbackChapter(chapterId: string, versionId: string): Promise<ChapterRecord>;
   deleteChapter(chapterId: string): Promise<void>;
+}
+
+interface CreateAdminChapterInput {
+  slug: string;
+  title: string;
+  html?: string;
+  normalizedDocument?: NormalizedDocument;
+  orderIndex?: number;
+  type?: ChapterRecord["type"];
+  visibility?: ChapterRecord["visibility"];
+  theme?: ChapterRecord["theme"];
+  sourceImport?: SourceImportMeta;
+}
+
+interface UpdateAdminChapterInput {
+  slug?: string;
+  title?: string;
+  html?: string;
+  normalizedDocument?: NormalizedDocument;
+  orderIndex?: number;
+  type?: ChapterRecord["type"];
+  visibility?: ChapterRecord["visibility"];
+  theme?: ChapterRecord["theme"];
 }
 
 interface AuthStore {
@@ -74,6 +110,18 @@ interface AuthStore {
   login(email: string, password: string): Promise<{ user: UserRecord; session: AuthSessionRecord }>;
   session(token: string | undefined): Promise<{ user: UserRecord; session: AuthSessionRecord } | undefined>;
   logout(token: string | undefined): Promise<void>;
+}
+
+interface ImportDraftStore {
+  importDocx(input: {
+    fileName: string;
+    contentBase64: string;
+    metadata?: Partial<StagedChapterMetadata>;
+  }): Promise<StagedChapterDraft>;
+  listDrafts(): Promise<StagedChapterDraft[]>;
+  updateDraftMetadata(draftId: string, patch: Partial<StagedChapterMetadata>): Promise<StagedChapterDraft>;
+  approveDraft(draftId: string): Promise<{ draft: StagedChapterDraft; chapter: ChapterRecord }>;
+  rejectDraft(draftId: string, reason: string): Promise<StagedChapterDraft>;
 }
 
 interface ReaderStateRecord {
@@ -125,6 +173,18 @@ interface AudioStore {
     loop?: boolean;
     overlapMode?: CueOverlapMode;
   }): Promise<AudioCueRecord>;
+  updateCue(cueId: string, updates: {
+    assetId?: string;
+    layer?: CueLayer;
+    startBlockId?: string;
+    endBlockId?: string;
+    volume?: number;
+    fadeInMs?: number;
+    fadeOutMs?: number;
+    loop?: boolean;
+    overlapMode?: CueOverlapMode;
+  }): Promise<AudioCueRecord>;
+  repairCue(cueId: string, content: ContentStore): Promise<AudioCueRecord>;
   deleteCue(cueId: string): Promise<void>;
 }
 
@@ -191,7 +251,7 @@ function deriveTitle(html: string, fallback: string): string {
 
 function normalizeHtmlChapter(chapterId: string, html: string): NormalizedDocument {
   const blocks: DocumentBlock[] = [];
-  const regex = /<(h2|h3|p|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi;
+  const regex = /<(h[1-6]|p|blockquote)[^>]*>([\s\S]*?)<\/\1>/gi;
   let match: RegExpExecArray | null;
   let index = 0;
 
@@ -206,7 +266,7 @@ function normalizeHtmlChapter(chapterId: string, html: string): NormalizedDocume
     blocks.push({
       id: `blk_${chapterId}_${index + 1}`,
       type,
-      level: tag === "h3" ? 3 : tag === "h2" ? 2 : undefined,
+      level: tag.startsWith("h") ? Number(tag.slice(1)) : undefined,
       spans: [{ id: `spn_${chapterId}_${index + 1}_1`, text }],
       sourceHint: "html-fragment",
     });
@@ -236,23 +296,42 @@ function compileRawHtml(chapterId: string, html: string, normalizedDocument: Nor
   };
 }
 
+function compileNormalizedChapter(chapterId: string, normalizedDocument: NormalizedDocument): CompiledChapterOutput {
+  return compileChapter(chapterId, normalizedDocument);
+}
+
+function sourceImport(sourceType: SourceImportMeta["sourceType"], sourceFile: string): SourceImportMeta {
+  return {
+    sourceType,
+    sourceFile,
+    importedAt: nowIso(),
+    warnings: [],
+  };
+}
+
 function makeChapterRecord(input: {
   slug: string;
   title: string;
   number: number;
-  html: string;
+  html?: string;
+  normalizedDocument?: NormalizedDocument;
+  compiledOutput?: CompiledChapterOutput;
   sourceFile: string;
+  sourceType?: SourceImportMeta["sourceType"];
   status?: ChapterStatus;
+  type?: ChapterRecord["type"];
+  visibility?: ChapterRecord["visibility"];
+  theme?: ChapterRecord["theme"];
+  sourceImport?: SourceImportMeta;
 }): ChapterRecord {
   const id = makeChapterId(input.slug);
   const now = nowIso();
-  const normalizedDocument = normalizeHtmlChapter(id, input.html);
-  const sourceImport: SourceImportMeta = {
-    sourceType: "html-fragment",
-    sourceFile: input.sourceFile,
-    importedAt: now,
-    warnings: [],
-  };
+  const html = input.html ?? "";
+  const normalizedDocument = input.normalizedDocument ?? normalizeHtmlChapter(id, html);
+  const compiledOutput = input.compiledOutput
+    ?? (input.normalizedDocument
+      ? compileNormalizedChapter(id, normalizedDocument)
+      : compileRawHtml(id, html, normalizedDocument));
 
   return {
     id,
@@ -260,12 +339,12 @@ function makeChapterRecord(input: {
     title: input.title,
     orderIndex: input.number,
     status: input.status ?? "published",
-    type: "standard",
-    visibility: defaultVisibility(),
-    theme: {},
-    sourceImport,
+    type: input.type ?? "standard",
+    visibility: input.visibility ?? defaultVisibility(),
+    theme: input.theme ?? {},
+    sourceImport: input.sourceImport ?? sourceImport(input.sourceType ?? "html-fragment", input.sourceFile),
     normalizedDocument,
-    compiledOutput: compileRawHtml(id, input.html, normalizedDocument),
+    compiledOutput,
     version: 1,
     createdAt: now,
     updatedAt: now,
@@ -305,6 +384,103 @@ async function readStaticChapters(rootDir: string): Promise<ChapterRecord[]> {
   }
 
   return chapters;
+}
+
+function slugFromFileName(fileName: string): string {
+  return fileName
+    .toLowerCase()
+    .replace(/\.docx$/i, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "untitled";
+}
+
+function titleFromDocument(document: NormalizedDocument, fallbackSlug: string): string {
+  const heading = document.blocks.find((block) => block.type === "heading");
+  const title = heading?.spans.map((span) => span.text).join(" ").trim();
+  if (title) {
+    return title;
+  }
+
+  return fallbackSlug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function validateStagedMetadata(metadata: StagedChapterMetadata): string[] {
+  const errors: string[] = [];
+  if (!metadata.title || metadata.title.trim().length < 2) {
+    errors.push("Title must be at least 2 characters");
+  }
+  if (!/^[a-z0-9-]+$/.test(metadata.slug)) {
+    errors.push("Slug must contain lowercase letters, numbers, and hyphens only");
+  }
+  if (!Number.isInteger(metadata.orderIndex) || metadata.orderIndex < 0) {
+    errors.push("Order index must be a non-negative integer");
+  }
+  if (metadata.visibility.mode === "conditional" && !metadata.visibility.conditionKey) {
+    errors.push("Conditional visibility requires a conditionKey");
+  }
+  return errors;
+}
+
+function buildStagedDraft(input: {
+  fileName: string;
+  warnings: string[];
+  normalizedDocument: NormalizedDocument;
+  metadata?: Partial<StagedChapterMetadata>;
+}): { job: ImportJobRecord; draft: StagedChapterDraft } {
+  const slug = slugFromFileName(input.fileName);
+  const metadata: StagedChapterMetadata = {
+    ...makeDefaultStagedMetadata(titleFromDocument(input.normalizedDocument, slug), slug),
+    ...input.metadata,
+  };
+  const now = nowIso();
+  const job: ImportJobRecord = {
+    id: makeImportJobId(input.fileName),
+    fileName: input.fileName,
+    status: "succeeded",
+    warnings: input.warnings,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const draft: StagedChapterDraft = {
+    id: makeStagedDraftId(metadata.slug),
+    jobId: job.id,
+    metadata,
+    normalizedDocument: input.normalizedDocument,
+    compiledPreview: compileNormalizedChapter(`preview_${metadata.slug}`, input.normalizedDocument),
+    status: "staged",
+    validationErrors: validateStagedMetadata(metadata),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  return { job, draft };
+}
+
+async function importDocxToDraft(input: {
+  fileName: string;
+  contentBase64: string;
+  metadata?: Partial<StagedChapterMetadata>;
+}): Promise<{ job: ImportJobRecord; draft: StagedChapterDraft }> {
+  const converted = await mammoth.convertToHtml({ buffer: Buffer.from(input.contentBase64, "base64") });
+  const slug = slugFromFileName(input.fileName);
+  return buildStagedDraft({
+    fileName: input.fileName,
+    warnings: converted.messages.map((message) => message.message),
+    normalizedDocument: normalizeHtmlChapter(`preview_${slug}`, converted.value),
+    metadata: input.metadata,
+  });
+}
+
+function touchDraftStatus(draft: StagedChapterDraft, status: StagedChapterDraft["status"], rejectionReason?: string): StagedChapterDraft {
+  return {
+    ...draft,
+    status,
+    rejectionReason,
+    updatedAt: nowIso(),
+  };
 }
 
 class MemoryContentStore implements ContentStore {
@@ -370,34 +546,46 @@ class MemoryContentStore implements ContentStore {
     return this.chapters.find((chapter) => chapter.id === chapterId || chapter.slug === chapterId);
   }
 
-  async updateChapter(chapterId: string, updates: { title?: string; html?: string }): Promise<ChapterRecord> {
+  async updateChapter(chapterId: string, updates: UpdateAdminChapterInput): Promise<ChapterRecord> {
     const chapter = await this.getChapter(chapterId);
     if (!chapter) {
       throw new Error(`Chapter not found: ${chapterId}`);
     }
 
     const html = updates.html ?? chapter.compiledOutput.html;
+    const normalizedDocument = updates.normalizedDocument ?? normalizeHtmlChapter(chapter.id, html);
     const title = updates.title ?? deriveTitle(html, chapter.title);
-    const normalizedDocument = normalizeHtmlChapter(chapter.id, html);
     const next = {
       ...chapter,
+      slug: updates.slug ?? chapter.slug,
       title,
+      orderIndex: updates.orderIndex ?? chapter.orderIndex,
+      type: updates.type ?? chapter.type,
+      visibility: updates.visibility ?? chapter.visibility,
+      theme: updates.theme ?? chapter.theme,
       status: "draft" as ChapterStatus,
       normalizedDocument,
-      compiledOutput: compileRawHtml(chapter.id, html, normalizedDocument),
+      compiledOutput: updates.normalizedDocument
+        ? compileNormalizedChapter(chapter.id, normalizedDocument)
+        : compileRawHtml(chapter.id, html, normalizedDocument),
       updatedAt: nowIso(),
     };
     this.chapters = this.chapters.map((item) => (item.id === chapter.id ? next : item));
     return next;
   }
 
-  async createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord> {
+  async createChapter(input: CreateAdminChapterInput): Promise<ChapterRecord> {
     const chapter = makeChapterRecord({
       slug: input.slug,
       title: input.title,
       number: input.orderIndex ?? this.chapters.length + 1,
       html: input.html,
+      normalizedDocument: input.normalizedDocument,
       sourceFile: "admin-staging",
+      sourceImport: input.sourceImport,
+      type: input.type,
+      visibility: input.visibility,
+      theme: input.theme,
       status: "draft",
     });
     this.chapters = this.chapters.filter((item) => item.id !== chapter.id && item.slug !== chapter.slug);
@@ -545,34 +733,46 @@ class PostgresContentStore implements ContentStore {
     return result.rows[0] ? this.rowToChapter(result.rows[0] as Record<string, unknown>) : undefined;
   }
 
-  async updateChapter(chapterId: string, updates: { title?: string; html?: string }): Promise<ChapterRecord> {
+  async updateChapter(chapterId: string, updates: UpdateAdminChapterInput): Promise<ChapterRecord> {
     const current = await this.getChapter(chapterId);
     if (!current) {
       throw new Error(`Chapter not found: ${chapterId}`);
     }
 
     const html = updates.html ?? current.compiledOutput.html;
-    const normalizedDocument = normalizeHtmlChapter(current.id, html);
+    const normalizedDocument = updates.normalizedDocument ?? normalizeHtmlChapter(current.id, html);
     const next: ChapterRecord = {
       ...current,
+      slug: updates.slug ?? current.slug,
       title: updates.title ?? deriveTitle(html, current.title),
+      orderIndex: updates.orderIndex ?? current.orderIndex,
+      type: updates.type ?? current.type,
+      visibility: updates.visibility ?? current.visibility,
+      theme: updates.theme ?? current.theme,
       status: "draft",
       normalizedDocument,
-      compiledOutput: compileRawHtml(current.id, html, normalizedDocument),
+      compiledOutput: updates.normalizedDocument
+        ? compileNormalizedChapter(current.id, normalizedDocument)
+        : compileRawHtml(current.id, html, normalizedDocument),
       updatedAt: nowIso(),
     };
     await this.upsertChapter(next);
     return next;
   }
 
-  async createChapter(input: { slug: string; title: string; html: string; orderIndex?: number }): Promise<ChapterRecord> {
+  async createChapter(input: CreateAdminChapterInput): Promise<ChapterRecord> {
     const existing = await this.listAdminChapters();
     const chapter = makeChapterRecord({
       slug: input.slug,
       title: input.title,
       number: input.orderIndex ?? existing.length + 1,
       html: input.html,
+      normalizedDocument: input.normalizedDocument,
       sourceFile: "admin-staging",
+      sourceImport: input.sourceImport,
+      type: input.type,
+      visibility: input.visibility,
+      theme: input.theme,
       status: "draft",
     });
     await this.upsertChapter(chapter);
@@ -727,6 +927,234 @@ class PostgresContentStore implements ContentStore {
   }
 }
 
+class MemoryImportDraftStore implements ImportDraftStore {
+  private jobs: ImportJobRecord[] = [];
+  private drafts: StagedChapterDraft[] = [];
+
+  constructor(private readonly content: ContentStore) {}
+
+  async importDocx(input: {
+    fileName: string;
+    contentBase64: string;
+    metadata?: Partial<StagedChapterMetadata>;
+  }): Promise<StagedChapterDraft> {
+    const { job, draft } = await importDocxToDraft(input);
+    this.jobs.push(job);
+    this.drafts.push(draft);
+    return draft;
+  }
+
+  async listDrafts(): Promise<StagedChapterDraft[]> {
+    return [...this.drafts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async updateDraftMetadata(draftId: string, patch: Partial<StagedChapterMetadata>): Promise<StagedChapterDraft> {
+    const draft = this.requireDraft(draftId);
+    const metadata = { ...draft.metadata, ...patch };
+    const updated = {
+      ...draft,
+      metadata,
+      validationErrors: validateStagedMetadata(metadata),
+      updatedAt: nowIso(),
+    };
+    this.drafts = this.drafts.map((item) => (item.id === draftId ? updated : item));
+    return updated;
+  }
+
+  async approveDraft(draftId: string): Promise<{ draft: StagedChapterDraft; chapter: ChapterRecord }> {
+    const draft = this.requireDraft(draftId);
+    if (draft.status !== "staged") {
+      throw Object.assign(new Error(`Draft ${draft.id} is not staged`), { status: 409 });
+    }
+    if (draft.validationErrors.length > 0) {
+      throw Object.assign(new Error(`Draft ${draft.id} has validation errors`), { status: 400 });
+    }
+    const job = this.jobs.find((item) => item.id === draft.jobId);
+    const chapter = await this.content.createChapter({
+      slug: draft.metadata.slug,
+      title: draft.metadata.title,
+      orderIndex: draft.metadata.orderIndex,
+      type: draft.metadata.chapterType,
+      visibility: draft.metadata.visibility,
+      theme: draft.metadata.theme,
+      normalizedDocument: draft.normalizedDocument,
+      sourceImport: {
+        sourceType: "docx",
+        sourceFile: job?.fileName ?? "import.docx",
+        importedAt: nowIso(),
+        warnings: job?.warnings ?? [],
+      },
+    });
+    const approved = touchDraftStatus(draft, "approved");
+    this.drafts = this.drafts.map((item) => (item.id === draftId ? approved : item));
+    return { draft: approved, chapter };
+  }
+
+  async rejectDraft(draftId: string, reason: string): Promise<StagedChapterDraft> {
+    if (!reason.trim()) {
+      throw Object.assign(new Error("Rejection reason is required"), { status: 400 });
+    }
+    const draft = this.requireDraft(draftId);
+    const rejected = touchDraftStatus(draft, "rejected", reason.trim());
+    this.drafts = this.drafts.map((item) => (item.id === draftId ? rejected : item));
+    return rejected;
+  }
+
+  private requireDraft(draftId: string): StagedChapterDraft {
+    const draft = this.drafts.find((item) => item.id === draftId);
+    if (!draft) {
+      throw Object.assign(new Error(`Draft not found: ${draftId}`), { status: 404 });
+    }
+    return draft;
+  }
+}
+
+class PostgresImportDraftStore implements ImportDraftStore {
+  constructor(private readonly pool: Pool, private readonly content: ContentStore) {}
+
+  async importDocx(input: {
+    fileName: string;
+    contentBase64: string;
+    metadata?: Partial<StagedChapterMetadata>;
+  }): Promise<StagedChapterDraft> {
+    const { job, draft } = await importDocxToDraft(input);
+    await this.pool.query(
+      `INSERT INTO import_jobs (id, file_name, status, warnings_json, error, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [job.id, job.fileName, job.status, JSON.stringify(job.warnings), job.error ?? null, job.createdAt, job.updatedAt],
+    );
+    await this.upsertDraft(draft);
+    return draft;
+  }
+
+  async listDrafts(): Promise<StagedChapterDraft[]> {
+    const result = await this.pool.query("SELECT * FROM staged_chapter_drafts ORDER BY created_at DESC");
+    return result.rows.map((row) => this.rowToDraft(row as Record<string, unknown>));
+  }
+
+  async updateDraftMetadata(draftId: string, patch: Partial<StagedChapterMetadata>): Promise<StagedChapterDraft> {
+    const draft = await this.requireDraft(draftId);
+    const metadata = { ...draft.metadata, ...patch };
+    const updated = {
+      ...draft,
+      metadata,
+      validationErrors: validateStagedMetadata(metadata),
+      updatedAt: nowIso(),
+    };
+    await this.upsertDraft(updated);
+    return updated;
+  }
+
+  async approveDraft(draftId: string): Promise<{ draft: StagedChapterDraft; chapter: ChapterRecord }> {
+    const draft = await this.requireDraft(draftId);
+    if (draft.status !== "staged") {
+      throw Object.assign(new Error(`Draft ${draft.id} is not staged`), { status: 409 });
+    }
+    if (draft.validationErrors.length > 0) {
+      throw Object.assign(new Error(`Draft ${draft.id} has validation errors`), { status: 400 });
+    }
+
+    const job = await this.getJob(draft.jobId);
+    const chapter = await this.content.createChapter({
+      slug: draft.metadata.slug,
+      title: draft.metadata.title,
+      orderIndex: draft.metadata.orderIndex,
+      type: draft.metadata.chapterType,
+      visibility: draft.metadata.visibility,
+      theme: draft.metadata.theme,
+      normalizedDocument: draft.normalizedDocument,
+      sourceImport: {
+        sourceType: "docx",
+        sourceFile: job?.fileName ?? "import.docx",
+        importedAt: nowIso(),
+        warnings: job?.warnings ?? [],
+      },
+    });
+    const approved = touchDraftStatus(draft, "approved");
+    await this.upsertDraft(approved);
+    return { draft: approved, chapter };
+  }
+
+  async rejectDraft(draftId: string, reason: string): Promise<StagedChapterDraft> {
+    if (!reason.trim()) {
+      throw Object.assign(new Error("Rejection reason is required"), { status: 400 });
+    }
+    const draft = await this.requireDraft(draftId);
+    const rejected = touchDraftStatus(draft, "rejected", reason.trim());
+    await this.upsertDraft(rejected);
+    return rejected;
+  }
+
+  private async getJob(jobId: string): Promise<ImportJobRecord | undefined> {
+    const result = await this.pool.query("SELECT * FROM import_jobs WHERE id = $1", [jobId]);
+    return result.rows[0] ? this.rowToJob(result.rows[0] as Record<string, unknown>) : undefined;
+  }
+
+  private async requireDraft(draftId: string): Promise<StagedChapterDraft> {
+    const result = await this.pool.query("SELECT * FROM staged_chapter_drafts WHERE id = $1", [draftId]);
+    if (!result.rows[0]) {
+      throw Object.assign(new Error(`Draft not found: ${draftId}`), { status: 404 });
+    }
+    return this.rowToDraft(result.rows[0] as Record<string, unknown>);
+  }
+
+  private async upsertDraft(draft: StagedChapterDraft): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO staged_chapter_drafts (
+        id, job_id, metadata_json, normalized_document_json, compiled_preview_json,
+        status, validation_errors_json, rejection_reason, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      ON CONFLICT (id) DO UPDATE SET
+        metadata_json = EXCLUDED.metadata_json,
+        normalized_document_json = EXCLUDED.normalized_document_json,
+        compiled_preview_json = EXCLUDED.compiled_preview_json,
+        status = EXCLUDED.status,
+        validation_errors_json = EXCLUDED.validation_errors_json,
+        rejection_reason = EXCLUDED.rejection_reason,
+        updated_at = EXCLUDED.updated_at`,
+      [
+        draft.id,
+        draft.jobId,
+        JSON.stringify(draft.metadata),
+        JSON.stringify(draft.normalizedDocument),
+        JSON.stringify(draft.compiledPreview),
+        draft.status,
+        JSON.stringify(draft.validationErrors),
+        draft.rejectionReason ?? null,
+        draft.createdAt,
+        draft.updatedAt,
+      ],
+    );
+  }
+
+  private rowToJob(row: Record<string, unknown>): ImportJobRecord {
+    return {
+      id: String(row.id),
+      fileName: String(row.file_name),
+      status: String(row.status) as ImportJobRecord["status"],
+      warnings: JSON.parse(String(row.warnings_json)) as string[],
+      error: row.error ? String(row.error) : undefined,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    };
+  }
+
+  private rowToDraft(row: Record<string, unknown>): StagedChapterDraft {
+    return {
+      id: String(row.id),
+      jobId: String(row.job_id),
+      metadata: JSON.parse(String(row.metadata_json)) as StagedChapterMetadata,
+      normalizedDocument: JSON.parse(String(row.normalized_document_json)) as NormalizedDocument,
+      compiledPreview: JSON.parse(String(row.compiled_preview_json)) as CompiledChapterOutput,
+      status: String(row.status) as StagedChapterDraft["status"],
+      validationErrors: JSON.parse(String(row.validation_errors_json)) as string[],
+      rejectionReason: row.rejection_reason ? String(row.rejection_reason) : undefined,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    };
+  }
+}
+
 class MemoryAuthStore implements AuthStore {
   private users: UserRecord[] = [];
   private sessions: AuthSessionRecord[] = [];
@@ -753,6 +1181,12 @@ class MemoryAuthStore implements AuthStore {
     const user = this.users.find((item) => item.email === normalizeEmail(email));
     if (!user || !verifyPassword(password, user.passwordHash)) {
       throw new Error("Invalid credentials");
+    }
+
+    if (needsPasswordRehash(user.passwordHash)) {
+      const passwordHash = hashPassword(password);
+      this.users = this.users.map((item) => item.id === user.id ? { ...item, passwordHash, updatedAt: nowIso() } : item);
+      user.passwordHash = passwordHash;
     }
 
     const session = this.createSession(user.id, user.role);
@@ -850,6 +1284,15 @@ class PostgresAuthStore implements AuthStore {
     const user = result.rows[0] ? this.rowToUser(result.rows[0] as Record<string, unknown>) : undefined;
     if (!user || !verifyPassword(password, user.passwordHash)) {
       throw new Error("Invalid credentials");
+    }
+
+    if (needsPasswordRehash(user.passwordHash)) {
+      user.passwordHash = hashPassword(password);
+      await this.pool.query("UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3", [
+        user.passwordHash,
+        nowIso(),
+        user.id,
+      ]);
     }
 
     const session = await this.createSession(user.id, user.role);
@@ -1025,6 +1468,58 @@ class MemoryAudioStore implements AudioStore {
     return cue;
   }
 
+  async updateCue(cueId: string, updates: {
+    assetId?: string;
+    layer?: CueLayer;
+    startBlockId?: string;
+    endBlockId?: string;
+    volume?: number;
+    fadeInMs?: number;
+    fadeOutMs?: number;
+    loop?: boolean;
+    overlapMode?: CueOverlapMode;
+  }): Promise<AudioCueRecord> {
+    const current = this.cues.find((cue) => cue.id === cueId);
+    if (!current) {
+      throw Object.assign(new Error(`Cue not found: ${cueId}`), { status: 404 });
+    }
+
+    const updated: AudioCueRecord = {
+      ...current,
+      assetId: updates.assetId ?? current.assetId,
+      layer: updates.layer ?? current.layer,
+      startAnchor: { blockId: updates.startBlockId ?? current.startAnchor.blockId },
+      endAnchor: { blockId: updates.endBlockId ?? current.endAnchor.blockId },
+      volume: updates.volume ?? current.volume,
+      fadeInMs: updates.fadeInMs ?? current.fadeInMs,
+      fadeOutMs: updates.fadeOutMs ?? current.fadeOutMs,
+      loop: updates.loop ?? current.loop,
+      overlapMode: updates.overlapMode ?? current.overlapMode,
+      status: "valid",
+      validationIssues: [],
+      updatedAt: nowAudioIso(),
+    };
+    this.cues = this.cues.map((cue) => (cue.id === cueId ? updated : cue));
+    return updated;
+  }
+
+  async repairCue(cueId: string, content: ContentStore): Promise<AudioCueRecord> {
+    const current = this.cues.find((cue) => cue.id === cueId);
+    if (!current) {
+      throw Object.assign(new Error(`Cue not found: ${cueId}`), { status: 404 });
+    }
+    const chapter = await content.getChapter(current.chapterId);
+    const blocks = chapter?.normalizedDocument.blocks ?? [];
+    if (blocks.length === 0) {
+      throw Object.assign(new Error("Cue cannot be repaired because the chapter has no blocks"), { status: 409 });
+    }
+
+    return this.updateCue(cueId, {
+      startBlockId: blocks[0].id,
+      endBlockId: blocks[Math.max(blocks.length - 1, 0)].id,
+    });
+  }
+
   async deleteCue(cueId: string): Promise<void> {
     this.cues = this.cues.filter((cue) => cue.id !== cueId);
   }
@@ -1127,8 +1622,96 @@ class PostgresAudioStore implements AudioStore {
     return cue;
   }
 
+  async updateCue(cueId: string, updates: {
+    assetId?: string;
+    layer?: CueLayer;
+    startBlockId?: string;
+    endBlockId?: string;
+    volume?: number;
+    fadeInMs?: number;
+    fadeOutMs?: number;
+    loop?: boolean;
+    overlapMode?: CueOverlapMode;
+  }): Promise<AudioCueRecord> {
+    const current = await this.getCue(cueId);
+    if (!current) {
+      throw Object.assign(new Error(`Cue not found: ${cueId}`), { status: 404 });
+    }
+
+    const updated: AudioCueRecord = {
+      ...current,
+      assetId: updates.assetId ?? current.assetId,
+      layer: updates.layer ?? current.layer,
+      startAnchor: { blockId: updates.startBlockId ?? current.startAnchor.blockId },
+      endAnchor: { blockId: updates.endBlockId ?? current.endAnchor.blockId },
+      volume: updates.volume ?? current.volume,
+      fadeInMs: updates.fadeInMs ?? current.fadeInMs,
+      fadeOutMs: updates.fadeOutMs ?? current.fadeOutMs,
+      loop: updates.loop ?? current.loop,
+      overlapMode: updates.overlapMode ?? current.overlapMode,
+      status: "valid",
+      validationIssues: [],
+      updatedAt: nowAudioIso(),
+    };
+
+    await this.pool.query(
+      `UPDATE audio_cues SET
+        asset_id = $1,
+        cue_layer = $2,
+        start_anchor_json = $3,
+        end_anchor_json = $4,
+        volume = $5,
+        fade_in_ms = $6,
+        fade_out_ms = $7,
+        loop = $8,
+        overlap_mode = $9,
+        status = $10,
+        validation_issues_json = $11,
+        updated_at = $12
+       WHERE id = $13`,
+      [
+        updated.assetId,
+        updated.layer,
+        JSON.stringify(updated.startAnchor),
+        JSON.stringify(updated.endAnchor),
+        updated.volume,
+        updated.fadeInMs,
+        updated.fadeOutMs,
+        updated.loop ? 1 : 0,
+        updated.overlapMode,
+        updated.status,
+        JSON.stringify(updated.validationIssues),
+        updated.updatedAt,
+        cueId,
+      ],
+    );
+    return updated;
+  }
+
+  async repairCue(cueId: string, content: ContentStore): Promise<AudioCueRecord> {
+    const current = await this.getCue(cueId);
+    if (!current) {
+      throw Object.assign(new Error(`Cue not found: ${cueId}`), { status: 404 });
+    }
+    const chapter = await content.getChapter(current.chapterId);
+    const blocks = chapter?.normalizedDocument.blocks ?? [];
+    if (blocks.length === 0) {
+      throw Object.assign(new Error("Cue cannot be repaired because the chapter has no blocks"), { status: 409 });
+    }
+
+    return this.updateCue(cueId, {
+      startBlockId: blocks[0].id,
+      endBlockId: blocks[Math.max(blocks.length - 1, 0)].id,
+    });
+  }
+
   async deleteCue(cueId: string): Promise<void> {
     await this.pool.query("DELETE FROM audio_cues WHERE id = $1", [cueId]);
+  }
+
+  private async getCue(cueId: string): Promise<AudioCueRecord | undefined> {
+    const result = await this.pool.query("SELECT * FROM audio_cues WHERE id = $1", [cueId]);
+    return result.rows[0] ? this.rowToCue(result.rows[0] as Record<string, unknown>) : undefined;
   }
 
   private rowToAsset(row: Record<string, unknown>): AudioAssetRecord {
@@ -1381,16 +1964,29 @@ function isAdminShellRoute(pathname: string): boolean {
   return pathname === "/admin" || (pathname.startsWith("/admin/") && path.extname(pathname) === "");
 }
 
-function chapterPayload(chapter: ChapterRecord): Record<string, unknown> {
+interface PublishReadinessPayload {
+  canPublish: boolean;
+  blockingIssues: string[];
+  warnings: string[];
+}
+
+function chapterPayload(chapter: ChapterRecord, publishReadiness?: PublishReadinessPayload): Record<string, unknown> {
   return {
     id: chapter.id,
     slug: chapter.slug,
     title: chapter.title,
     number: chapter.orderIndex,
     status: chapter.status,
+    type: chapter.type,
+    visibility: chapter.visibility,
+    theme: chapter.theme,
+    sourceImport: chapter.sourceImport,
+    normalizedDocument: chapter.normalizedDocument,
+    runtime: chapter.compiledOutput.runtime,
     html: chapter.compiledOutput.html,
     version: chapter.version,
     updatedAt: chapter.updatedAt,
+    publishReadiness,
   };
 }
 
@@ -1425,6 +2021,227 @@ async function brokenCueMessages(content: ContentStore, audio: AudioStore, chapt
   });
 }
 
+async function buildPublishReadiness(
+  content: ContentStore,
+  audio: AudioStore,
+  chapter: ChapterRecord,
+): Promise<PublishReadinessPayload> {
+  const blockingIssues: string[] = [];
+  const warnings: string[] = [];
+
+  if (!chapter.title.trim()) {
+    blockingIssues.push("Chapter title is required");
+  }
+  if (!/^[a-z0-9-]+$/.test(chapter.slug)) {
+    blockingIssues.push("Chapter slug must contain lowercase letters, numbers, and hyphens only");
+  }
+  if (chapter.visibility.mode === "conditional" && !chapter.visibility.conditionKey) {
+    blockingIssues.push("Conditional visibility requires a condition key");
+  }
+  if (chapter.normalizedDocument.blocks.length === 0) {
+    blockingIssues.push("Chapter must contain at least one block");
+  }
+
+  const brokenCues = await brokenCueMessages(content, audio, chapter.id);
+  blockingIssues.push(...brokenCues);
+
+  if (chapter.status !== "preview") {
+    warnings.push("Preview before publishing to review the latest draft");
+  }
+
+  return {
+    canPublish: blockingIssues.length === 0,
+    blockingIssues,
+    warnings,
+  };
+}
+
+function blockLabel(block: DocumentBlock, index: number): string {
+  if (block.type === "scene_break") {
+    return `Scene break ${index + 1}`;
+  }
+  const text = block.spans.map((span) => span.text).join("").trim();
+  return text.length > 80 ? `${text.slice(0, 77)}...` : text || `Section ${index + 1}`;
+}
+
+function cueIssues(
+  cue: AudioCueRecord,
+  blockIds: Set<string>,
+  assetIds: Set<string>,
+): string[] {
+  const issues: string[] = [];
+  if (!blockIds.has(cue.startAnchor.blockId)) {
+    issues.push(`Start anchor block not found: ${cue.startAnchor.blockId}`);
+  }
+  if (!blockIds.has(cue.endAnchor.blockId)) {
+    issues.push(`End anchor block not found: ${cue.endAnchor.blockId}`);
+  }
+  if (!assetIds.has(cue.assetId)) {
+    issues.push(`Asset not found: ${cue.assetId}`);
+  }
+  if (cue.volume < 0 || cue.volume > 1) {
+    issues.push("Cue volume must be between 0 and 1");
+  }
+  return issues;
+}
+
+async function audioStudioPayload(
+  content: ContentStore,
+  audio: AudioStore,
+  chapterId: string,
+): Promise<Record<string, unknown>> {
+  const chapter = await content.getChapter(chapterId);
+  if (!chapter) {
+    throw Object.assign(new Error(`Chapter not found: ${chapterId}`), { status: 404 });
+  }
+
+  const assets = await audio.listAssets();
+  const cues = await audio.listCues(chapter.id);
+  const blockIds = new Set(chapter.normalizedDocument.blocks.map((block) => block.id));
+  const assetIds = new Set(assets.map((asset) => asset.id));
+  const blockOptions = chapter.normalizedDocument.blocks.map((block, index) => ({
+    id: block.id,
+    label: blockLabel(block, index),
+    type: block.type,
+    orderIndex: index,
+  }));
+  const blockIndex = new Map(blockOptions.map((block) => [block.id, block.orderIndex]));
+  const assetTitle = new Map(assets.map((asset) => [asset.id, asset.title]));
+  const cueViewModels = cues.map((cue) => {
+    const issues = cueIssues(cue, blockIds, assetIds);
+    return {
+      id: cue.id,
+      chapterId: cue.chapterId,
+      assetId: cue.assetId,
+      assetTitle: assetTitle.get(cue.assetId) ?? "Unknown asset",
+      layer: cue.layer,
+      startBlockId: cue.startAnchor.blockId,
+      endBlockId: cue.endAnchor.blockId,
+      startIndex: blockIndex.get(cue.startAnchor.blockId) ?? -1,
+      endIndex: blockIndex.get(cue.endAnchor.blockId) ?? -1,
+      volume: cue.volume,
+      fadeInMs: cue.fadeInMs,
+      fadeOutMs: cue.fadeOutMs,
+      loop: cue.loop,
+      overlapMode: cue.overlapMode,
+      status: issues.length === 0 ? "valid" : "broken",
+      validationIssues: issues,
+    };
+  });
+  const readiness = await buildPublishReadiness(content, audio, chapter);
+
+  return {
+    chapterId: chapter.id,
+    blocks: blockOptions,
+    assets,
+    cues: cueViewModels,
+    timeline: ["music", "ambient"].map((layer) => ({
+      id: `lane_${layer}`,
+      layer,
+      cues: cueViewModels.filter((cue) => cue.layer === layer),
+    })),
+    validationResults: cueViewModels.map((cue) => ({
+      cueId: cue.id,
+      status: cue.status,
+      issues: cue.validationIssues,
+    })),
+    canPublish: readiness.canPublish,
+    blockingIssues: readiness.blockingIssues,
+  };
+}
+
+function normalizedDocumentFromBody(body: Record<string, unknown>): NormalizedDocument | undefined {
+  const value = body.normalizedDocument;
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  const candidate = value as Partial<NormalizedDocument>;
+  if (!Array.isArray(candidate.blocks)) {
+    throw Object.assign(new Error("normalizedDocument.blocks must be an array"), { status: 400 });
+  }
+  return {
+    schemaVersion: typeof candidate.schemaVersion === "number" ? candidate.schemaVersion : 1,
+    blocks: candidate.blocks as DocumentBlock[],
+  };
+}
+
+function chapterTypeFromUnknown(value: unknown): ChapterRecord["type"] | undefined {
+  return value === "standard" || value === "interlude" || value === "hidden" || value === "conditional"
+    ? value
+    : undefined;
+}
+
+function visibilityFromUnknown(value: unknown): ChapterRecord["visibility"] | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const mode = record.mode;
+  if (mode !== "public" && mode !== "direct-link" && mode !== "conditional") {
+    return undefined;
+  }
+  return {
+    mode,
+    conditionKey: typeof record.conditionKey === "string" ? record.conditionKey : undefined,
+    includeInToc: typeof record.includeInToc === "boolean" ? record.includeInToc : true,
+  };
+}
+
+function themeFromUnknown(value: unknown): ChapterRecord["theme"] | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    accentColor: typeof record.accentColor === "string" ? record.accentColor : undefined,
+    backgroundTint: typeof record.backgroundTint === "string" ? record.backgroundTint : undefined,
+    classes: Array.isArray(record.classes) ? record.classes.filter((item): item is string => typeof item === "string") : undefined,
+  };
+}
+
+function metadataPatchFromUnknown(value: unknown): Partial<StagedChapterMetadata> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const patch: Partial<StagedChapterMetadata> = {};
+  if (typeof record.title === "string") {
+    patch.title = record.title;
+  }
+  if (typeof record.slug === "string") {
+    patch.slug = record.slug;
+  }
+  const chapterType = chapterTypeFromUnknown(record.chapterType);
+  if (chapterType) {
+    patch.chapterType = chapterType;
+  }
+  if (typeof record.orderIndex === "number") {
+    patch.orderIndex = record.orderIndex;
+  }
+  const visibility = visibilityFromUnknown(record.visibility);
+  if (visibility) {
+    patch.visibility = visibility;
+  }
+  const theme = themeFromUnknown(record.theme);
+  if (theme) {
+    patch.theme = theme;
+  }
+  return patch;
+}
+
+async function audioStorageWritable(rootDir: string): Promise<boolean> {
+  const assetDir = process.env.AUDIO_ASSET_DIR || path.join(rootDir, "assets", "library");
+  const probePath = path.join(assetDir, `.readiness-${process.pid}-${Date.now()}`);
+  try {
+    await fs.promises.mkdir(assetDir, { recursive: true });
+    await fs.promises.writeFile(probePath, "ok", "utf8");
+    await fs.promises.unlink(probePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function createBookServer(options: CreateBookServerOptions = {}): Promise<http.Server> {
   const rootDir = rootFromOptions(options);
   const mode = options.mode ?? (process.env.DATABASE_URL ? "postgres" : "memory");
@@ -1435,6 +2252,7 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
   const content: ContentStore = pool ? new PostgresContentStore(pool, rootDir) : new MemoryContentStore(rootDir);
   const auth: AuthStore = pool ? new PostgresAuthStore(pool) : new MemoryAuthStore();
   const audio: AudioStore = pool ? new PostgresAudioStore(pool, rootDir) : new MemoryAudioStore(rootDir);
+  const imports: ImportDraftStore = pool ? new PostgresImportDraftStore(pool, content) : new MemoryImportDraftStore(content);
   const readerState: ReaderStateStore = pool ? new PostgresReaderStateStore(pool) : new MemoryReaderStateStore();
   const events: AppEventStore = pool ? new PostgresAppEventStore(pool) : new MemoryAppEventStore();
   const adminBootstrap = readAdminBootstrapConfig(options);
@@ -1472,14 +2290,17 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
 
       if (pathname === "/api/deploy/readiness") {
         const manifest = await content.listPublishedChapters();
+        const storage = await audioStorageWritable(rootDir);
+        const database = mode === "postgres" || process.env.NODE_ENV !== "production";
         sendJson(response, 200, {
-          ok: manifest.length > 0,
+          ok: manifest.length > 0 && storage && database,
           mode,
           checks: {
             readerApi: manifest.length > 0,
             adminApi: true,
             auth: true,
-            storage: true,
+            database,
+            storage,
           },
         });
         return;
@@ -1575,20 +2396,27 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
 
       if (method === "GET" && pathname === "/api/admin/chapters") {
         const chapters = await content.listAdminChapters();
-        sendJson(response, 200, chapters.map(chapterPayload));
+        sendJson(response, 200, await Promise.all(chapters.map(async (chapter) => (
+          chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter))
+        ))));
         return;
       }
 
       if (method === "POST" && pathname === "/api/admin/chapters") {
         const body = await readJson(request);
+        const normalizedDocument = normalizedDocumentFromBody(body);
         const chapter = await content.createChapter({
           slug: String(body.slug ?? ""),
           title: String(body.title ?? ""),
-          html: String(body.html ?? ""),
+          html: typeof body.html === "string" ? body.html : undefined,
+          normalizedDocument,
           orderIndex: typeof body.orderIndex === "number" ? body.orderIndex : undefined,
+          type: chapterTypeFromUnknown(body.type),
+          visibility: visibilityFromUnknown(body.visibility),
+          theme: themeFromUnknown(body.theme),
         });
         await events.record("chapter_created", (await auth.session(authToken(request)))?.user.id, { chapterId: chapter.id });
-        sendJson(response, 201, chapterPayload(chapter));
+        sendJson(response, 201, chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)));
         return;
       }
 
@@ -1597,21 +2425,82 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         return;
       }
 
+      if (method === "POST" && pathname === "/api/admin/import/docx") {
+        const body = await readJson(request);
+        const draft = await imports.importDocx({
+          fileName: String(body.fileName ?? "import.docx"),
+          contentBase64: String(body.contentBase64 ?? ""),
+          metadata: metadataPatchFromUnknown(body.metadata),
+        });
+        await events.record("chapter_imported", (await auth.session(authToken(request)))?.user.id, { draftId: draft.id });
+        sendJson(response, 201, draft);
+        return;
+      }
+
+      if (method === "GET" && pathname === "/api/admin/import/drafts") {
+        sendJson(response, 200, { drafts: await imports.listDrafts() });
+        return;
+      }
+
+      const importMetadataMatch = /^\/api\/admin\/import\/drafts\/([^/]+)\/metadata$/.exec(pathname);
+      if (importMetadataMatch && method === "PUT") {
+        const body = await readJson(request);
+        const patch = metadataPatchFromUnknown(body.metadata) ?? metadataPatchFromUnknown(body) ?? {};
+        const draft = await imports.updateDraftMetadata(importMetadataMatch[1], patch);
+        await events.record("chapter_import_metadata_updated", (await auth.session(authToken(request)))?.user.id, { draftId: draft.id });
+        sendJson(response, 200, draft);
+        return;
+      }
+
+      const importApproveMatch = /^\/api\/admin\/import\/drafts\/([^/]+)\/approve$/.exec(pathname);
+      if (importApproveMatch && method === "POST") {
+        const result = await imports.approveDraft(importApproveMatch[1]);
+        await events.record("chapter_import_approved", (await auth.session(authToken(request)))?.user.id, {
+          draftId: result.draft.id,
+          chapterId: result.chapter.id,
+        });
+        sendJson(response, 200, {
+          draft: result.draft,
+          chapter: chapterPayload(result.chapter, await buildPublishReadiness(content, audio, result.chapter)),
+        });
+        return;
+      }
+
+      const importRejectMatch = /^\/api\/admin\/import\/drafts\/([^/]+)\/reject$/.exec(pathname);
+      if (importRejectMatch && method === "POST") {
+        const body = await readJson(request);
+        const draft = await imports.rejectDraft(importRejectMatch[1], String(body.reason ?? ""));
+        await events.record("chapter_import_rejected", (await auth.session(authToken(request)))?.user.id, { draftId: draft.id });
+        sendJson(response, 200, draft);
+        return;
+      }
+
       const adminChapterMatch = /^\/api\/admin\/chapters\/([^/]+)$/.exec(pathname);
       if (adminChapterMatch && method === "GET") {
         const chapter = await content.getChapter(adminChapterMatch[1]);
-        sendJson(response, chapter ? 200 : 404, chapter ? chapterPayload(chapter) : { error: "Chapter not found" });
+        sendJson(
+          response,
+          chapter ? 200 : 404,
+          chapter ? chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)) : { error: "Chapter not found" },
+        );
         return;
       }
 
       if (adminChapterMatch && method === "PUT") {
         const body = await readJson(request);
+        const normalizedDocument = normalizedDocumentFromBody(body);
         const chapter = await content.updateChapter(adminChapterMatch[1], {
+          slug: typeof body.slug === "string" ? body.slug : undefined,
           title: typeof body.title === "string" ? body.title : undefined,
           html: typeof body.html === "string" ? body.html : undefined,
+          normalizedDocument,
+          orderIndex: typeof body.orderIndex === "number" ? body.orderIndex : undefined,
+          type: chapterTypeFromUnknown(body.type),
+          visibility: visibilityFromUnknown(body.visibility),
+          theme: themeFromUnknown(body.theme),
         });
         await events.record("chapter_updated", (await auth.session(authToken(request)))?.user.id, { chapterId: chapter.id });
-        sendJson(response, 200, chapterPayload(chapter));
+        sendJson(response, 200, chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)));
         return;
       }
 
@@ -1630,18 +2519,27 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
 
       const publishMatch = /^\/api\/admin\/chapters\/([^/]+)\/publish$/.exec(pathname);
       if (publishMatch && method === "POST") {
-        const brokenCues = await brokenCueMessages(content, audio, publishMatch[1]);
-        if (brokenCues.length > 0) {
+        const current = await content.getChapter(publishMatch[1]);
+        if (!current) {
+          sendJson(response, 404, { error: "Chapter not found" });
+          return;
+        }
+        const readiness = await buildPublishReadiness(content, audio, current);
+        if (!readiness.canPublish) {
           await events.record("chapter_publish_blocked", (await auth.session(authToken(request)))?.user.id, {
             chapterId: publishMatch[1],
-            brokenCueCount: brokenCues.length,
+            blockingIssueCount: readiness.blockingIssues.length,
           });
-          sendJson(response, 409, { error: "Chapter has broken cues that must be repaired before publish", brokenCues });
+          sendJson(response, 409, {
+            error: "Chapter has broken cues or other blocking issues that must be repaired before publish",
+            brokenCues: readiness.blockingIssues,
+            publishReadiness: readiness,
+          });
           return;
         }
         const chapter = await content.setChapterStatus(publishMatch[1], "published");
         await events.record("chapter_published", (await auth.session(authToken(request)))?.user.id, { chapterId: chapter.id });
-        sendJson(response, 200, chapterPayload(chapter));
+        sendJson(response, 200, chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)));
         return;
       }
 
@@ -1654,13 +2552,24 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
           chapterId: chapter.id,
           versionId,
         });
-        sendJson(response, 200, chapterPayload(chapter));
+        sendJson(response, 200, chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)));
         return;
       }
 
       const previewMatch = /^\/api\/admin\/chapters\/([^/]+)\/preview$/.exec(pathname);
       if (previewMatch && method === "POST") {
-        sendJson(response, 200, chapterPayload(await content.setChapterStatus(previewMatch[1], "preview")));
+        const chapter = await content.setChapterStatus(previewMatch[1], "preview");
+        sendJson(response, 200, chapterPayload(chapter, await buildPublishReadiness(content, audio, chapter)));
+        return;
+      }
+
+      if (method === "GET" && pathname === "/api/admin/audio/studio") {
+        const chapterId = url.searchParams.get("chapterId");
+        if (!chapterId) {
+          sendJson(response, 400, { error: "chapterId is required" });
+          return;
+        }
+        sendJson(response, 200, await audioStudioPayload(content, audio, chapterId));
         return;
       }
 
@@ -1708,7 +2617,36 @@ export async function createBookServer(options: CreateBookServerOptions = {}): P
         return;
       }
 
+      const cueRepairMatch = /^\/api\/admin\/audio\/cues\/([^/]+)\/repair$/.exec(pathname);
+      if (method === "POST" && cueRepairMatch) {
+        const cue = await audio.repairCue(cueRepairMatch[1], content);
+        await events.record("audio_cue_repaired", (await auth.session(authToken(request)))?.user.id, { cueId: cue.id });
+        sendJson(response, 200, cue);
+        return;
+      }
+
       const cueDeleteMatch = /^\/api\/admin\/audio\/cues\/([^/]+)$/.exec(pathname);
+      if (method === "PUT" && cueDeleteMatch) {
+        const body = await readJson(request);
+        const overlapMode = body.overlapMode === "allow" || body.overlapMode === "exclusive" || body.overlapMode === "crossfade"
+          ? body.overlapMode
+          : undefined;
+        const cue = await audio.updateCue(cueDeleteMatch[1], {
+          assetId: typeof body.assetId === "string" ? body.assetId : undefined,
+          layer: body.layer === "ambient" ? "ambient" : body.layer === "music" ? "music" : undefined,
+          startBlockId: typeof body.startBlockId === "string" ? body.startBlockId : undefined,
+          endBlockId: typeof body.endBlockId === "string" ? body.endBlockId : undefined,
+          volume: typeof body.volume === "number" ? body.volume : undefined,
+          fadeInMs: typeof body.fadeInMs === "number" ? body.fadeInMs : undefined,
+          fadeOutMs: typeof body.fadeOutMs === "number" ? body.fadeOutMs : undefined,
+          loop: typeof body.loop === "boolean" ? body.loop : undefined,
+          overlapMode,
+        });
+        await events.record("audio_cue_updated", (await auth.session(authToken(request)))?.user.id, { cueId: cue.id });
+        sendJson(response, 200, cue);
+        return;
+      }
+
       if (method === "DELETE" && cueDeleteMatch) {
         await audio.deleteCue(cueDeleteMatch[1]);
         sendJson(response, 200, { ok: true });

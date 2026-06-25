@@ -4,6 +4,13 @@ import * as http from "node:http";
 import * as path from "node:path";
 import { createBookServer } from "../api/src/server";
 
+const JSZip: {
+  new(): {
+    file(name: string, data: string): void;
+    generateAsync(options: { type: "nodebuffer" }): Promise<Buffer>;
+  };
+} = require("jszip");
+
 interface SmokeTarget {
   baseUrl: string;
   adminEmail: string;
@@ -51,6 +58,28 @@ function setEnvValue(name: string, value: string | undefined): void {
   }
 
   process.env[name] = value;
+}
+
+async function createDocxBuffer(title: string, paragraph: string): Promise<Buffer> {
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  zip.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  zip.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>${title}</w:t></w:r></w:p>
+    <w:p><w:r><w:t>${paragraph}</w:t></w:r></w:p>
+  </w:body>
+</w:document>`);
+  return zip.generateAsync({ type: "nodebuffer" });
 }
 
 async function expectProductionBootstrapFailure(
@@ -170,6 +199,7 @@ async function run(): Promise<void> {
   let adminCookie = "";
   let disposableChapterId: string | undefined;
   let disposableCueId: string | undefined;
+  let importedChapterId: string | undefined;
 
   try {
     const health = await requestJson<{ ok: boolean }>(baseUrl, "/api/health");
@@ -274,6 +304,66 @@ async function run(): Promise<void> {
       throw new Error("Deployment readiness endpoint failed");
     }
 
+    const importSlug = `smoke-import-${Date.now()}`;
+    const docxBuffer = await createDocxBuffer("Smoke Imported Chapter", "Imported through the Author Studio HTTP API.");
+    const importedDraft = await requestJson<{ id: string; status: string; metadata: { slug: string; title: string } }>(
+      baseUrl,
+      "/api/admin/import/docx",
+      {
+        method: "POST",
+        headers: { cookie },
+        body: JSON.stringify({
+          fileName: `${importSlug}.docx`,
+          contentBase64: docxBuffer.toString("base64"),
+          metadata: {
+            slug: importSlug,
+            title: "Smoke Imported Chapter",
+            orderIndex: 98,
+          },
+        }),
+      },
+    );
+    if (importedDraft.status !== 201 || importedDraft.body.status !== "staged" || importedDraft.body.metadata.slug !== importSlug) {
+      throw new Error("DOCX import endpoint did not create a staged draft");
+    }
+
+    const draftList = await requestJson<{ drafts: Array<{ id: string }> }>(baseUrl, "/api/admin/import/drafts", {
+      headers: { cookie },
+    });
+    if (draftList.status !== 200 || !draftList.body.drafts.some((draft) => draft.id === importedDraft.body.id)) {
+      throw new Error("Import draft list did not include uploaded draft");
+    }
+
+    const metadataUpdate = await requestJson<{ metadata: { title: string } }>(
+      baseUrl,
+      `/api/admin/import/drafts/${encodeURIComponent(importedDraft.body.id)}/metadata`,
+      {
+        method: "PUT",
+        headers: { cookie },
+        body: JSON.stringify({ title: "Smoke Imported Chapter Revised" }),
+      },
+    );
+    if (metadataUpdate.status !== 200 || metadataUpdate.body.metadata.title !== "Smoke Imported Chapter Revised") {
+      throw new Error("Import draft metadata update did not persist");
+    }
+
+    const importApproval = await requestJson<{ chapter: { id: string; status: string; normalizedDocument: { blocks: unknown[] } } }>(
+      baseUrl,
+      `/api/admin/import/drafts/${encodeURIComponent(importedDraft.body.id)}/approve`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    importedChapterId = importApproval.body.chapter.id;
+    if (
+      importApproval.status !== 200
+      || importApproval.body.chapter.status !== "draft"
+      || importApproval.body.chapter.normalizedDocument.blocks.length < 2
+    ) {
+      throw new Error("Import draft approval did not create a block-backed chapter");
+    }
+
     const readerLogin = await requestJson<{ user: { role: string } }>(baseUrl, "/api/auth/register", {
       method: "POST",
       body: JSON.stringify({
@@ -338,6 +428,23 @@ async function run(): Promise<void> {
     });
     if (asset.status !== 201 || cue.status !== 201 || !cue.body.id) {
       throw new Error("Audio studio API did not create asset and cue");
+    }
+
+    const updatedCue = await requestJson<{ volume: number; startAnchor: { blockId: string } }>(
+      baseUrl,
+      `/api/admin/audio/cues/${encodeURIComponent(cue.body.id)}`,
+      {
+        method: "PUT",
+        headers: { cookie },
+        body: JSON.stringify({
+          volume: 0.33,
+          startBlockId: "blk_ch_chapter1_2",
+          endBlockId: "blk_ch_chapter1_2",
+        }),
+      },
+    );
+    if (updatedCue.status !== 200 || updatedCue.body.volume !== 0.33 || updatedCue.body.startAnchor.blockId !== "blk_ch_chapter1_2") {
+      throw new Error("Audio studio API did not update cue placement");
     }
 
     const deleteCue = await fetch(`${baseUrl}/api/admin/audio/cues/${encodeURIComponent(cue.body.id)}`, {
@@ -457,14 +564,28 @@ async function run(): Promise<void> {
       throw new Error("Disposable staging chapter publish was not blocked by a broken cue");
     }
 
-    const deleteStagingCue = await fetch(`${baseUrl}/api/admin/audio/cues/${encodeURIComponent(disposableCueId)}`, {
-      method: "DELETE",
-      headers: { cookie },
-    });
-    if (deleteStagingCue.status !== 200) {
-      throw new Error("Disposable staging chapter cue repair/delete failed");
+    const repairedStagingCue = await requestJson<{ status: string }>(
+      baseUrl,
+      `/api/admin/audio/cues/${encodeURIComponent(disposableCueId)}/repair`,
+      {
+        method: "POST",
+        headers: { cookie },
+      },
+    );
+    if (repairedStagingCue.status !== 200 || repairedStagingCue.body.status !== "valid") {
+      throw new Error("Disposable staging chapter cue repair endpoint failed");
     }
-    disposableCueId = undefined;
+
+    const repairedStudio = await requestJson<{ canPublish: boolean; blockingIssues: string[] }>(
+      baseUrl,
+      `/api/admin/audio/studio?chapterId=${encodeURIComponent(disposableChapterId)}`,
+      {
+        headers: { cookie },
+      },
+    );
+    if (repairedStudio.status !== 200 || !repairedStudio.body.canPublish || repairedStudio.body.blockingIssues.length !== 0) {
+      throw new Error("Audio studio readiness did not clear after cue repair");
+    }
 
     const secondPublish = await requestJson<{ status: string }>(
       baseUrl,
@@ -516,6 +637,12 @@ async function run(): Promise<void> {
     }
     if (adminCookie && disposableChapterId) {
       await fetch(`${baseUrl}/api/admin/chapters/${encodeURIComponent(disposableChapterId)}`, {
+        method: "DELETE",
+        headers: { cookie: adminCookie },
+      }).catch(() => undefined);
+    }
+    if (adminCookie && importedChapterId) {
+      await fetch(`${baseUrl}/api/admin/chapters/${encodeURIComponent(importedChapterId)}`, {
         method: "DELETE",
         headers: { cookie: adminCookie },
       }).catch(() => undefined);

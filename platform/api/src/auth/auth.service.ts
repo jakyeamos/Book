@@ -1,5 +1,5 @@
 import { SessionContext, UserRole } from "../../../shared/src/users/schema";
-import { UserRepository, verifyPassword } from "../users/user.repository";
+import { UserRepository, hashPassword, needsPasswordRehash, verifyPassword } from "../users/user.repository";
 
 export interface LoginInput {
   email: string;
@@ -33,6 +33,10 @@ export class AuthService {
 
     if (!verifyPassword(input.password, user.passwordHash)) {
       throw new Error("Invalid credentials");
+    }
+
+    if (needsPasswordRehash(user.passwordHash)) {
+      this.users.updatePasswordHash(user.id, hashPassword(input.password));
     }
 
     const session = this.users.createSession(user.id, user.role, input.ttlHours ?? 24);

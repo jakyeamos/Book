@@ -6,8 +6,13 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "build": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json",
+    "format": "node tools/validate-chapters.cjs --lint-formatting",
+    "lint": "node tools/validate-chapters.cjs --lint-formatting",
     "start": "node .planning/.tmp-tsrun/platform/platform/api/src/server.js",
     "test": "node tools/validate-chapters.cjs --full",
+    "typecheck": "pnpm run platform:typecheck",
+    "audit:dead-code": "node node_modules/typescript/lib/tsc.js --project tsconfig.platform.json --noEmit --noUnusedLocals --noUnusedParameters",
+    "smoke": "pnpm run platform:ops-readiness-smoke",
     "validate:chapters": "node tools/validate-chapters.cjs --full",
     "validate:manifest": "node tools/validate-chapters.cjs --manifest",
     "lint:chapters": "node tools/validate-chapters.cjs --lint-formatting",

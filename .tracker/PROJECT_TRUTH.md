@@ -6,7 +6,7 @@ healthScore: 88
 statusLabel: on_track
 nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` against the deployed service.
 blockers: []
-lastUpdated: 2026-06-25
+lastUpdated: 2026-07-03
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -16,13 +16,13 @@ goals:
 repoType: app
 sourceOfTruth: mixed
 primaryLanguage: TypeScript
-activeBranch: codex/author-studio-v1-1
-lastCommitDate: "2026-06-25"
+activeBranch: qr/triage-parallel-20260702T200935Z
+lastCommitDate: "2026-07-03"
 quality:
   lint: pass
   types: pass
   tests: pass
-  deadCode: unknown
+  deadCode: pass
   structure: pass
   dependencies: pnpm
 canonicalCommands:
@@ -31,7 +31,7 @@ canonicalCommands:
   lint: pnpm run lint:chapters
   typecheck: pnpm run platform:typecheck
   test: pnpm test
-  deadcode: unknown
+  deadcode: pnpm run audit:dead-code
 agentExpectationsVersion: 1
 ---
 
@@ -53,6 +53,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jun 13: Normalized runtime, deployment, and operations dependency commands to pnpm and replaced the npm lockfile with `pnpm-lock.yaml`.
 - Jun 24: Updated `.pre-cr.json` to use an 80% threshold with coverage, security, checklist checks, and auto coverage-path detection.
 - Jun 25: Extended deployed acceptance evidence and full-stack smoke assertions so DOCX import staging, draft metadata persistence, and chapter order/type/visibility reloads are covered through live HTTP APIs.
+- Jul 3: Added top-level QR-discoverable `format`, `lint`, `typecheck`, `audit:dead-code`, and `smoke` script aliases that route to existing chapter/platform validation gates.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -70,14 +71,14 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - The full-stack admin, login, admin subroute, and reader-only paths are verified locally but not yet verified on the live domain.
 - Audio asset storage is configured for a persistent managed disk by default; switching to S3/R2-style object storage would require adding that provider adapter.
 - Admin block editing is functional but intentionally lightweight; a richer drag/drop editor would be a future UX pass.
-- No dead-code audit command is configured in `package.json`.
+- Broad QR structural findings remain outside this triage change set and need a dedicated cleanup pass.
 
 ## Next Concrete Steps
 
 1. Create the Render service/database from `render.yaml` and set `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 2. Point the live domain at the Node service after smoke-checking `/api/health`, `/`, `/login`, and `/admin`.
 3. Verify deployed UI behavior after `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` passes against the Node service.
-4. Add a dead-code scan command or explicitly document why one is unavailable.
+4. Plan a dedicated structural cleanup pass for nested ternaries, deep nesting, unsafe HTML injection, and UI spacing findings.
 
 ## Risks / Blockers
 
@@ -94,7 +95,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - **Build:** `pnpm run build` passed on 2026-06-25 through `pnpm run platform:fullstack-smoke`.
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-25 and now covers DOCX import staging, metadata persistence, approved chapter order/type/visibility reloads, disposable staging chapter publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
 - **Platform smokes:** `pnpm run platform:import-smoke` passed on 2026-06-25; `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
-- **Dead code:** no `audit:dead-code` script is configured, so status is unknown.
+- **Dead code:** `pnpm run audit:dead-code` passes through TypeScript `--noUnusedLocals` / `--noUnusedParameters` checks as of 2026-07-03.
 - **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.
 
 ## Agent Notes

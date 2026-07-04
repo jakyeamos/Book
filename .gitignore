@@ -8,3 +8,5 @@ pnpm-debug.log*
 
 .planning/
 .pre-cr/
+
+.quality-runner/

@@ -88,3 +88,19 @@ This roadmap reflects repo and deployment reality as of 2026-06-25:
 - Legacy closure evidence lives at: `docs/legacy-backlog-checklist.md`.
 - `gsd execute-phase` auto-runner still cannot run in this repo because `scripts/execute-plan-integrated.ts` is missing; manual execution is still required.
 - Next action order: Author Studio v1 docs -> server/API/security -> admin UX -> smoke coverage -> deployed acceptance -> re-baseline Phase 07.
+
+### Phase 8: QR remediation: book
+
+
+
+**Goal:** Resolve Quality Runner findings for book using cluster-oriented, behavior-preserving remediation from run qr-fleet-continue-20260704-book.
+**Requirements**: QR-BOOK
+**Depends on:** Phase 7
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md - Primary QR cluster remediation
+- [ ] 08-02-PLAN.md - Additional QR cluster remediation
+
+**Cross-cutting constraints:**
+- The post-remediation QR run records no unresolved regression for this plan scope.

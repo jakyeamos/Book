@@ -103,3 +103,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Static reader edits still live in `chapters/` and `chapters/config.js`, but the intended direction is admin-managed content and cues.
 - The portfolio tracker should map the `book` project slug to this file.
 - Keep future state updates focused on the live project snapshot, not a changelog dump.
+
+## QR Remediation Planning
+
+- 2026-07-04: Added GSD Phase 8 for QR remediation from qr-fleet-continue-20260704-book; 2 plan(s) created from book.md. Execution has not started.

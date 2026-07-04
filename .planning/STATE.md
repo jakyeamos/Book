@@ -54,6 +54,9 @@ Progress: [#######---] 71%
 
 ## Accumulated Context
 
+
+### Roadmap Evolution
+- 2026-07-04: Phase 8 planned: QR remediation: book from QR run qr-fleet-continue-20260704-book.
 ### Decisions
 
 - Legacy static-reader phases (1-5) remain complete and intact.

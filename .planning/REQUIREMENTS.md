@@ -177,6 +177,6 @@
 ---
 *Requirements defined: 2026-03-10*
 *Last updated: 2026-06-25 - Reconciled with Author Studio v1 product requirements*
+## QR Remediation Requirements
 
-
-
+- [ ] **QR-BOOK**: Resolve the Quality Runner advisory clusters from run qr-fleet-continue-20260704-book for book without changing intended behavior, then verify with focused repo checks and a post-remediation QR comparison.

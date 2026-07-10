@@ -4,9 +4,9 @@ projectName: Book
 summary: Book has a full-stack reading platform path plus current pre-cr quality gate configuration for coverage, security, and checklist checks.
 healthScore: 88
 statusLabel: on_track
-nextStep: Deploy the Render blueprint with production `ADMIN_EMAIL` and `ADMIN_PASSWORD`, point the live domain at the Node service, and run `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` against the deployed service.
+nextStep: Move the reader and admin service onto the hosted deployment path, connect the live domain, and complete deployed acceptance smoke coverage.
 blockers: []
-lastUpdated: 2026-07-03
+lastUpdated: 2026-07-10
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -46,7 +46,7 @@ The platform layer now includes a full-stack HTTP server, Postgres migrations, d
 The project should become editable by nontechnical users. Chapter text, ordering, publishing, soundtrack uploads, and cue placement should happen through an admin UI rather than requiring direct repo edits to chapter files or `chapters/config.js`.
 
 ## Recent Progress
-
+- Jul 10: Added a TypeScript 7 upgrade audit documenting the shared platform config's TypeScript 5.9 baseline, `moduleResolution: "node"` blocker, and deferred-upgrade recommendation.
 - Jun 12: Added a shared `/login` route and server redirects so anonymous `/admin`, `/me/highlights`, and `/me/notes` requests no longer fall through to 404; authenticated reader-only routes serve the reader shell.
 - Jun 13: Closed remaining deployed auth gaps: extensionless `/admin/*` routes now require admin access and serve the admin shell, shared route guards read the runtime `auth_token` cookie, and production startup requires explicit admin bootstrap credentials instead of default accounts.
 - Jun 13: Added disposable staging-chapter coverage to `platform:fullstack-smoke` so publish, broken-cue publish blocking, publish recovery, rollback, cleanup, and publish-related audit events are exercised through the deployed HTTP API.
@@ -62,9 +62,6 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - May 1: Added an `Admin Editors` button to reader controls that navigates to `/admin`, and narrowed audio unlock warnings to true autoplay-block cases with prompt re-show cooldown.
 - May 1: Fixed reader text highlighting to toggle off existing highlights instead of nesting `<mark>` elements when highlighting already-highlighted text.
 - May 1: Added a static `admin/index.html` entry page so `/admin` no longer resolves to 404 in the deployed/static site.
-- May 1: Replaced the placeholder admin path with an authenticated API-backed admin editor and added a Node server that serves `/admin`, reader APIs, auth APIs, and admin editing APIs.
-- May 1: Added Postgres migrations, runtime migration application, content seeding, DB-backed content/auth/audio stores, Render deployment config, and full-stack smoke coverage.
-- May 1: Added reader registration, DB-backed progress/highlights/notes/preferences sync, library/search/preferences UI, block-assisted admin editing, audio upload/cue UI, analytics events, login rate limiting, production cookie hardening, and operations documentation.
 
 ## Open Problems
 
@@ -88,6 +85,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 
 ## Quality Ladder Notes
 
+- **TypeScript 7 audit doc:** `git diff --check -- TYPESCRIPT_7_UPGRADE_AUDIT.md .tracker/PROJECT_TRUTH.md` — PASS on 2026-07-10; local commit quality gate passed. No package/config changes were made.
 - **AIOS gate audit metadata:** recorded 2026-06-25 warning-only gate events for changed-line coverage, secret-literal reminders, and oversized-source reminders. No product files changed in that cleanup commit.
 - **Lint/format baseline:** `pnpm run lint:chapters` passed on 2026-06-24.
 - **Types:** `pnpm run platform:typecheck` passed on 2026-06-25.

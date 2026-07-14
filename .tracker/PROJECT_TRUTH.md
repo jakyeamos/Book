@@ -105,7 +105,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-25 and now covers DOCX import staging, metadata persistence, approved chapter order/type/visibility reloads, disposable staging chapter publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
 - **Platform smokes:** `pnpm run platform:import-smoke` passed on 2026-06-25; `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** `pnpm run audit:dead-code` passes through TypeScript `--noUnusedLocals` / `--noUnusedParameters` checks as of 2026-07-03.
-- **Book v2 verification:** `pnpm v2:typecheck`, `pnpm v2:lint`, `pnpm v2:test` (19 tests), `pnpm v2:build`, `pnpm build`, `pnpm typecheck`, `pnpm test`, and `pnpm v2:test:e2e` (3 flows) passed on 2026-07-14.
+- **Book v2 verification:** `pnpm v2:typecheck`, `pnpm v2:lint`, `pnpm v2:test` (24 tests), `pnpm v2:build`, `pnpm build`, `pnpm typecheck`, `pnpm test`, and `pnpm v2:test:e2e` (4 flows) passed on 2026-07-14.
 - **Book v2 migration/storage:** numbered migrations through `0004_v2_identity`, checksum-addressed R2/local adapters, upload/finalize/read authorization, and legacy asset/document reconciliation are committed in `e1cda27`.
 - **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.
 

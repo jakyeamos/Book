@@ -1,10 +1,10 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book v2 foundation and the draft publishing/reader-sync vertical slice are implemented on codex/book-v2-rewrite as a Next.js narrative soundtrack shell with Postgres contracts and Cloudflare R2 storage boundaries.
+summary: Book v2 foundation, draft publishing/reader-sync boundaries, and deterministic all-chapter legacy export are implemented on codex/book-v2-rewrite as a Next.js narrative soundtrack shell with Postgres contracts and Cloudflare R2 storage boundaries.
 healthScore: 76
 statusLabel: modernization_in_progress
-nextStep: Wire the Studio controls to Postgres-loaded drafts/history, then migrate the legacy chapters and cues through the checksum/quarantine pipeline.
+nextStep: Wire the Studio controls to Postgres-loaded drafts/history, then import the exported chapters and reconciled audio into a staging database.
 blockers: []
 lastUpdated: 2026-07-14
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
@@ -60,6 +60,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jul 3: Added top-level QR-discoverable `format`, `lint`, `typecheck`, `audit:dead-code`, and `smoke` script aliases that route to existing chapter/platform validation gates.
 - Jul 14: Started the clean v2 rewrite on `codex/book-v2-rewrite`; added `PRODUCT.md`, `DESIGN.md`, Next shell, typed scene/cue model, published reader repository, Studio composition prototype, R2 upload/finalize/read APIs, deterministic legacy reconciliation, hashed-session foundation, and Playwright coverage. Commit `e1cda27`.
 - Jul 14: Added draft autosave, atomic publish/readiness routes, revision history surface, server-owned progress/annotation mutation contracts, and session-gated reader APIs. Commit `39befaa`.
+- Jul 14: Added deterministic all-chapter HTML-to-block/cue export (`pnpm v2:export-content`) for the 11 legacy chapters; output remains a migration artifact until checksum reconciliation and staging import pass. Commit `68467da`.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -89,6 +90,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - No code blockers remain for local full-stack verification of `/login`, `/admin`, `/admin/*`, or reader-only account routes.
 - Live functionality depends on deploying the managed Node/Postgres service and moving the domain away from static-only hosting.
 - R2 credentials and a staging bucket are external prerequisites for production asset verification.
+- The legacy export maps line cues to stable block anchors, but asset duration/checksum metadata still must be reconciled before any cue is marked ready.
 - The live domain still points at the legacy deployment path until v2 cutover is explicitly approved.
 
 ## Quality Ladder Notes

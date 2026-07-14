@@ -9,6 +9,7 @@
     "v2:build": "next build",
     "v2:start": "next start",
     "v2:migrate": "tsx src/db/migrate-cli.ts",
+    "v2:export-content": "tsx scripts/export-v2-content.ts",
     "v2:lint": "eslint src tests --max-warnings=0",
     "v2:typecheck": "tsc --noEmit -p tsconfig.json",
     "v2:test": "vitest run",

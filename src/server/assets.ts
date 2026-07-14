@@ -65,7 +65,7 @@ export function assertStudioAssetMutationAuthorized(request: Pick<NextRequest, "
   }
 }
 
-function assertRequestOrigin(request: Pick<NextRequest, "headers">, environment: BookEnvironment): void {
+export function assertRequestOrigin(request: Pick<NextRequest, "headers">, environment: BookEnvironment = process.env): void {
   const expectedOrigin = environment.BOOK_PUBLIC_ORIGIN;
   const requestOrigin = request.headers.get("origin");
   if (!expectedOrigin || !requestOrigin) {
@@ -178,6 +178,9 @@ export class AssetHttpError extends Error {
 export function assetErrorResponse(error: unknown): Response {
   if (error instanceof AssetHttpError) {
     return Response.json({ error: error.message, details: error.details }, { status: error.status });
+  }
+  if (error instanceof Error && "status" in error && typeof error.status === "number") {
+    return Response.json({ error: error.message }, { status: error.status });
   }
   console.error("Book v2 asset request failed", error);
   return Response.json({ error: "Asset request failed." }, { status: 500 });

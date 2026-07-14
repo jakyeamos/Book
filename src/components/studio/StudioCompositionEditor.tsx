@@ -39,7 +39,11 @@ export function StudioCompositionEditor({ revision }: StudioCompositionEditorPro
           <p className="studio-kicker">Author Studio / composition</p>
           <h1>{revision.title}</h1>
         </div>
-        <a href={`/read/${revision.slug}`}>Open reader ↗</a>
+        <nav className="studio-header-nav" aria-label="Chapter studio navigation">
+          <a href={`/read/${revision.slug}`}>Open reader ↗</a>
+          <a href={`/studio/chapters/${revision.chapterId}/history`}>History</a>
+          <a href={`/studio/chapters/${revision.chapterId}/publish`}>Publish</a>
+        </nav>
       </header>
       <div className="studio-layout">
         <aside className="studio-rail" aria-label="Scenes">

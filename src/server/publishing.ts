@@ -19,10 +19,13 @@ async function publishWithinTransaction(client: PoolClient, input: PublishRevisi
     throw new Error("The revision does not belong to the requested chapter.");
   }
 
-  await client.query(
-    "UPDATE v2_chapter_revisions SET status = 'published' WHERE id = $1 AND chapter_id = $2",
+  const updated = await client.query(
+    "UPDATE v2_chapter_revisions SET status = 'published' WHERE id = $1 AND chapter_id = $2 AND status = 'draft'",
     [input.revision.id, input.chapterId],
   );
+  if (updated.rowCount !== 1) {
+    throw new Error("Only a draft revision can be published.");
+  }
   await client.query(
     `INSERT INTO v2_chapter_publications (chapter_id, revision_id, published_at)
      VALUES ($1, $2, now())

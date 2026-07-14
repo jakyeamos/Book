@@ -16,10 +16,20 @@ test("studio preview exposes scene and timeline controls", async ({ page }) => {
   await page.getByRole("button", { name: "Play preview" }).click();
   await expect(page.getByRole("button", { name: "Pause preview" })).toBeVisible();
   await expect(page.getByText("Cursor following text")).toBeVisible();
+  await page.getByRole("link", { name: "Publish" }).click();
+  await expect(page.getByRole("heading", { name: "Ready to publish" })).toBeVisible();
+  await page.getByRole("link", { name: "Back to composition" }).click();
+  await page.getByRole("link", { name: "History" }).click();
+  await expect(page.getByRole("heading", { name: "History you can trust." })).toBeVisible();
 });
 
 test("health route reports v2 service status", async ({ request }) => {
   const response = await request.get("/api/health");
   expect(response.ok()).toBeTruthy();
   expect(await response.json()).toMatchObject({ ok: true, service: "book-v2" });
+});
+
+test("reader mutations require a server session", async ({ request }) => {
+  const response = await request.post("/api/reader/progress", { data: { chapterId: "chapter-1", revisionId: "revision-ritual-1", blockId: "b2", progressPercent: 20 } });
+  expect(response.status()).toBe(401);
 });

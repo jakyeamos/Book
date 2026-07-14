@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book v2 foundation, draft publishing/reader-sync boundaries, and deterministic all-chapter legacy export are implemented on codex/book-v2-rewrite as a Next.js narrative soundtrack shell with Postgres contracts and Cloudflare R2 storage boundaries.
+summary: Book v2 foundation, draft publishing/reader-sync boundaries, deterministic all-chapter legacy export, rollback safety, and editable Studio cue controls are implemented on codex/book-v2-rewrite.
 healthScore: 76
 statusLabel: modernization_in_progress
 nextStep: Wire the Studio controls to Postgres-loaded drafts/history, then import the exported chapters and reconciled audio into a staging database.
@@ -61,6 +61,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jul 14: Started the clean v2 rewrite on `codex/book-v2-rewrite`; added `PRODUCT.md`, `DESIGN.md`, Next shell, typed scene/cue model, published reader repository, Studio composition prototype, R2 upload/finalize/read APIs, deterministic legacy reconciliation, hashed-session foundation, and Playwright coverage. Commit `e1cda27`.
 - Jul 14: Added draft autosave, atomic publish/readiness routes, revision history surface, server-owned progress/annotation mutation contracts, and session-gated reader APIs. Commit `39befaa`.
 - Jul 14: Added deterministic all-chapter HTML-to-block/cue export (`pnpm v2:export-content`) for the 11 legacy chapters; output remains a migration artifact until checksum reconciliation and staging import pass. Commit `68467da`.
+- Jul 14: Added rollback-as-new-draft safety, editable cue fields/waveform peaks, and the Studio rollback API. Commit `d52255d`.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -73,7 +74,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 ## Open Problems
 
 - The full-stack admin, login, admin subroute, and reader-only paths are verified locally but not yet verified on the live domain.
-- V2 Studio controls are still a representative client surface; Postgres-loaded drafts/history and account login UI are not yet wired through.
+- V2 Studio controls now edit local draft state and can autosave through the API; Postgres-loaded drafts/history and account login UI are not yet wired through.
 - R2 production requires bucket credentials, staging smoke tests, and the legacy audio migration before cutover.
 - The legacy runtime remains in the repository for rollback and must not be removed until v2 migration reconciliation passes.
 - Broad QR structural findings remain outside this triage change set and need a dedicated cleanup pass.

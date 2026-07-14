@@ -1,4 +1,4 @@
-name: Chapter Validation
+name: Book v2 verification
 
 on:
   pull_request:
@@ -6,9 +6,8 @@ on:
     branches: ["main"]
 
 jobs:
-  validate:
+  verify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,5 +24,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate chapters
+      - name: Verify v2
+        run: pnpm v2:verify
+
+      - name: Verify legacy content contract
         run: pnpm test

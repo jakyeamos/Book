@@ -24,8 +24,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Enable pnpm
+        run: corepack enable
+
       - name: Validate chapters
-        run: npm ci && npm run validate:chapters
+        run: pnpm install --frozen-lockfile && pnpm run validate:chapters
 
       - name: Ensure static Pages mode
         run: touch .nojekyll

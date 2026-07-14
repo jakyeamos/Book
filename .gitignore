@@ -7,6 +7,11 @@ yarn-error.log*
 pnpm-debug.log*
 
 .planning/
+.next/
+tsconfig.tsbuildinfo
+.local-assets/
+test-results/
+playwright-report/
 .pre-cr/
 
 .quality-runner/

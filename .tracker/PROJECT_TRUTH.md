@@ -1,12 +1,12 @@
 ---
 schemaVersion: 1
 projectName: Book
-summary: Book has a full-stack reading platform path plus current pre-cr quality gate configuration for coverage, security, and checklist checks.
-healthScore: 88
-statusLabel: on_track
-nextStep: Move the reader and admin service onto the hosted deployment path, connect the live domain, and complete deployed acceptance smoke coverage.
+summary: Book v2 foundation is implemented on codex/book-v2-rewrite as a Next.js narrative soundtrack shell with Postgres contracts and Cloudflare R2 storage boundaries.
+healthScore: 76
+statusLabel: modernization_in_progress
+nextStep: Connect Studio draft persistence and immutable publishing, then migrate the legacy chapters and cues through the checksum/quarantine pipeline.
 blockers: []
-lastUpdated: 2026-07-10
+lastUpdated: 2026-07-14
 tags: [interactive-book, admin-cms, audio, typescript, publishing]
 areas: [reader, admin, content-pipeline, audio-studio, publish-workflow]
 goals:
@@ -16,8 +16,8 @@ goals:
 repoType: app
 sourceOfTruth: mixed
 primaryLanguage: TypeScript
-activeBranch: qr/triage-parallel-20260702T200935Z
-lastCommitDate: "2026-07-03"
+activeBranch: codex/book-v2-rewrite
+lastCommitDate: "2026-07-14"
 quality:
   lint: pass
   types: pass
@@ -39,7 +39,11 @@ agentExpectationsVersion: 1
 
 Book is a full-stack-capable interactive reading experience with chapter-specific visual themes, motion effects, particles, background music, ambient layers, optional Giscus discussion embeds, and a Node server that serves the reader, shared login route, and authenticated admin editor.
 
-The platform layer now includes a full-stack HTTP server, Postgres migrations, database-backed content/auth/audio/reader-state persistence, static-content seeding, protected admin chapter create/edit/publish/rollback/delete APIs, audio asset/cue APIs, reader account/state/search APIs, analytics/audit events, and reader APIs that serve published DB content with static fallback for local development.
+The v2 foundation now includes a Next.js App Router shell, strict composition and
+publish-readiness contracts, Postgres migration discovery and transaction
+boundaries, published-revision reader hydration with visibility enforcement,
+R2/local asset adapters with checksum finalization, a synchronized Reader/Studio
+prototype, migration reconciliation tooling, and browser/unit verification.
 
 ## Why This Matters / Intended Outcome
 
@@ -54,6 +58,7 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - Jun 24: Updated `.pre-cr.json` to use an 80% threshold with coverage, security, checklist checks, and auto coverage-path detection.
 - Jun 25: Extended deployed acceptance evidence and full-stack smoke assertions so DOCX import staging, draft metadata persistence, and chapter order/type/visibility reloads are covered through live HTTP APIs.
 - Jul 3: Added top-level QR-discoverable `format`, `lint`, `typecheck`, `audit:dead-code`, and `smoke` script aliases that route to existing chapter/platform validation gates.
+- Jul 14: Started the clean v2 rewrite on `codex/book-v2-rewrite`; added `PRODUCT.md`, `DESIGN.md`, Next shell, typed scene/cue model, published reader repository, Studio composition prototype, R2 upload/finalize/read APIs, deterministic legacy reconciliation, hashed-session foundation, and Playwright coverage. Commit `e1cda27`.
 - May 1: Added `ChapterStudioController` for admin chapter creation, editing, reordering, preview, publish, and rollback flows.
 - May 1: Added `AudioStudioController` for MP3 upload, asset listing, visual block-based cue CRUD, cue repair, and publish readiness.
 - May 1: Extended audio cue services/repositories with update/delete operations and MP3 upload validation.
@@ -66,22 +71,24 @@ The project should become editable by nontechnical users. Chapter text, ordering
 ## Open Problems
 
 - The full-stack admin, login, admin subroute, and reader-only paths are verified locally but not yet verified on the live domain.
-- Audio asset storage is configured for a persistent managed disk by default; switching to S3/R2-style object storage would require adding that provider adapter.
-- Admin block editing is functional but intentionally lightweight; a richer drag/drop editor would be a future UX pass.
+- V2 Studio draft persistence, cue editing, immutable history, and account-backed reader sync are not yet wired to the UI.
+- R2 production requires bucket credentials, staging smoke tests, and the legacy audio migration before cutover.
+- The legacy runtime remains in the repository for rollback and must not be removed until v2 migration reconciliation passes.
 - Broad QR structural findings remain outside this triage change set and need a dedicated cleanup pass.
 
 ## Next Concrete Steps
 
-1. Create the Render service/database from `render.yaml` and set `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-2. Point the live domain at the Node service after smoke-checking `/api/health`, `/`, `/login`, and `/admin`.
-3. Verify deployed UI behavior after `BOOK_SMOKE_BASE_URL=... pnpm run platform:deployed-acceptance` passes against the Node service.
-4. Plan a dedicated structural cleanup pass for nested ternaries, deep nesting, unsafe HTML injection, and UI spacing findings.
+1. Provision Postgres and private R2 credentials for a v2 preview, then run `pnpm v2:migrate`.
+2. Implement Studio draft autosave, scene/cue editing, publish blocking, history, and rollback.
+3. Run the legacy manifest/checksum reconciliation against all chapter audio and import valid chapter revisions.
+4. Complete account-backed progress/annotations and execute the read-only cutover with rollback snapshots.
 
 ## Risks / Blockers
 
 - No code blockers remain for local full-stack verification of `/login`, `/admin`, `/admin/*`, or reader-only account routes.
 - Live functionality depends on deploying the managed Node/Postgres service and moving the domain away from static-only hosting.
-- Persistent audio uploads depend on the managed disk configured in `render.yaml`; object-storage provider support is still future work.
+- R2 credentials and a staging bucket are external prerequisites for production asset verification.
+- The live domain still points at the legacy deployment path until v2 cutover is explicitly approved.
 
 ## Quality Ladder Notes
 
@@ -94,6 +101,8 @@ The project should become editable by nontechnical users. Chapter text, ordering
 - **Full-stack smoke:** `pnpm run platform:fullstack-smoke` passed on 2026-06-25 and now covers DOCX import staging, metadata persistence, approved chapter order/type/visibility reloads, disposable staging chapter publish, broken-cue blocking, publish recovery, rollback, cleanup, and publish audit events.
 - **Platform smokes:** `pnpm run platform:import-smoke` passed on 2026-06-25; `pnpm run platform:auth-smoke` passed on 2026-06-13; editorial, audio, reader sync, and phase06 smoke scripts previously passed on 2026-05-01.
 - **Dead code:** `pnpm run audit:dead-code` passes through TypeScript `--noUnusedLocals` / `--noUnusedParameters` checks as of 2026-07-03.
+- **Book v2 verification:** `pnpm v2:typecheck`, `pnpm v2:lint`, `pnpm v2:test` (19 tests), `pnpm v2:build`, `pnpm build`, `pnpm typecheck`, `pnpm test`, and `pnpm v2:test:e2e` (3 flows) passed on 2026-07-14.
+- **Book v2 migration/storage:** numbered migrations through `0004_v2_identity`, checksum-addressed R2/local adapters, upload/finalize/read authorization, and legacy asset/document reconciliation are committed in `e1cda27`.
 - **Security:** package management now uses pnpm; production admin bootstrap rejects missing credentials and the removed `change-me-admin` default.
 
 ## Agent Notes

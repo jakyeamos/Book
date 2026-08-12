@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "project": {
+    "name": "Book",
+    "identity": "A browser-based interactive reading and authoring product that presents chapter fragments as cinematic, chapter-specific reading experiences and supports a private Author Studio for content operations.",
+    "audience": "Readers who want an immersive literary experience and the single author or maintainer who imports, edits, previews, publishes, and rolls back chapters.",
+    "core_loop": "Load a chapter manifest, render its text and presentation layers, and use the bounded Author Studio path to import, edit, preview, publish, or roll back content when the production prerequisites are available.",
+    "north_star": "Every published chapter makes the story easier to enter and the authoring path safer to operate, with presentation serving the narrative rather than obscuring it.",
+    "not_this": [
+      "A general-purpose multi-author content-management system",
+      "A video-background or effects-first showcase disconnected from the story",
+      "Proof of hosted production behavior from local source or documentation alone",
+      "A self-service public admin or reader-account platform"
+    ]
+  },
+  "targets": {
+    "mvp": {
+      "definition": "A local reader can load the manifest, navigate authored chapters, and apply the documented chapter-specific text, theme, motion, and audio behavior through the existing validation path."
+    },
+    "complete_product": {
+      "definition": "The deployed Node/Postgres product supports the reader and single-author Author Studio loop with safe import, normalized editing, preview, audio-cue validation, publish readiness, version history, rollback, and recorded production acceptance."
+    }
+  },
+  "pillars": [
+    {
+      "id": "immersive-reader",
+      "name": "Immersive reader",
+      "outcomes": [
+        {
+          "id": "manifest-driven-reading",
+          "name": "Readers can load and navigate authored chapters from the manifest without losing the intended reading flow.",
+          "targets": ["mvp", "complete_product"],
+          "maturity": 25,
+          "confidence": "medium",
+          "layers": {
+            "intended": "The product is intended to provide a chapter-based interactive reading experience.",
+            "planned": "The project requirements call for chapter navigation, content migration, and a stable reader baseline.",
+            "implemented": "The repository contains a reader shell, chapter manifest, chapter fragments, and client orchestration code.",
+            "verified": "No fresh end-to-end reader receipt is recorded in this bootstrap contract; documentation and source are not runtime proof."
+          },
+          "evidence": [
+            {"ref": "README.md", "note": "Reader purpose, manifest, quickstart, and commands.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "index.html", "note": "Reader app shell present in the implementation.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "chapters/index.json", "note": "Manifest-driven chapter source.", "observed_at": "2026-08-12T08:06:54Z"}
+          ],
+          "blockers": [
+            {"kind": "verification", "summary": "A fresh local reader run and recorded chapter-navigation receipt are not yet attached to this contract."}
+          ]
+        },
+        {
+          "id": "chapter-presentation",
+          "name": "Chapter presentation layers reinforce the narrative with controlled theme, motion, audio, and optional discussion behavior.",
+          "targets": ["mvp", "complete_product"],
+          "maturity": 25,
+          "confidence": "medium",
+          "layers": {
+            "intended": "Each chapter is intended to feel like its own cinematic world while preserving readable content.",
+            "planned": "The project requirements define chapter themes, parallax, scroll-triggered effects, particles, audio crossfade, and responsive behavior.",
+            "implemented": "The repository contains styling, client orchestration, audio assets, chapter configuration, and presentation dependencies.",
+            "verified": "Visual and audio behavior has not been directly verified in a fresh installed or hosted run for this checkpoint."
+          },
+          "evidence": [
+            {"ref": ".planning/PROJECT.md", "note": "Cinematic experience requirements and constraints.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "script.js", "note": "Client-side chapter and presentation orchestration.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "styles.css", "note": "Reader presentation surface.", "observed_at": "2026-08-12T08:06:54Z"}
+          ],
+          "blockers": [
+            {"kind": "verification", "summary": "Responsive, motion, audio, and accessibility behavior need direct behavior evidence rather than source inspection alone."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "content-operations",
+      "name": "Content operations",
+      "outcomes": [
+        {
+          "id": "author-studio-loop",
+          "name": "The single author can move a chapter from import or draft through normalized editing, preview, and a controlled publish decision.",
+          "targets": ["mvp", "complete_product"],
+          "maturity": 25,
+          "confidence": "low",
+          "layers": {
+            "intended": "Author Studio is intended to make content operations safer and less dependent on raw HTML, JSON, and block identifiers.",
+            "planned": "The active requirements call for staged DOCX import, normalized editing, reader-style previews, and publish readiness.",
+            "implemented": "The repository contains admin and platform files plus deployment and migration documentation for the authoring path.",
+            "verified": "No current deployed admin login, database, or publish receipt is recorded."
+          },
+          "evidence": [
+            {"ref": ".planning/PROJECT.md", "note": "Author Studio v1 requirements and known limitations.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "admin/admin.js", "note": "Authoring surface implementation.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "docs/operations.md", "note": "Operational and release path documentation.", "observed_at": "2026-08-12T08:06:54Z"}
+          ],
+          "blockers": [
+            {"kind": "external", "summary": "Real Render, Postgres, persistent audio storage, and explicit admin credentials are not verified in this local checkpoint."},
+            {"kind": "verification", "summary": "Production acceptance remains unsigned in docs/phase06-acceptance-checklist.md."}
+          ]
+        },
+        {
+          "id": "safe-publish-rollback",
+          "name": "Publishing blocks unsafe content changes and retains enough version history to roll back a published chapter.",
+          "targets": ["complete_product"],
+          "maturity": 0,
+          "confidence": "low",
+          "layers": {
+            "intended": "The product is intended to fail closed around broken audio cues and preserve reversible content operations.",
+            "planned": "The requirements explicitly call for publish readiness, version history, rollback, and production verification.",
+            "implemented": "The repository documents migrations, backups, restore steps, and a platform path, but does not establish the complete live contract.",
+            "verified": "No live unsafe-publish rejection, rollback, or restoration receipt is available."
+          },
+          "evidence": [
+            {"ref": ".planning/PROJECT.md", "note": "Publish readiness and rollback requirements.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "render.yaml", "note": "Declared deployment and persistent-storage configuration.", "observed_at": "2026-08-12T08:06:54Z"},
+            {"ref": "docs/phase06-acceptance-checklist.md", "note": "Acceptance checklist exists but is not signed off.", "observed_at": "2026-08-12T08:06:54Z"}
+          ],
+          "blockers": [
+            {"kind": "technical", "summary": "The complete normalized-content, audio-cue, version-history, and rollback path still needs focused implementation and gate evidence."}
+          ]
+        }
+      ]
+    }
+  ],
+  "source_layers": {
+    "intended": [
+      {"ref": ".planning/PROJECT.md", "note": "Product identity, story, core value, and requirements.", "observed_at": "2026-08-12T08:06:54Z"}
+    ],
+    "planned": [
+      {"ref": ".planning/PROJECT.md", "note": "Active requirements, constraints, and roadmap direction.", "observed_at": "2026-08-12T08:06:54Z"}
+    ],
+    "implemented": [
+      {"ref": "README.md", "note": "Current reader, platform, commands, and deployment surface.", "observed_at": "2026-08-12T08:06:54Z"},
+      {"ref": "script.js", "note": "Reader runtime implementation.", "observed_at": "2026-08-12T08:06:54Z"},
+      {"ref": "admin/admin.js", "note": "Authoring surface implementation.", "observed_at": "2026-08-12T08:06:54Z"}
+    ],
+    "verified": []
+  },
+  "drift": [
+    {
+      "kind": "verification-gap",
+      "summary": "The repository documents a full-stack reader and authoring path, but fresh local, deployed, and production-acceptance evidence is not recorded.",
+      "status": "open",
+      "observed_at": "2026-08-12T08:06:54Z",
+      "evidence": [
+        {"ref": "docs/phase06-acceptance-checklist.md", "note": "Acceptance checklist remains the declared follow-up surface.", "observed_at": "2026-08-12T08:06:54Z"}
+      ]
+    }
+  ],
+  "updated_at": "2026-08-12T08:06:54Z"
+}

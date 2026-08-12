@@ -667,6 +667,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.style.lineHeight = String(lineHeight);
     if (elements.fontScaleInput) {
       elements.fontScaleInput.value = String(fontScale);
+      elements.fontScaleInput.dataset.taskState = "preference_applied";
+      elements.fontScaleInput.setAttribute("aria-valuetext", `${Math.round(fontScale * 100)} percent`);
     }
     if (elements.lineHeightInput) {
       elements.lineHeightInput.value = String(lineHeight);
@@ -719,11 +721,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function showReaderPanel() {
     elements.readerPanel?.classList.remove("hidden");
+    elements.readerPanel?.setAttribute("data-task-state", "library_open");
+    elements.libraryButton?.setAttribute("aria-expanded", "true");
+    elements.libraryButton?.setAttribute("data-task-state", "library_open");
     renderReaderLibrary();
   }
 
   function hideReaderPanel() {
     elements.readerPanel?.classList.add("hidden");
+    elements.readerPanel?.setAttribute("data-task-state", "library_closed");
+    elements.libraryButton?.setAttribute("aria-expanded", "false");
+    elements.libraryButton?.setAttribute("data-task-state", "library_closed");
   }
 
   async function fetchPublishedManifest() {
@@ -1585,6 +1593,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    elements.chapterSelector.dataset.taskState = "chapter_loading";
+    elements.chapterContainer.dataset.taskState = "chapter_loading";
     await transitionOutCurrentChapter();
 
     resetChapterEffects();
@@ -1610,6 +1620,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem("selectedChapter", chapterId);
 
       await setupChapterExperience(chapterId, chapterMeta.title);
+      elements.chapterSelector.dataset.taskState = "chapter_selected";
+      elements.chapterContainer.dataset.taskState = "chapter_selected";
+      elements.chapterContainer.dataset.selectedChapter = chapterId;
 
       if (shouldScrollToTop) {
         window.scrollTo({ top: 0, behavior: "auto" });
@@ -1619,6 +1632,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) {
       Logger.error(error?.message || error);
       elements.chapterContainer.innerHTML = `<p>Failed to load ${chapterMeta.file}. Run this project from an HTTP server (not file://).</p>`;
+      elements.chapterSelector.dataset.taskState = "chapter_failed";
+      elements.chapterContainer.dataset.taskState = "chapter_failed";
     }
   }
 
@@ -1788,11 +1803,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     event.preventDefault();
     const query = elements.readerSearchInput.value.trim();
     if (!query) {
+      elements.readerSearchResults.dataset.taskState = "search_empty_query";
+      elements.readerSearchResults.textContent = "Enter a chapter search term.";
       return;
     }
+    elements.readerSearchInput.dataset.taskState = "search_loading";
+    elements.readerSearchResults.dataset.taskState = "search_loading";
+    elements.readerSearchResults.textContent = "Searching chapters…";
     try {
       const { results } = await apiJson(`/api/reader/search?q=${encodeURIComponent(query)}`);
       elements.readerSearchResults.innerHTML = "";
+      elements.readerSearchResults.dataset.taskState = results.length > 0 ? "search_results" : "search_no_results";
+      elements.readerSearchResults.dataset.query = query;
+      if (results.length === 0) {
+        elements.readerSearchResults.textContent = `No chapters matched “${query}”.`;
+      }
       results.forEach((result) => {
         const button = document.createElement("button");
         button.type = "button";
@@ -1805,7 +1830,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (error) {
       elements.readerSearchResults.textContent = error?.message || "Search failed";
+      elements.readerSearchInput.dataset.taskState = "search_failed";
+      elements.readerSearchResults.dataset.taskState = "search_failed";
+      return;
     }
+    elements.readerSearchInput.dataset.taskState = "search_complete";
   });
 
   [elements.fontScaleInput, elements.lineHeightInput].forEach((input) => {
@@ -1890,4 +1919,3 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupGiscus();
   await loadManifestAndBoot();
 });
-

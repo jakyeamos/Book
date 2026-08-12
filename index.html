@@ -9,18 +9,18 @@
 <body>
 <div id="chapter-controls">
     <button id="prev-chapter" class="hidden" aria-label="Previous chapter">Prev</button>
-    <select id="chapter-selector" aria-label="Chapter selector"></select>
+    <select id="chapter-selector" aria-label="Chapter selector" data-mac-control-id="book.chapter-selector" data-task-state="chapter_ready"></select>
     <button id="next-chapter" aria-label="Next chapter">Next</button>
     <button id="admin-editors-button" aria-label="Open admin editors">Admin Editors</button>
     <button id="dark-mode-toggle" aria-label="Toggle dark mode">Dark</button>
     <button id="mute-toggle" aria-label="Mute audio">Mute</button>
     <button id="effects-toggle" aria-label="Toggle visual effects">Effects On</button>
     <button id="highlight-text-button">Highlight</button>
-    <button id="library-toggle" aria-label="Open reader library">Library</button>
+    <button id="library-toggle" aria-label="Open reader library" aria-controls="reader-panel" aria-expanded="false" data-mac-control-id="book.library-toggle" data-task-state="library_closed">Library</button>
     <button id="account-toggle" aria-label="Open reader account">Account</button>
 </div>
 
-<aside id="reader-panel" class="reader-panel hidden" aria-label="Reader tools">
+<aside id="reader-panel" class="reader-panel hidden" aria-label="Reader tools" data-mac-control-id="book.reader-panel" data-task-state="library_closed">
     <section>
         <div class="reader-panel-heading">
             <h2>Reader Account</h2>
@@ -45,17 +45,17 @@
     <section>
         <h2>Search</h2>
         <form id="reader-search-form" class="reader-search-form">
-            <input id="reader-search-input" type="search" placeholder="Search chapters">
+            <input id="reader-search-input" type="search" placeholder="Search chapters" aria-label="Search chapters" aria-describedby="reader-search-results" data-mac-control-id="book.reader-search-input" data-task-state="search_ready">
             <button type="submit">Search</button>
         </form>
-        <div id="reader-search-results" class="reader-search-results"></div>
+        <div id="reader-search-results" class="reader-search-results" role="status" aria-live="polite" data-mac-control-id="book.reader-search-results" data-task-state="search_idle"></div>
     </section>
 
     <section>
         <h2>Reading Preferences</h2>
         <label>
             Font scale
-            <input id="font-scale-input" type="range" min="0.9" max="1.35" step="0.05" value="1">
+            <input id="font-scale-input" type="range" min="0.9" max="1.35" step="0.05" value="1" aria-label="Font scale" data-mac-control-id="book.font-scale-input" data-task-state="preference_ready">
         </label>
         <label>
             Line height
@@ -78,7 +78,7 @@
 <div class="book-container chapter-theme" data-chapter="chapter1">
     <div id="parallax-root" aria-hidden="true"></div>
 
-    <div id="chapter-container">
+    <div id="chapter-container" role="region" aria-label="Selected chapter" aria-live="polite" data-mac-control-id="book.chapter-container" data-task-state="chapter_loading">
         <!-- Chapter content is injected dynamically by script.js.
              Development note: fetch() requires an HTTP server. file:// protocol will not load chapter fragments. -->
     </div>

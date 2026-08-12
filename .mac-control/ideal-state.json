@@ -1,0 +1,832 @@
+{
+  "schema": "mac-control-task-manifest/v4",
+  "repository_id": "repo-38a2ff6280635e2e",
+  "repository_name": "Book",
+  "applicability": "applicable",
+  "applicability_reason": "The browser reader exposes stable task-specific DOM identities, semantic native controls, explicit progress and failure states, and independent readbacks for its core reading workflows.",
+  "app": {
+    "name": "Book browser reader",
+    "launch": "python -m http.server 8080"
+  },
+  "criteria": {},
+  "tasks": [
+    {
+      "surface_kind": "web_content",
+      "focus_policy": "foreground",
+      "foreground_postcondition": "target_foreground",
+      "fallback_policy": "fresh_state_handoff",
+      "change_states": [
+        "loading"
+      ],
+      "change_state_exemptions": {
+        "modal": "Chapter selection does not own a modal.",
+        "disabled": "The selector remains available after the chapter manifest loads.",
+        "permission_unavailable": "Chapter selection requires no additional app permission."
+      },
+      "navigation_strategy": "direct_semantic",
+      "route_candidates": [
+        {
+          "id": "browser-dom",
+          "provider": "browser_connector",
+          "method": "adapter",
+          "interaction_mode": "semantic"
+        },
+        {
+          "id": "computer-pointer",
+          "provider": "computer_use",
+          "method": "pointer",
+          "interaction_mode": "pointer"
+        }
+      ],
+      "shortcut_acceleration": {
+        "disposition": "not_applicable",
+        "reason": "No task-specific direct shortcut or reversible shortcut assignment surface is implemented."
+      },
+      "task_id": "select-chapter",
+      "stable_target_id": "book.chapter-selector",
+      "hierarchy": "Book reader > Chapter controls > Chapter selector",
+      "semantic_action": "select_option",
+      "observable_postcondition": "The chapter container reports chapter_selected and identifies the selected chapter",
+      "observable_states": [
+        "enabled",
+        "focused",
+        "visible",
+        "loading",
+        "completed"
+      ],
+      "state_exemptions": {
+        "selected": "The independent chapter container owns selected-chapter readback.",
+        "expanded": "The native select owns its transient expansion state."
+      },
+      "accessibility": {
+        "identifier": "book.chapter-selector",
+        "label": "Chapter selector",
+        "role": "combobox"
+      },
+      "verification_oracle": {
+        "oracle_id": "select-chapter.task-state",
+        "kind": "task_state",
+        "expected_state": "chapter_selected",
+        "independent_readback": true
+      },
+      "semantic_evidence": {
+        "stable_identity": {
+          "level": "source_grounded",
+          "claims": {
+            "selector_kind": "data_attribute",
+            "selector_value": "book.chapter-selector",
+            "scope": "book-reader",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.chapter-selector\"",
+              "evidence_tokens": [
+                "<select",
+                "aria-label=\"Chapter selector\""
+              ]
+            }
+          ]
+        },
+        "correct_semantics": {
+          "level": "source_grounded",
+          "claims": {
+            "role": "combobox",
+            "accessible_name": "Chapter selector",
+            "action": "select_option"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.chapter-selector\"",
+              "evidence_tokens": [
+                "<select",
+                "aria-label=\"Chapter selector\""
+              ]
+            }
+          ]
+        },
+        "observable_state": {
+          "level": "source_grounded",
+          "claims": {
+            "property": "data-task-state",
+            "unavailable_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.chapterSelector.dataset.taskState = \"chapter_loading\"",
+              "evidence_tokens": [
+                "chapter_selected",
+                "chapter_failed"
+              ]
+            }
+          ]
+        },
+        "useful_hierarchy": {
+          "level": "source_grounded",
+          "claims": {
+            "container": "book-reader",
+            "relationship": "Book reader > Chapter controls > Chapter selector",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.chapter-selector\"",
+              "evidence_tokens": [
+                "<select",
+                "aria-label=\"Chapter selector\""
+              ]
+            }
+          ]
+        },
+        "efficient_navigation": {
+          "level": "source_grounded",
+          "claims": {
+            "strategy": "direct_semantic",
+            "entry_point": "book.chapter-selector"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.chapter-selector\"",
+              "evidence_tokens": [
+                "<select",
+                "aria-label=\"Chapter selector\""
+              ]
+            }
+          ]
+        },
+        "verifiable_outcomes": {
+          "level": "source_grounded",
+          "claims": {
+            "readback_provider": "browser_connector",
+            "property": "data-task-state",
+            "operator": "equals",
+            "expected": "chapter_selected"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.chapterContainer.dataset.selectedChapter = chapterId",
+              "evidence_tokens": [
+                "chapter_selected",
+                "chapterId"
+              ]
+            }
+          ]
+        },
+        "route_flexibility": {
+          "level": "source_grounded",
+          "claims": {
+            "primary_provider": "browser_connector",
+            "secondary_provider": "computer_use",
+            "fallback_policy": "fresh_state_handoff"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.chapter-selector\"",
+              "evidence_tokens": [
+                "<select",
+                "aria-label=\"Chapter selector\""
+              ]
+            }
+          ]
+        },
+        "stable_change_behavior": {
+          "level": "source_grounded",
+          "claims": {
+            "scenarios": "loading,modal,disabled,permission_unavailable",
+            "failure_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.chapterSelector.dataset.taskState = \"chapter_loading\"",
+              "evidence_tokens": [
+                "chapter_selected",
+                "chapter_failed"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "surface_kind": "web_content",
+      "focus_policy": "foreground",
+      "foreground_postcondition": "target_foreground",
+      "fallback_policy": "fresh_state_handoff",
+      "change_states": [],
+      "change_state_exemptions": {
+        "loading": "The task uses a synchronous local surface; navigation progress is owned and reported by the selected provider.",
+        "modal": "The task does not own a modal overlay.",
+        "disabled": "The read-only target remains available whenever its containing surface is present.",
+        "permission_unavailable": "The task requires no additional app-level permission; provider permission failures are reported before dispatch."
+      },
+      "navigation_strategy": "direct_semantic",
+      "route_candidates": [
+        {
+          "id": "browser-dom",
+          "provider": "browser_connector",
+          "method": "adapter",
+          "interaction_mode": "semantic"
+        },
+        {
+          "id": "computer-pointer",
+          "provider": "computer_use",
+          "method": "pointer",
+          "interaction_mode": "pointer"
+        }
+      ],
+      "shortcut_acceleration": {
+        "disposition": "not_applicable",
+        "reason": "No task-specific direct shortcut or reversible shortcut assignment surface is implemented."
+      },
+      "task_id": "open-reader-library",
+      "stable_target_id": "book.library-toggle",
+      "hierarchy": "Book reader > Reader tools > Library toggle",
+      "semantic_action": "press",
+      "observable_postcondition": "The toggle and reader panel report library_open",
+      "observable_states": [
+        "enabled",
+        "focused",
+        "visible",
+        "expanded",
+        "completed"
+      ],
+      "state_exemptions": {
+        "selected": "The toggle is a momentary action.",
+        "loading": "Opening the local panel is synchronous."
+      },
+      "accessibility": {
+        "identifier": "book.library-toggle",
+        "label": "Open reader library",
+        "role": "button"
+      },
+      "verification_oracle": {
+        "oracle_id": "open-reader-library.task-state",
+        "kind": "task_state",
+        "expected_state": "library_open",
+        "independent_readback": true
+      },
+      "semantic_evidence": {
+        "stable_identity": {
+          "level": "source_grounded",
+          "claims": {
+            "selector_kind": "data_attribute",
+            "selector_value": "book.library-toggle",
+            "scope": "book-reader",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.library-toggle\"",
+              "evidence_tokens": [
+                "aria-controls=\"reader-panel\"",
+                "aria-expanded=\"false\""
+              ]
+            }
+          ]
+        },
+        "correct_semantics": {
+          "level": "source_grounded",
+          "claims": {
+            "role": "button",
+            "accessible_name": "Open reader library",
+            "action": "press"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.library-toggle\"",
+              "evidence_tokens": [
+                "aria-controls=\"reader-panel\"",
+                "aria-expanded=\"false\""
+              ]
+            }
+          ]
+        },
+        "observable_state": {
+          "level": "source_grounded",
+          "claims": {
+            "property": "data-task-state",
+            "unavailable_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.libraryButton?.setAttribute(\"data-task-state\", \"library_open\")",
+              "evidence_tokens": [
+                "aria-expanded",
+                "library_closed"
+              ]
+            }
+          ]
+        },
+        "useful_hierarchy": {
+          "level": "source_grounded",
+          "claims": {
+            "container": "book-reader",
+            "relationship": "Book reader > Reader tools > Library toggle",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.library-toggle\"",
+              "evidence_tokens": [
+                "aria-controls=\"reader-panel\"",
+                "aria-expanded=\"false\""
+              ]
+            }
+          ]
+        },
+        "efficient_navigation": {
+          "level": "source_grounded",
+          "claims": {
+            "strategy": "direct_semantic",
+            "entry_point": "book.library-toggle"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.library-toggle\"",
+              "evidence_tokens": [
+                "aria-controls=\"reader-panel\"",
+                "aria-expanded=\"false\""
+              ]
+            }
+          ]
+        },
+        "verifiable_outcomes": {
+          "level": "source_grounded",
+          "claims": {
+            "readback_provider": "browser_connector",
+            "property": "data-task-state",
+            "operator": "equals",
+            "expected": "library_open"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.readerPanel?.setAttribute(\"data-task-state\", \"library_open\")",
+              "evidence_tokens": [
+                "showReaderPanel",
+                "renderReaderLibrary"
+              ]
+            }
+          ]
+        },
+        "route_flexibility": {
+          "level": "source_grounded",
+          "claims": {
+            "primary_provider": "browser_connector",
+            "secondary_provider": "computer_use",
+            "fallback_policy": "fresh_state_handoff"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.library-toggle\"",
+              "evidence_tokens": [
+                "aria-controls=\"reader-panel\"",
+                "aria-expanded=\"false\""
+              ]
+            }
+          ]
+        },
+        "stable_change_behavior": {
+          "level": "source_grounded",
+          "claims": {
+            "scenarios": "loading,modal,disabled,permission_unavailable",
+            "failure_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.libraryButton?.setAttribute(\"data-task-state\", \"library_open\")",
+              "evidence_tokens": [
+                "aria-expanded",
+                "library_closed"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "surface_kind": "web_content",
+      "focus_policy": "foreground",
+      "foreground_postcondition": "target_foreground",
+      "fallback_policy": "fresh_state_handoff",
+      "change_states": [
+        "loading"
+      ],
+      "change_state_exemptions": {
+        "modal": "Search does not own a modal.",
+        "disabled": "The local search input remains available while results update.",
+        "permission_unavailable": "Search requires no additional app permission."
+      },
+      "navigation_strategy": "direct_semantic",
+      "route_candidates": [
+        {
+          "id": "browser-dom",
+          "provider": "browser_connector",
+          "method": "adapter",
+          "interaction_mode": "semantic"
+        },
+        {
+          "id": "computer-pointer",
+          "provider": "computer_use",
+          "method": "pointer",
+          "interaction_mode": "pointer"
+        }
+      ],
+      "shortcut_acceleration": {
+        "disposition": "not_applicable",
+        "reason": "No task-specific direct shortcut or reversible shortcut assignment surface is implemented."
+      },
+      "task_id": "search-chapters",
+      "stable_target_id": "book.reader-search-input",
+      "hierarchy": "Book reader > Reader tools > Chapter search",
+      "semantic_action": "set_value_and_submit",
+      "observable_postcondition": "The status region reports search_results, search_no_results, or search_failed for the submitted query",
+      "observable_states": [
+        "enabled",
+        "focused",
+        "visible",
+        "loading",
+        "completed"
+      ],
+      "state_exemptions": {
+        "selected": "Search input is not a selectable item.",
+        "expanded": "Search input does not own a disclosure."
+      },
+      "accessibility": {
+        "identifier": "book.reader-search-input",
+        "label": "Search chapters",
+        "role": "searchbox"
+      },
+      "verification_oracle": {
+        "oracle_id": "search-chapters.task-state",
+        "kind": "task_state",
+        "expected_state": "search_results",
+        "independent_readback": true
+      },
+      "semantic_evidence": {
+        "stable_identity": {
+          "level": "source_grounded",
+          "claims": {
+            "selector_kind": "data_attribute",
+            "selector_value": "book.reader-search-input",
+            "scope": "book-reader",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.reader-search-input\"",
+              "evidence_tokens": [
+                "type=\"search\"",
+                "aria-describedby=\"reader-search-results\""
+              ]
+            }
+          ]
+        },
+        "correct_semantics": {
+          "level": "source_grounded",
+          "claims": {
+            "role": "searchbox",
+            "accessible_name": "Search chapters",
+            "action": "set_value_and_submit"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.reader-search-input\"",
+              "evidence_tokens": [
+                "type=\"search\"",
+                "aria-describedby=\"reader-search-results\""
+              ]
+            }
+          ]
+        },
+        "observable_state": {
+          "level": "source_grounded",
+          "claims": {
+            "property": "data-task-state",
+            "unavailable_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.readerSearchResults.dataset.taskState = \"search_loading\"",
+              "evidence_tokens": [
+                "search_no_results",
+                "search_failed"
+              ]
+            }
+          ]
+        },
+        "useful_hierarchy": {
+          "level": "source_grounded",
+          "claims": {
+            "container": "book-reader",
+            "relationship": "Book reader > Reader tools > Chapter search",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.reader-search-input\"",
+              "evidence_tokens": [
+                "type=\"search\"",
+                "aria-describedby=\"reader-search-results\""
+              ]
+            }
+          ]
+        },
+        "efficient_navigation": {
+          "level": "source_grounded",
+          "claims": {
+            "strategy": "direct_semantic",
+            "entry_point": "book.reader-search-input"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.reader-search-input\"",
+              "evidence_tokens": [
+                "type=\"search\"",
+                "aria-describedby=\"reader-search-results\""
+              ]
+            }
+          ]
+        },
+        "verifiable_outcomes": {
+          "level": "source_grounded",
+          "claims": {
+            "readback_provider": "browser_connector",
+            "property": "data-task-state",
+            "operator": "equals",
+            "expected": "search_results"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.readerSearchResults.dataset.query = query",
+              "evidence_tokens": [
+                "search_results",
+                "search_no_results"
+              ]
+            }
+          ]
+        },
+        "route_flexibility": {
+          "level": "source_grounded",
+          "claims": {
+            "primary_provider": "browser_connector",
+            "secondary_provider": "computer_use",
+            "fallback_policy": "fresh_state_handoff"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.reader-search-input\"",
+              "evidence_tokens": [
+                "type=\"search\"",
+                "aria-describedby=\"reader-search-results\""
+              ]
+            }
+          ]
+        },
+        "stable_change_behavior": {
+          "level": "source_grounded",
+          "claims": {
+            "scenarios": "loading,modal,disabled,permission_unavailable",
+            "failure_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.readerSearchResults.dataset.taskState = \"search_loading\"",
+              "evidence_tokens": [
+                "search_no_results",
+                "search_failed"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "surface_kind": "web_content",
+      "focus_policy": "foreground",
+      "foreground_postcondition": "target_foreground",
+      "fallback_policy": "fresh_state_handoff",
+      "change_states": [],
+      "change_state_exemptions": {
+        "loading": "The task uses a synchronous local surface; navigation progress is owned and reported by the selected provider.",
+        "modal": "The task does not own a modal overlay.",
+        "disabled": "The read-only target remains available whenever its containing surface is present.",
+        "permission_unavailable": "The task requires no additional app-level permission; provider permission failures are reported before dispatch."
+      },
+      "navigation_strategy": "direct_semantic",
+      "route_candidates": [
+        {
+          "id": "browser-dom",
+          "provider": "browser_connector",
+          "method": "adapter",
+          "interaction_mode": "semantic"
+        },
+        {
+          "id": "computer-pointer",
+          "provider": "computer_use",
+          "method": "pointer",
+          "interaction_mode": "pointer"
+        }
+      ],
+      "shortcut_acceleration": {
+        "disposition": "not_applicable",
+        "reason": "No task-specific direct shortcut or reversible shortcut assignment surface is implemented."
+      },
+      "task_id": "adjust-reading-preferences",
+      "stable_target_id": "book.font-scale-input",
+      "hierarchy": "Book reader > Reader tools > Reading preferences > Font scale",
+      "semantic_action": "set_value",
+      "observable_postcondition": "The slider reports preference_applied and exposes its percentage value",
+      "observable_states": [
+        "enabled",
+        "focused",
+        "visible",
+        "completed"
+      ],
+      "state_exemptions": {
+        "selected": "The target is a momentary action or read-only surface rather than a selectable item.",
+        "expanded": "The target does not own an expandable disclosure.",
+        "loading": "The selected provider owns navigation progress; the app exposes the resulting task state."
+      },
+      "accessibility": {
+        "identifier": "book.font-scale-input",
+        "label": "Font scale",
+        "role": "slider"
+      },
+      "verification_oracle": {
+        "oracle_id": "adjust-reading-preferences.task-state",
+        "kind": "task_state",
+        "expected_state": "preference_applied",
+        "independent_readback": true
+      },
+      "semantic_evidence": {
+        "stable_identity": {
+          "level": "source_grounded",
+          "claims": {
+            "selector_kind": "data_attribute",
+            "selector_value": "book.font-scale-input",
+            "scope": "book-reader",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.font-scale-input\"",
+              "evidence_tokens": [
+                "type=\"range\"",
+                "aria-label=\"Font scale\""
+              ]
+            }
+          ]
+        },
+        "correct_semantics": {
+          "level": "source_grounded",
+          "claims": {
+            "role": "slider",
+            "accessible_name": "Font scale",
+            "action": "set_value"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.font-scale-input\"",
+              "evidence_tokens": [
+                "type=\"range\"",
+                "aria-label=\"Font scale\""
+              ]
+            }
+          ]
+        },
+        "observable_state": {
+          "level": "source_grounded",
+          "claims": {
+            "property": "data-task-state",
+            "unavailable_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.fontScaleInput.dataset.taskState = \"preference_applied\"",
+              "evidence_tokens": [
+                "aria-valuetext",
+                "fontScale"
+              ]
+            }
+          ]
+        },
+        "useful_hierarchy": {
+          "level": "source_grounded",
+          "claims": {
+            "container": "book-reader",
+            "relationship": "Book reader > Reader tools > Reading preferences > Font scale",
+            "uniqueness": "exactly_one"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.font-scale-input\"",
+              "evidence_tokens": [
+                "type=\"range\"",
+                "aria-label=\"Font scale\""
+              ]
+            }
+          ]
+        },
+        "efficient_navigation": {
+          "level": "source_grounded",
+          "claims": {
+            "strategy": "direct_semantic",
+            "entry_point": "book.font-scale-input"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.font-scale-input\"",
+              "evidence_tokens": [
+                "type=\"range\"",
+                "aria-label=\"Font scale\""
+              ]
+            }
+          ]
+        },
+        "verifiable_outcomes": {
+          "level": "source_grounded",
+          "claims": {
+            "readback_provider": "browser_connector",
+            "property": "data-task-state",
+            "operator": "equals",
+            "expected": "preference_applied"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "document.documentElement.style.setProperty(\"--reader-font-scale\"",
+              "evidence_tokens": [
+                "fontScaleInput.value",
+                "preference_applied"
+              ]
+            }
+          ]
+        },
+        "route_flexibility": {
+          "level": "source_grounded",
+          "claims": {
+            "primary_provider": "browser_connector",
+            "secondary_provider": "computer_use",
+            "fallback_policy": "fresh_state_handoff"
+          },
+          "source_refs": [
+            {
+              "path": "index.html",
+              "anchor": "data-mac-control-id=\"book.font-scale-input\"",
+              "evidence_tokens": [
+                "type=\"range\"",
+                "aria-label=\"Font scale\""
+              ]
+            }
+          ]
+        },
+        "stable_change_behavior": {
+          "level": "source_grounded",
+          "claims": {
+            "scenarios": "loading,modal,disabled,permission_unavailable",
+            "failure_behavior": "block_and_explain"
+          },
+          "source_refs": [
+            {
+              "path": "script.js",
+              "anchor": "elements.fontScaleInput.dataset.taskState = \"preference_applied\"",
+              "evidence_tokens": [
+                "aria-valuetext",
+                "fontScale"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

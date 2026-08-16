@@ -3,13 +3,9 @@ services:
     name: book
     runtime: node
     plan: starter
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm start
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run v2:build
+    startCommand: pnpm v2:start
     healthCheckPath: /api/health
-    disk:
-      name: book-audio
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -21,8 +17,14 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
-      - key: AUDIO_ASSET_DIR
-        value: /var/data/book-audio
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
 
 databases:
   - name: book-postgres

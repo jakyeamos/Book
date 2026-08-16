@@ -44,6 +44,10 @@ async function listen(server: http.Server): Promise<string> {
 }
 
 async function close(server: http.Server): Promise<void> {
+  if (!server.listening) {
+    return;
+  }
+
   await new Promise<void>((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });

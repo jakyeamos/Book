@@ -1,0 +1,47 @@
+{
+  "schema": "compass-behavior-inventory/v1",
+  "behaviors": [
+    {
+      "id": "versioned-composition",
+      "title": "Compose prose and soundscape through one versioned document model",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "atomic-publication-rollback",
+      "title": "Preserve live publication while drafts evolve and publish only ready revisions",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "reader-state-and-visibility",
+      "title": "Serve published chapters and retain bounded reader state",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "private-assets-and-sessions",
+      "title": "Preserve server-owned asset access and session identity",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "legacy-content-continuity",
+      "title": "Preserve legacy chapter identity, content and asset migration",
+      "spec_ref": "README.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "published-query-hydration",
+      "title": "Hydrate published revision query results and carry explicit visibility query decisions",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    },
+    {
+      "id": "asset-adapter-session-primitives",
+      "title": "Preserve local immutable asset checksums, mocked R2 adapter selection and opaque session cookie primitives",
+      "spec_ref": "docs/modernization/TARGET.md",
+      "authority": "accepted"
+    }
+  ]
+}

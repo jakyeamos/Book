@@ -79,3 +79,7 @@ For local admin development with `pnpm start`, set `ADMIN_EMAIL` and `ADMIN_PASS
 
 - Ambient/parallax assets are optional. If no media file is configured, the app uses gradient fallbacks and no ambient playback.
 - Giscus configuration is managed in `chapters/config.js` under `SITE_CONFIG.giscus`.
+
+## Behavior intent and proof
+
+The canonical [product purpose](PRODUCT.md) and [v2 invariants](docs/modernization/TARGET.md) are associated with exact source and local oracles in [Compass](.project-compass/development.json), with [change routing](.agents/change-surface-matrix.json). Local fixtures do not certify hosted PostgreSQL atomic publication, R2, browser playback, persisted reader state or rendered accessibility. Legacy content and implementation remain preserved; no migration or cutover is authorized by these associations.

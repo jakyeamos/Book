@@ -1,0 +1,32 @@
+{
+  "schema_version": "change-surface-matrix/v1",
+  "subject": {
+    "kind": "repository",
+    "id": "Book"
+  },
+  "owner": "repository-owner",
+  "last_reviewed": "2026-09-11",
+  "surfaces": [
+    {
+      "id": "narrative-source-proof",
+      "scope": "local",
+      "path": "PRODUCT.md; docs/modernization/TARGET.md; src/**; app/**; platform/**; assets/**; chapters/**; tests/**; .project-compass/**",
+      "owner": "repository-owner",
+      "condition": "Narrative composition, reading, access, publication or evidence association changes.",
+      "operations": [
+        "add",
+        "change",
+        "remove"
+      ],
+      "validation": [
+        "Review canonical product and v2 invariants; preserve legacy source until explicit retirement.",
+        "Run affected real Vitest oracles through pnpm v2:test; pnpm test validates legacy chapters only.",
+        "Run independent authoritative QR release check when enrolled; keep browser, hosted DB and R2 evidence separate."
+      ],
+      "status": "applicable"
+    }
+  ],
+  "unresolved_surfaces": [
+    "Browser audio consent, reader state persistence and accessibility need direct runtime proof. Atomic publication requires real transaction proof."
+  ]
+}
